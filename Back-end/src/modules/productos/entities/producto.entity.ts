@@ -12,4 +12,6 @@ export class Producto {
     rating!: number;
     review_count!: number;
     image_url!: string[];
+    deleted!: boolean;
+
 }

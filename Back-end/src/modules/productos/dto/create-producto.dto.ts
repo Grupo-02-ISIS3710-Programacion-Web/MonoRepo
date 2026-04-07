@@ -1,10 +1,11 @@
-import { Category, SkinType } from "src/enums/enums"
+import { Category, ProductType, SkinType } from "src/enums/enums"
 
 export class CreateProductoDto {
     name!: string
     brand!: string
     skin_type!: SkinType[]
-    product_type!: string
+    description!: string
+    product_type!: ProductType
     primary_category!: Category
     additional_categories?: Category[]
     ingredients!: string[]

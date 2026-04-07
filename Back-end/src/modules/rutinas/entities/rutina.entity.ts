@@ -1,11 +1,12 @@
 import { SkinType } from "src/enums/enums";
+import { Producto } from "src/modules/productos/entities/producto.entity";
 
 export class RoutineStep {
-    id: string;
-    name: string;
-    order: number;
-    productId: string;
-    product?: Product;
+    id!: string;
+    name!: string;
+    order!: number;
+    productId!: string;
+    product?: Producto;
     notes?: string;
 }
 
