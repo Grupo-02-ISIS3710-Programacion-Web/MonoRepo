@@ -1,0 +1,43 @@
+import { Category, Product, ProductType, SkinType } from '../../types/product'
+
+export const mockProducts: Product[] = [
+  {
+    id: 'p1',
+    name: 'Hydra Cream',
+    brand: 'Brand A',
+    description: 'Hydrating cream for daily use.',
+    skin_type: [SkinType.NORMAL, SkinType.SECA],
+    product_type: ProductType.CREAM,
+    category: [Category.HIDRATACION],
+    ingredients: ['glycerin', 'ceramide'],
+    rating: 4.5,
+    review_count: 120,
+    image_url: ['https://example.com/hydra.jpg'],
+  },
+  {
+    id: 'p2',
+    name: 'Repair Balm',
+    brand: 'Brand B',
+    description: 'Repair balm for irritated skin.',
+    skin_type: [SkinType.SENSIBLE],
+    product_type: ProductType.BALM,
+    category: [Category.REPARACION],
+    ingredients: ['panthenol'],
+    rating: 4.0,
+    review_count: 20,
+    image_url: ['https://example.com/repair.jpg'],
+  },
+  {
+    id: 'p3',
+    name: 'Cleanser Plus',
+    brand: 'Brand C',
+    description: 'Foaming cleanser.',
+    skin_type: [SkinType.GRASA],
+    product_type: ProductType.CLEANSER,
+    category: [Category.LIMPIEZA, Category.EXFOLIACION],
+    ingredients: ['salicylic acid'],
+    rating: 5,
+    review_count: 200,
+    image_url: ['https://example.com/cleanser.jpg'],
+  },
+]

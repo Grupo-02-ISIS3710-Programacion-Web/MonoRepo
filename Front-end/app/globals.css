@@ -1,0 +1,159 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================= */
+/* THEME MAPPING (TAILWIND V4)   */
+/* ============================= */
+
+@theme inline {
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-geist-sans, 'Inter'), ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.75rem;
+}
+
+/* ============================= */
+/* LIGHT MODE                    */
+/* ============================= */
+
+:root {
+  --radius: 0.75rem;
+
+  /* Base */
+  --background: #F6F8F6;
+  --foreground: #1D1E2C;
+
+  /* Cards */
+  --card: #FFFFFF;
+  --card-foreground: #1D1E2C;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #1D1E2C;
+
+  /* Brand */
+  --primary: #BE3D5E;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #EC9192;
+  --secondary-foreground: #1D1E2C;
+
+  /* Muted */
+  --muted: #E8ECEF;
+  --muted-foreground: #59656F;
+
+  /* Accent (soft secondary) */
+  --accent: #EC919240;
+  /* 25% */
+  --accent-foreground: #1D1E2C;
+
+  /* Borders */
+  --border: #E8ECEF;
+  --input: #E8ECEF;
+  --ring: #DB5375bf;
+  /* primary 75% */
+
+  /* States */
+  --destructive: #B91C1C;
+  --destructive-foreground: #FFFFFF;
+}
+
+/* ============================= */
+/* DARK MODE                     */
+/* ============================= */
+
+.dark {
+  --background: #14151F;
+  --foreground: #F5F5F5;
+
+  --card: #1C1E2A;
+  --card-foreground: #F5F5F5;
+
+  --popover: #1C1E2A;
+  --popover-foreground: #F5F5F5;
+
+  /* Brand adaptado a dark */
+  --primary: #EC9192;
+  --primary-foreground: #14151F;
+
+  --secondary: #DB5375;
+  --secondary-foreground: #FFFFFF;
+
+  --muted: #232534;
+  --muted-foreground: #A0A4B8;
+
+  --accent: #DB537540;
+  /* primary 25% */
+  --accent-foreground: #F5F5F5;
+
+  --border: #2A2D3E;
+  --input: #2A2D3E;
+  --ring: #EC9192bf;
+
+  --destructive: #F87171;
+  --destructive-foreground: #14151F;
+}
+
+/* ============================= */
+/* BASE LAYER                    */
+/* ============================= */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  p {
+    @apply text-muted-foreground leading-relaxed;
+  }
+}

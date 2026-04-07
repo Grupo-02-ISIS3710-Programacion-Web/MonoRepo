@@ -1,0 +1,709 @@
+{
+    "CrearRutina": {
+        "title": "Crea Tu Rutina Ideal",
+        "routineInfo": "Información de tu rutina",
+        "description": "Explora productos, filtra por categoría y guarda una rutina personalizada para tu piel.",
+        "submitButton": "Crear Rutina",
+        "toasts": {
+            "created": "Tu rutina ha sido creada exitosamente"
+        }
+    },
+    "EditarRutina": {
+        "title": "Edita Tu Rutina",
+        "description": "Actualiza la información general y ajusta los pasos de tu rutina existente.",
+        "submitButton": "Guardar Cambios",
+        "notFoundTitle": "Rutina no encontrada",
+        "notFoundDescription": "No pudimos encontrar una rutina con el ID proporcionado.",
+        "toasts": {
+            "saved": "Los cambios han sido guardados exitosamente"
+        }
+    },
+    "GuardarRutina": {
+        "pageTitle": "Finaliza tu rutina personalizada",
+        "pageDescription": "Revisa y ajusta la descripción de cada paso de tu rutina. Puedes cambiar el orden, editar los detalles o eliminar pasos antes de guardar tu rutina personalizada.",
+        "infoCard": {
+            "title": "Información de la rutina",
+            "nameLabel": "Nombre de la rutina",
+            "namePlaceholder": "Nombre de la rutina",
+            "descriptionLabel": "Descripción de la rutina",
+            "descriptionPlaceholder": "Descripción de la rutina",
+            "timeOfDayLabel": "Momento de la rutina",
+            "skinTypeLabel": "Tipo de piel",
+            "skinTypePlaceholder": "Selecciona el tipo de piel",
+            "timeOfDay": {
+                "am": "AM",
+                "pm": "PM"
+            },
+            "productsLabel": "Productos en la rutina",
+            "productsSelected": "{count, plural, =0 {0 productos seleccionados} =1 {1 producto seleccionado} other {{count} productos seleccionados}}",
+            "selectProductsButton": "Agregar un paso"
+        },
+        "productDialog": {
+            "title": "Selecciona los productos de tu rutina",
+            "noResults": "No hay productos que coincidan con la búsqueda."
+        },
+        "steps": {
+            "title": "Descripción de cada paso",
+            "empty": "No hay pasos en la rutina. Agrega productos desde el selector para empezar.",
+            "stepNumber": "Paso {number}",
+            "nameLabel": "Nombre del paso",
+            "routineNamePlaceholder": "Nombre de la rutina",
+            "namePlaceholder": "Nombre del paso",
+            "descriptionLabel": "Descripción del paso",
+            "descriptionPlaceholder": "Descripción del paso",
+            "errors": {
+                "nameRequired": "El nombre del paso es obligatorio",
+                "nameMin": "El nombre del paso debe tener al menos 2 caracteres",
+                "descriptionRequired": "La descripción del paso es obligatoria",
+                "descriptionMin": "La descripción del paso debe tener al menos 5 caracteres",
+                "atLeastOneStep": "Debes agregar al menos un paso a la rutina"
+            }
+        },
+        "submitButton": "Crear Rutina",
+        "validation": {
+            "nameRequired": "El nombre de la rutina es obligatorio",
+            "nameMin": "El nombre de la rutina debe tener al menos 3 caracteres",
+            "descriptionRequired": "La descripción de la rutina es obligatoria",
+            "descriptionMin": "La descripción de la rutina debe tener al menos 10 caracteres",
+            "skinTypeRequired": "Debes seleccionar un tipo de piel"
+        },
+        "toast": {
+            "alreadyAdded": "{name} ya fue agregado a tu rutina",
+            "added": "{name} agregado a la rutina"
+        }
+    },
+    "GridProductos": {
+        "loading": "Cargando productos...",
+        "noResults": "No se encontraron productos que coincidan con tu búsqueda.",
+        "toast": {
+            "alreadyAdded": "{name} ya está en tu rutina",
+            "added": "{name} se ha agregado a tu rutina",
+            "removed": "{name} se ha eliminado de tu rutina"
+        }
+    },
+    "CardProducto": {
+        "addToRoutine": "Añadir a rutina",
+        "categories": {
+            "hidratacion": "Hidratación",
+            "limpieza": "Limpieza",
+            "exfoliacion": "Exfoliación",
+            "anti-edad": "Anti-edad",
+            "reparacion": "Reparación",
+            "antioxidante": "Antioxidante"
+        }
+    },
+    "RoutineDrawer": {
+        "viewRoutine": "Ver mi rutina"
+    },
+    "RoutineSummary": {
+        "title": "Tus productos seleccionados",
+        "empty": "No has agregado ningún producto a tu rutina. Explora y agrega productos para verlos aquí.",
+        "save": "Siguiente paso",
+        "productsCount": "{count, plural, =0 {0 productos agregados} =1 {1 producto agregado} other {{count} productos agregados}}"
+    },
+    "SearchBar": {
+        "placeholder": "Busca productos por nombre, marca o tipo...",
+        "allProducts": "Todos los productos"
+    },
+    "Home": {
+        "topProducts": "Productos mejor valorados",
+        "topProductsDescription": "Seleccionados por nuestra comunidad y dermatólogos.",
+        "seeAllProducts": "Ver todos los productos"
+    },
+    "NavBar": {
+        "home": "Inicio",
+        "discover": "Descubre",
+        "community": "Comunidad",
+        "aiRoutines": "Rutinas creadas con IA",
+        "register": "Registrarme",
+        "login": "Iniciar sesión",
+        "logout": "Cerrar sesión",
+        "profile": "Perfil",
+        "menuTitle": "Menú",
+        "openMenu": "Abrir menú",
+        "openSearch": "Abrir búsqueda",
+        "searchPlaceholder": "Buscar productos...",
+        "notifications": "Notificaciones"
+    },
+    "CommentHome": {
+        "title": "Explora rutinas reales de la comunidad",
+        "description": "Descubre rutinas publicadas por personas con tu mismo tipo de piel, compara resultados y adapta tu plan paso a paso.",
+        "feature1": "Rutinas filtradas por tipo de piel",
+        "feature2": "Resultados y progreso de usuarios reales",
+        "feature3": "Ideas prácticas para mejorar tu rutina diaria",
+        "visitCommunity": "Visitar comunidad",
+        "post1": "¿Cuál es el mejor protector solar para piel grasa que no obstruya los poros?",
+        "post2": "Mi transformación con vitamina C después de 3 meses (Resultados)",
+        "post3": "¿Se puede usar retinol junto con niacinamida? Expertos lo explican.",
+        "replies": "respuestas",
+        "likes": "me gusta",
+        "ctaTitle": "Empieza tu transformación de piel",
+        "ctaDescription": "Recibe consejos personalizados de skincare cada semana y acceso temprano a nuevos productos.",
+        "emailPlaceholder": "Ingresa tu email",
+        "joinNow": "Unirme"
+    },
+    "ProductCard": {
+        "viewDetails": "Ver detalles"
+    },
+    "SeccionInfoHome": {
+        "badge": "CUIDADO DE LA PIEL RESPALDADO POR EXPERTOS",
+        "title1": "Tu viaje de",
+        "title2": "Skincare",
+        "title3": "empieza aquí",
+        "description": "Únete a una comunidad de más de 50 mil entusiastas. Haz seguimiento a tu progreso, encuentra la rutina perfecta para tu tipo de piel y descubre productos que realmente funcionan.",
+        "register": "Regístrate",
+        "explorer": "Descubre más",
+        "trusted": "personas confían en nosotros"
+    },
+    "Profile": {
+        "myRoutine": "Mis rutinas",
+        "myFavorites": "Mis favoritos",
+        "morning": "Mañana (AM)",
+        "evening": "Noche (PM)",
+        "addStep": "+ Agregar rutina",
+        "createWithAi": "Crear con IA",
+        "searchProducts": "Buscar productos...",
+        "discoverMore": "Descubre más productos",
+        "loadMore": "Cargar más"
+    },
+    "ProfileTabs": {
+        "myRoutine": "Mis rutina",
+        "myFavorites": "Mis favoritos",
+        "forumPosts": "Publicaciones del foro",
+        "morning": "Mañana (AM)",
+        "evening": "Noche (PM)",
+        "addStep": "+ Agregar paso",
+        "searchProducts": "Buscar productos...",
+        "discoverMore": "Descubre más productos"
+    },
+    "RoutineContent": {
+        "steps": "pasos",
+        "deleteDialog": {
+            "title": "Eliminar rutina",
+            "description": "¿Estás seguro que deseas eliminar",
+            "descriptionWarning": "? Esta acción no se puede deshacer.",
+            "cancel": "Cancelar",
+            "delete": "Eliminar"
+        },
+        "editButton": "Editar rutina",
+        "deleted": "ha sido eliminada"
+    },
+    "UserInfo": {
+        "reviews": "RESEÑAS",
+        "posts": "PUBLICACIONES",
+        "editProfile": "Editar perfil",
+        "changePhoto": "Cambiar foto",
+        "name": "Nombre",
+        "city": "Ciudad",
+        "skinType": "Tipo de piel",
+        "bio": "Biografía",
+        "cancel": "Cancelar",
+        "save": "Guardar"
+    },
+    "Login": {
+        "welcome": "Bienvenido",
+        "subtitle": "Inicia sesión en tu ritual diario de cuidado de la piel",
+        "usernameEmail": "Usuario o Email",
+        "password": "Contraseña",
+        "forgotPassword": "¿Olvidé mi contraseña?",
+        "login": "Ingresar",
+        "continueWith": "o continúa con",
+        "newUser": "¿Nuevo en Skin4All?",
+        "register": "Regístrate",
+        "emailRequired": "El email es obligatorio",
+        "passwordRequired": "La contraseña es obligatoria",
+        "invalidCredentials": "Credenciales inválidas. Verifica tu usuario/email y contraseña.",
+        "demoHint": "Demo: usuario sofia@skin4all.com, contraseña skin4all123"
+    },
+    "Auth": {
+        "requiredTitle": "No has iniciado sesión",
+        "requiredDescription": "Necesitas iniciar sesión para crear o editar rutinas y para interactuar en comentarios.",
+        "goToLogin": "Ir a iniciar sesión",
+        "backToCommunity": "Volver a la comunidad"
+    },
+    "AiRoutine": {
+        "badge": "Rutina asistida por IA",
+        "title": "Crea una rutina conversando con IA",
+        "description": "Describe lo que buscas, ajusta el borrador en tiempo real y selecciona productos que ya existen dentro de Skin4All.",
+        "headerActions": {
+            "manualBuilder": "Abrir constructor manual",
+            "suggestions": "Ver sugerencias"
+        },
+        "suggestionsSheet": {
+            "title": "Sugerencias",
+            "description": "Explora productos sugeridos y atajos para seguir refinando la conversación."
+        },
+        "mobileDraft": {
+            "open": "Ver borrador",
+            "title": "Borrador de rutina",
+            "description": "Edita tu rutina sin salir del chat.",
+            "close": "Cerrar"
+        },
+        "starterPrompts": {
+            "title": "Puntos de inicio",
+            "description": "Empieza con una intención clara y continúa iterando desde el chat.",
+            "hydration": {
+                "label": "Más hidratación y barrera",
+                "value": "Quiero una rutina enfocada en hidratación, reparación de barrera y menos irritación."
+            },
+            "breakouts": {
+                "label": "Brotes y textura",
+                "value": "Necesito una rutina que me ayude con brotes ocasionales, textura y exceso de grasa sin resecar demasiado."
+            },
+            "barrier": {
+                "label": "Piel sensible",
+                "value": "Busco una rutina calmante para piel sensible con pocos pasos y enfoque en reparación."
+            },
+            "minimalist": {
+                "label": "Rutina minimalista",
+                "value": "Quiero una rutina simple, fácil de seguir y con pocos productos."
+            }
+        },
+        "focusAreas": {
+            "title": "Áreas de enfoque",
+            "description": "Estas prioridades influyen en los productos sugeridos para el borrador.",
+            "items": {
+                "hydration": "Hidratación",
+                "barrier": "Barrera",
+                "texture": "Textura",
+                "sensitivity": "Sensibilidad"
+            }
+        },
+        "chat": {
+            "title": "Chat",
+            "description": "Haz preguntas, pide ajustes y sigue afinando la rutina paso a paso.",
+            "status": "Experiencia lista para conectar con IA",
+            "assistantLabel": "Skin4All AI",
+            "userLabel": "{name}"
+        },
+        "composer": {
+            "label": "Indica lo que quieres lograr",
+            "placeholder": "Describe tus preocupaciones, ingredientes que quieres usar o evitar, presupuesto, tiempo disponible y cualquier detalle relevante...",
+            "hint": "Esta pantalla simula la experiencia final. La lógica real del LLM se integrará después.",
+            "send": "Enviar"
+        },
+        "messages": {
+            "assistantIntro": "Hola {name}, cuéntame qué quieres mejorar y te iré guiando hacia una rutina más precisa.",
+            "userGoal": "Quiero una rutina simple que me ayude con deshidratación, sensibilidad y textura irregular.",
+            "assistantFollowUp": "Perfecto. Empezaré con una propuesta base y luego podremos seguir ajustando productos, pasos y notas desde esta misma conversación.",
+            "pendingReply": "Respuesta simulada: aquí aparecerá la siguiente iteración del asistente cuando se conecte la lógica con el LLM."
+        },
+        "draft": {
+            "title": "Borrador de rutina",
+            "description": "Este panel representa una estructura real del tipo Routine: nombre, descripción, tipo, tipo de piel y pasos con productos existentes.",
+            "initialName": "Rutina personalizada asistida",
+            "initialDescription": "Borrador inicial generado desde el contexto del chat. Edita campos, reorganiza pasos y selecciona productos existentes.",
+            "fields": {
+                "name": "Nombre de la rutina",
+                "description": "Descripción",
+                "type": "Momento de la rutina",
+                "skinType": "Tipo de piel"
+            },
+            "placeholders": {
+                "name": "Nombre de la rutina",
+                "description": "Describe qué busca resolver esta rutina",
+                "skinType": "Selecciona el tipo de piel",
+                "stepName": "Nombre del paso",
+                "stepNotes": "Notas o instrucciones del paso"
+            },
+            "typeOptions": {
+                "am": "AM",
+                "pm": "PM"
+            },
+            "structure": {
+                "title": "Vista estructurada",
+                "summary": "{count, plural, =0 {0 pasos dentro del borrador} =1 {1 paso dentro del borrador} other {{count} pasos dentro del borrador}}"
+            },
+            "stepsTitle": "Pasos seleccionados",
+            "stepsCount": "{count, plural, =0 {0 pasos} =1 {1 paso} other {{count} pasos}}",
+            "stepLabel": "Paso {order}",
+            "stepName": "Paso {order}",
+            "stepNotes": "Usar {productName} siguiendo tolerancia y necesidades de la piel.",
+            "empty": "Aún no has agregado productos al borrador. Usa las recomendaciones para construir la rutina.",
+            "unknownProduct": "Producto no encontrado",
+            "actions": {
+                "continue": "Continuar en el constructor",
+                "moveUp": "Mover paso hacia arriba",
+                "moveDown": "Mover paso hacia abajo",
+                "removeStep": "Eliminar paso"
+            }
+        },
+        "recommendedProducts": {
+            "title": "Productos sugeridos",
+            "description": "Estas recomendaciones usan productos reales de la plataforma y puedes agregarlas o quitarlas del borrador.",
+            "actions": {
+                "add": "Agregar al borrador",
+                "added": "Ya agregado"
+            },
+            "toast": {
+                "added": "{name} se agrego al borrador"
+            }
+        },
+        "continuousRecommendations": {
+            "title": "Recomendaciones continuas",
+            "description": "Atajos para seguir refinando la conversación sin romper el flujo.",
+            "addToChat": "Llevar al chat",
+            "items": {
+                "adjustFrequency": {
+                    "title": "Hacer la rutina más progresiva",
+                    "description": "Pide una versión más suave si quieres introducir activos con mayor cuidado.",
+                    "prompt": "Ajusta la rutina para introducir los activos de forma más gradual y tolerable."
+                },
+                "swapTexture": {
+                    "title": "Cambiar texturas",
+                    "description": "Solicita opciones más ligeras o más nutritivas manteniendo el mismo objetivo.",
+                    "prompt": "Propón alternativas con texturas más ligeras para clima cálido y húmedo."
+                },
+                "simplifyNight": {
+                    "title": "Crear una versión PM",
+                    "description": "Úsalo para pedir una variante nocturna que complemente la rutina principal.",
+                    "prompt": "Crea una versión nocturna más simple que complemente este borrador."
+                }
+            }
+        }
+    },
+    "DiscoveryPage": {
+        "didNotFindProduct": "¿No encontraste lo que estabas buscando?",
+        "addProduct": "Añade un producto a nuestro catálogo"
+    },
+    "FilterHeader": {
+        "title": "Descubre productos",
+        "description": "Descubre los mejores productos para ti",
+        "productCount": "{count, plural, =0 {Mostrando 0 productos} =1 {Mostrando 1 producto} other {Mostrando {count} productos}}",
+        "filter": "Filtrar por:",
+        "filters": {
+            "skinType": "Tipo de piel",
+            "brand": "Marca",
+            "excludeIngredients": "Excluir ingredientes"
+        },
+        "clearFilters": "Limpiar filtros",
+        "chips": {
+            "skin": "Piel",
+            "brand": "Marca: {brand}",
+            "exclude": "Excluir: {ingredient}"
+        }
+    },
+    "SkinTypes": {
+        "normal": "Normal",
+        "seca": "Seca",
+        "grasa": "Grasa",
+        "mixta": "Mixta",
+        "sensible": "Sensible",
+        "acneica": "Acnéica",
+        "irritada": "Irritada",
+        "opaca": "Opaca",
+        "texturizada": "Texturizada"
+    },
+    "Categories": {
+        "ALL": {
+            "label": "Todos los productos",
+            "description": "Descubre todos los productos disponibles"
+        },
+        "limpieza": {
+            "label": "Limpiadores",
+            "description": "Encuentra los mejores limpiadores para tu piel"
+        },
+        "hidratacion": {
+            "label": "Hidratantes",
+            "description": "Hidrata tu piel con cremas y lociones"
+        },
+        "antioxidante": {
+            "label": "Serums",
+            "description": "Potencia tu rutina con serums especializados"
+        },
+        "reparacion": {
+            "label": "Reparación",
+            "description": "Potencia tu rutina con esencias reparadoras"
+        },
+        "exfoliacion": {
+            "label": "Exfoliación",
+            "description": "Renueva tu piel con exfoliantes químicos y físicos"
+        },
+        "anti-edad": {
+            "label": "Anti-edad",
+            "description": "Encuentra productos anti-edad para combatir los signos del envejecimiento"
+        }
+    },
+    "CategoriesCard": {
+        "title": "Categorías",
+        "description": "Explora productos por categorías"
+    },
+    "ProductTypes": {
+        "cream": "Crema",
+        "cleanser": "Limpiador",
+        "eye_cream": "Crema para ojos",
+        "mask": "Mascarilla",
+        "oil": "Aceite",
+        "serum": "Suero",
+        "essence": "Esencia",
+        "exfoliant": "Exfoliante",
+        "sunscreen": "Protector solar",
+        "toner": "Tónico",
+        "gel": "Gel",
+        "balm": "Bálsamo",
+        "treatment": "Tratamiento",
+        "makeup_remover": "Desmaquillante",
+        "makeup": "Maquillaje"
+    },
+    "ProductCard": {
+        "discover": "Descubrir",
+        "category": "Categoría",
+        "productType": "Tipo de producto",
+        "keyIngredient": "Ingrediente clave",
+        "ingredientsDetailed": "Ingredientes detallados",
+        "addToRoutine": "Agregar a una rutina",
+        "productNotFound": "Producto no encontrado",
+        "productTypes": {
+            "cream": "Crema",
+            "cleanser": "Limpiador",
+            "eye_cream": "Crema para ojos",
+            "mask": "Mascarilla",
+            "oil": "Aceite",
+            "serum": "Suero",
+            "essence": "Esencia",
+            "exfoliant": "Exfoliante",
+            "sunscreen": "Protector solar",
+            "toner": "Tónico",
+            "gel": "Gel",
+            "balm": "Bálsamo",
+            "treatment": "Tratamiento",
+            "makeup_remover": "Desmaquillante",
+            "makeup": "Maquillaje"
+        }
+    },
+    "CreateProductPage": {
+        "title": "Añade un nuevo producto al catálogo de Skin4All",
+        "submitDisclaimer": "Los productos que subas a este form pasaran por la verificación de un administrador antes de ser acepatos en la plataforma. El administrador puede excluir el producto si considera que no cumple con los estándares de la plataforma.",
+        "productName": "Nombre del producto",
+        "productNamePlaceholder": "CeraVe limpiador hidratante",
+        "brand": "Marca del producto",
+        "description": "Descripción del producto",
+        "descriptionPlaceholder": "Escriba la descripción del producto",
+        "productType": "Tipo de producto",
+        "productTypePlaceholder": "Selecciona el tipo de producto",
+        "primaryCategory": "Categoría principal del producto",
+        "primaryCategoryPlaceholder": "Selecciona la categoría principal del producto",
+        "additionalCategories": "Otras categorías del producto",
+        "additionalCategoriesPlaceholder": "Escoja otras categorías del producto",
+        "skinTypes": "Tipos de piel",
+        "skinTypesPlaceholder": "Selecciona los tipos de piel del producto",
+        "ingredients": "Ingredientes",
+        "ingredientsPlaceholder": "Ej: niacinamida, glicerina, ceramidas",
+        "imageUrl": "URL de la imagen del producto",
+        "errors": {
+            "nameMin": "El nombre del producto debe tener al menos 3 caracteres",
+            "brandMin": "La marca del producto debe tener al menos 3 caracteres",
+            "descriptionMin": "La descripción del producto debe tener al menos 10 caracteres",
+            "skinTypeRequired": "Debe seleccionar al menos un tipo de piel",
+            "productTypeRequired": "Debe seleccionar el tipo de producto",
+            "primaryCategoryRequired": "Debe seleccionar al menos una categoría",
+            "imageUrlInvalid": "Una o más URLs de imagen no son válidas",
+            "ingredientsRequired": "Debe ingresar al menos un ingrediente",
+            "imageUrlRequired": "Debe incluir una url de imagen del producto válida"
+        }
+    },
+    "registro": {
+        "titulo": "Crear cuenta",
+        "descripcion": "Completa tus datos para comenzar tu experiencia",
+        "header": {
+            "title": "Empieza una nueva rutina ahora",
+            "subtitle": "Añadele brillo a tu piel"
+        },
+        "campos": {
+            "nombre": {
+                "label": "Nombre",
+                "placeholder": "Ej: Pepito Pérez"
+            },
+            "fechaNacimiento": {
+                "label": "Fecha de nacimiento"
+            },
+            "tipoPiel": {
+                "label": "Tipo de piel",
+                "placeholder": "Selecciona tu tipo de piel",
+                "opciones": {
+                    "grasa": "Grasa",
+                    "seca": "Seca",
+                    "mixta": "Mixta",
+                    "sensible": "Sensible",
+                    "normal": "Normal"
+                }
+            },
+            "probadoSkinCare": {
+                "label": "¿Alguna vez has probado productos de skincare?",
+                "si": "Sí",
+                "no": "No"
+            },
+            "comoEnteroDeNosotros": {
+                "label": "¿Cómo te enteraste de nosotros?",
+                "placeholder": "Selecciona una opción",
+                "opciones": {
+                    "instagram": "Instagram",
+                    "tiktok": "TikTok",
+                    "amigo": "Recomendación de un amigo",
+                    "google": "Búsqueda en Google",
+                    "publicidad": "Publicidad",
+                    "otro": "Otro"
+                }
+            },
+            "email": {
+                "label": "Correo electrónico",
+                "placeholder": "correo@ejemplo.com"
+            },
+            "contrasenia": {
+                "label": "Contraseña",
+                "placeholder": "********"
+            },
+            "confirmarContrasenia": {
+                "label": "Confirmar contraseña",
+                "placeholder": "********"
+            }
+        },
+        "validaciones": {
+            "requerido": "Este campo es obligatorio",
+            "emailInvalido": "Ingresa un correo electrónico válido",
+            "contraseniaMinima": "La contraseña debe tener al menos 8 caracteres",
+            "contraseniasNoCoinciden": "Las contraseñas no coinciden"
+        },
+        "legal": {
+            "texto": "La contraseña debe tener al menos 8 caracteres. Al crear una cuenta aceptas nuestros",
+            "terminos": "Términos y condiciones"
+        },
+        "botones": {
+            "crearCuenta": "Crear cuenta",
+            "iniciarSesion": "Inicia sesión aquí"
+        },
+        "footer": {
+            "yaTienesCuenta": "¿Ya tienes una cuenta?"
+        },
+        "mensajes": {
+            "registroExitoso": "Tu cuenta ha sido creada exitosamente",
+            "errorGenerico": "Ocurrió un error inesperado. Inténtalo nuevamente."
+        }
+    },
+    "CommunityPage": {
+        "forumTitle": "Foro de la comunidad",
+        "forumSubtitle": "Skincare y salud",
+        "allSkinTypes": "Todos los tipos de piel",
+        "createPost": "Crear publicación",
+        "createWithAi": "Crear rutina con IA",
+        "discussionsTitle": "Discusiones de rutinas",
+        "discussionsSubtitle": "Explora, compara y mejora rutinas de skincare.",
+        "filter": "Filtrar",
+        "solved": "Resuelto",
+        "mostDiscussed": "Rutinas más discutidas",
+        "commentsCount": "{count, plural, =0 {0 comentarios} =1 {1 comentario} other {{count} comentarios}}",
+        "viewsCount": "{count} vistas",
+        "freshness": {
+            "twoHours": "Hace 2 horas",
+            "fiveHours": "Hace 5 horas",
+            "yesterday": "Ayer",
+            "twoDays": "Hace 2 días"
+        },
+        "tabs": {
+            "newest": "Recientes",
+            "mostCommented": "Más comentadas",
+            "solved": "Resueltas",
+            "mostVoted": "Más votadas"
+        }
+    },
+    "RoutineDetail": {
+        "community": "Comunidad",
+        "notFoundTitle": "Rutina no encontrada",
+        "notFoundDescription": "La rutina que intentas abrir no existe en la API mock.",
+        "backToDiscussions": "Volver a discusiones",
+        "authorFallback": "Autor",
+        "routineCreator": "Creador de la rutina",
+        "routineType": "Rutina {type}",
+        "stepsTitle": "Pasos de la rutina",
+        "stepTitle": "Paso {number}: {name}",
+        "unknownBrand": "Marca desconocida",
+        "unknownProduct": "Producto desconocido",
+        "noImage": "Sin imagen",
+        "commentsTitle": "Comentarios",
+        "thoughtsTitle": "Que opinas?",
+        "commentPlaceholder": "Comparte tu experiencia con esta rutina...",
+        "addComment": "Agregar comentario",
+        "postComment": "Publicar comentario",
+        "commentPosted": "Tu comentario ha sido publicado",
+        "noComments": "Aun no hay comentarios. Se la primera persona en comentar esta rutina.",
+        "communityMember": "Miembro de la comunidad",
+        "userFallback": "Usuario Skin4All",
+        "likes": "{count, plural, =0 {0 me gusta} =1 {1 me gusta} other {{count} me gusta}}",
+        "reply": "Responder",
+        "expert": "Experto",
+        "justNow": "Ahora",
+        "hoursAgo": "{count}h",
+        "upvote": "Votar positivo",
+        "downvote": "Votar negativo",
+        "bold": "Negrita",
+        "italic": "Cursiva",
+        "insertLink": "Insertar enlace",
+        "insertImage": "Insertar imagen",
+        "loginRequiredForComments": "Debes iniciar sesión para comentar o votar.",
+        "goToLogin": "Iniciar sesión"
+    },
+    "Footer": {
+        "brand": "Skin4All",
+        "description": "Únete a la mejor comunidad de cuidado de la piel. Descubre productos, comparte tus resultados y encuentra la rutina perfecta para ti.",
+        "exploreTitle": "Explorar",
+        "explore": {
+            "bestSellers": "Inicio",
+            "ingredientLab": "Descubrir",
+            "forums": "Comunidad"
+        },
+        "communityTitle": "Comunidad",
+        "community": {
+            "communityRules": "Perfil",
+            "hallOfFame": "Rutina con IA",
+            "verifiedExperts": "Términos y condiciones"
+        },
+        "newsletterTitle": "Boletín",
+        "emailPlaceholder": "Tu correo",
+        "send": "Enviar",
+        "copyright": "© 2026 Skin4All. Todos los derechos reservados."
+    },
+    "ProductComments": {
+        "commentsTitle": "Comentarios",
+        "thoughtsTitle": "Que opinas?",
+        "commentPlaceholder": "Comparte tu experiencia con este producto...",
+        "addComment": "Agregar comentario",
+        "postComment": "Publicar comentario",
+        "commentPosted": "Tu comentario ha sido publicado",
+        "noComments": "Aun no hay comentarios. Se la primera persona en comentar este producto.",
+        "communityMember": "Miembro de la comunidad",
+        "userFallback": "Usuario Skin4All",
+        "likes": "{count, plural, =0 {0 me gusta} =1 {1 me gusta} other {{count} me gusta}}",
+        "reply": "Responder",
+        "expert": "Experto",
+        "justNow": "Ahora",
+        "hoursAgo": "{count}h",
+        "upvote": "Votar positivo",
+        "downvote": "Votar negativo",
+        "bold": "Negrita",
+        "italic": "Cursiva",
+        "insertLink": "Insertar enlace",
+        "insertImage": "Insertar imagen"
+    },
+    "ToS": {
+        "title": "Terminos y Condiciones",
+        "lastUpdated": "Ultima actualizacion: 16 de marzo de 2026",
+        "sections": {
+            "platformUse": {
+                "title": "1. Uso de la plataforma",
+                "body": "Al crear una cuenta en Skin4All, aceptas usar la plataforma de manera responsable, sin afectar la seguridad, disponibilidad o experiencia de otros usuarios."
+            },
+            "accountPrivacy": {
+                "title": "2. Cuenta y privacidad",
+                "body": "Eres responsable de mantener la confidencialidad de tu cuenta. La informacion proporcionada sera tratada conforme a nuestras politicas de privacidad y solo para mejorar tu experiencia en la aplicacion."
+            },
+            "contentRecommendations": {
+                "title": "3. Contenido y recomendaciones",
+                "body": "Las rutinas y recomendaciones mostradas son de caracter informativo y no sustituyen asesoria profesional medica o dermatologica."
+            },
+            "changes": {
+                "title": "4. Cambios en estos terminos",
+                "body": "Podemos actualizar estos terminos en cualquier momento. Si realizamos cambios importantes, te lo notificaremos dentro de la plataforma."
+            }
+        }
+    }
+}
