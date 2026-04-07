@@ -17,12 +17,16 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: npm install -g pnpm && pnpm install
+      working-directory: ./Front-end
     - name: Install Playwright Browsers
       run: pnpm exec playwright install --with-deps
+      working-directory: ./Front-end
     - name: Run Playwright tests
       run: pnpm exec playwright test
+      working-directory: ./Front-end
     - name: Run Unit tests
       run: pnpm run test:unit
+      working-directory: ./Front-end
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
