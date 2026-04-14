@@ -111,7 +111,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjWwYICcN2Ltwv4ucjZbmwUY81SuYRcrHLKg&s"],
         description: "Suero antioxidante con 23% de vitamina C pura que mejora la luminosidad y combate los signos del envejecimiento. Contiene ácido hialurónico para mantener la hidratación.",
         rating: 4.4,
-        review_count: 11234
+        review_count: 11234,
+        deleted: false
     },
     {
         id: "9",
@@ -124,7 +125,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://cosmetis.com/media/catalog/product/c/t/ct204001-theordinary_retinol_2_squalene_serum_30ml.jpg"],
         description: "Suero con retinol al 0.3% que ayuda a reducir líneas finas, mejorar textura y unificar el tono. Ideal para introducir el retinol progresivamente.",
         rating: 4.6,
-        review_count: 16789
+        review_count: 16789,
+        deleted: false
     },
     {
         id: "10",
@@ -137,7 +139,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://http2.mlstatic.com/D_NQ_NP_704291-MLU54983799272_042023-O.webp"],
         description: "Crema hidratante facial de uso diario que proporciona hidratación prolongada y fortalece la barrera de la piel en todo tipo de piel.",
         rating: 4.8,
-        review_count: 9543
+        review_count: 9543,
+        deleted: false
     },
     {
         id: "11",
@@ -150,7 +153,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://pielfarmaceutica.com/cdn/shop/files/effaclar_gel_x_400ml.png?v=1723645399"],
         description: "Gel limpiador purificante que elimina el exceso de grasa y limpia profundamente los poros sin resecar la piel.",
         rating: 4.7,
-        review_count: 13221
+        review_count: 13221,
+        deleted: false
     },
     {
         id: "12",
@@ -163,7 +167,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://cocorosey.net/cdn/shop/products/16_1800x.jpg?v=1653346366"],
         description: "Limpiador facial suave que elimina impurezas mientras mantiene la hidratación natural de la piel gracias a sus ceramidas y ácido hialurónico.",
         rating: 4.8,
-        review_count: 20567
+        review_count: 20567,
+        deleted: false
     },
     {
         id: "13",
@@ -176,7 +181,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://bebeautycol.com/cdn/shop/products/image_33008b22-795b-41a9-bc5f-cbcc31a1f602_1024x1024.jpg?v=1704781533"],
         description: "Serum con niacinamida y zinc que ayuda a regular el exceso de sebo, reducir imperfecciones y mejorar la apariencia de los poros.",
         rating: 4.5,
-        review_count: 18934
+        review_count: 18934,
+        deleted: false
     },
     {
         id: "14",
@@ -189,7 +195,8 @@ export const productosMock: Producto[] = [
         image_url: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ6AiLsjODpxkoXlXoXDN6bDwNvAD4B_zV8Mw&s"],
         description: "Esencia reparadora con 96% de mucina de caracol que mejora la elasticidad, hidrata profundamente y ayuda a reparar la piel dañada.",
         rating: 4.7,
-        review_count: 8765
+        review_count: 8765,
+        deleted: false
     },
     {
         id: "15",
@@ -202,6 +209,7 @@ export const productosMock: Producto[] = [
         image_url: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiQUy4b0kJxqUJApxBbU1EtEaOyt8HgnI-Qw&s"],
         description: "Suero hidratante con agua volcánica y ácido hialurónico que fortalece la barrera cutánea y protege contra agresores externos.",
         rating: 4.9,
-        review_count: 14234
+        review_count: 14234,
+        deleted: false
     }
 ];

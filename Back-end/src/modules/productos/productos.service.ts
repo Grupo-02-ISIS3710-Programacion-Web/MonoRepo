@@ -1,43 +1,66 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
-import { productosMock } from 'src/mocks/productos-mock';
 import { Producto } from './entities/producto.entity';
 
 @Injectable()
 export class ProductosService {
-  create(createProductoDto: CreateProductoDto) {
-    const producto = new Producto();
+  constructor(@InjectModel('Producto') private productoModel: Model<Producto>) {}
 
-    producto.id = String(productosMock.length + 1);
-    producto.name = createProductoDto.name;
-    producto.brand = createProductoDto.brand;
-    producto.description = createProductoDto.description;
-    producto.skin_type = createProductoDto.skin_type;
-    producto.product_type = createProductoDto.product_type as any;
-    producto.category = [createProductoDto.primary_category, ...(createProductoDto.additional_categories || [])];
-    producto.ingredients = createProductoDto.ingredients;
-    producto.rating = 0;
-    producto.review_count = 0;
-    producto.image_url = createProductoDto.image_url;
-
-    productosMock.push(producto);
-    return producto;
+  async create(createProductoDto: CreateProductoDto): Promise<Producto> {
+    const producto = new this.productoModel({
+      name: createProductoDto.name,
+      brand: createProductoDto.brand,
+      description: createProductoDto.description,
+      skin_type: createProductoDto.skin_type,
+      product_type: createProductoDto.product_type,
+      category: [createProductoDto.primary_category, ...(createProductoDto.additional_categories || [])],
+      ingredients: createProductoDto.ingredients,
+      image_url: createProductoDto.image_url,
+      rating: 0,
+      review_count: 0,
+      deleted: false,
+    });
+    return await producto.save();
   }
 
-  findAll() {
-    return productosMock;
+  async findAll(): Promise<Producto[]> {
+    return await this.productoModel.find({ deleted: false }).exec();
   }
 
-  findOne(id: number) {
-    return productosMock.find((producto) => producto.id === String(id));
+  async findOne(id: string): Promise<Producto | null> {
+    return await this.productoModel.findById(id).exec();
   }
 
-  update(id: number, updateProductoDto: UpdateProductoDto) {
-    return `This action updates a #${id} producto`;
+  async update(id: string, updateProductoDto: UpdateProductoDto): Promise<Producto | null> {
+    const updateData: any = {};
+    
+    if (updateProductoDto.name) updateData.name = updateProductoDto.name;
+    if (updateProductoDto.brand) updateData.brand = updateProductoDto.brand;
+    if (updateProductoDto.description) updateData.description = updateProductoDto.description;
+    if (updateProductoDto.skin_type) updateData.skin_type = updateProductoDto.skin_type;
+    if (updateProductoDto.product_type) updateData.product_type = updateProductoDto.product_type;
+    if (updateProductoDto.ingredients) updateData.ingredients = updateProductoDto.ingredients;
+    if (updateProductoDto.image_url) updateData.image_url = updateProductoDto.image_url;
+    
+    if (updateProductoDto.primary_category) {
+      const categories = [updateProductoDto.primary_category];
+      if (updateProductoDto.additional_categories) {
+        categories.push(...updateProductoDto.additional_categories);
+      }
+      updateData.category = categories;
+    }
+
+    return await this.productoModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} producto`;
+  async remove(id: string): Promise<{ message: string }> {
+    const resultado = await this.productoModel.findByIdAndUpdate(id, { deleted: true }, { new: true }).exec();
+    if (resultado) {
+      return { message: `Se ha eliminado el producto con id ${id}` };
+    }
+    return { message: `No se encontró el producto con id ${id}` };
   }
 }
