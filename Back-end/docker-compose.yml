@@ -1,25 +1,20 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: skin4all_postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: skin4all
+  mongodb:
+    image: mongo:latest
+    container_name: skin4all_mongodb
+    restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: skin4all
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - mongo_data:/data/db
     networks:
       - skin4all_network
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   backend:
     build:
@@ -29,25 +24,23 @@ services:
     environment:
       NODE_ENV: development
       PORT: 5000
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      DB_USERNAME: admin
+      DB_PASSWORD: password123
       DB_NAME: skin4all
     ports:
       - '5000:5000'
     depends_on:
-      postgres:
-        condition: service_healthy
+      - mongodb
     networks:
       - skin4all_network
     volumes:
       - .:/app
-      - /app/node_modules
     command: npm run start:dev
 
 volumes:
-  postgres_data:
+  mongo_data:
 
 networks:
   skin4all_network:

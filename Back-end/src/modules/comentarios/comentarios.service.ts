@@ -11,9 +11,9 @@ export class ComentariosService {
     comentario.id = Math.random().toString(36).substring(2, 15);
     comentario.userId = createComentarioDto.userId;
     comentario.comment = createComentarioDto.comment;
-    comentario.createdAt = createComentarioDto.createdAt;
-    comentario.upvotes = createComentarioDto.upvotes;
-    comentario.downvotes = createComentarioDto.downvotes;
+    comentario.createdAt = new Date().toISOString();
+    comentario.upvotes =  [];
+    comentario.downvotes = [];
     return comentario;
   }
 
@@ -31,5 +31,17 @@ export class ComentariosService {
 
   remove(id: number) {
     return `This action removes a #${id} comentario`;
+  }
+
+  upvote(id: number, userId: string) {
+    const comentario: Comentario = this.findOne(id);
+    if (!comentario) {
+      return `Comentario with id ${id} not found`;
+    }
+    if (comentario.upvotes.includes(userId)) {
+      return `User ${userId} has already upvoted this comentario`;
+    }
+    comentario.upvotes.push(userId);
+    return comentario;
   }
 }
