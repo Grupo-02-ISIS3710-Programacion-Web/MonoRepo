@@ -1,12 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { ComentariosService } from './comentarios.service';
+
 import { CreateComentarioDto } from './dto/create-comentario.dto';
 import { UpdateComentarioDto } from './dto/update-comentario.dto';
+import { ComentariosService } from './comentarios.service';
 
 @Controller('comentarios')
 export class ComentariosController {
-  constructor(private readonly comentariosService: ComentariosService) {}
+  constructor(private readonly comentariosService: ComentariosService) { }
 
   @Post()
   @ApiBody({
@@ -32,7 +33,7 @@ export class ComentariosController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.comentariosService.findOne(+id);
+    return this.comentariosService.findOne(id);
   }
 
   @Patch(':id')
@@ -49,11 +50,16 @@ export class ComentariosController {
     },
   })
   update(@Param('id') id: string, @Body() updateComentarioDto: UpdateComentarioDto) {
-    return this.comentariosService.update(+id, updateComentarioDto);
+    return this.comentariosService.update(id, updateComentarioDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.comentariosService.remove(+id);
+    return this.comentariosService.remove(id);
+  }
+
+  @Post(':id/upvote')
+  upvote(@Param('id') id: string, @Body('userId') userId: string) {
+    return this.comentariosService.upvote(id, userId);
   }
 }

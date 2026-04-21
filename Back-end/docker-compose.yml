@@ -30,7 +30,7 @@ services:
       DB_PASSWORD: password123
       DB_NAME: skin4all
     ports:
-      - '5000:5000'
+      - '5001:5000'
     depends_on:
       - mongodb
     networks:
@@ -41,6 +41,7 @@ services:
 
 volumes:
   mongo_data:
+
 
 networks:
   skin4all_network:

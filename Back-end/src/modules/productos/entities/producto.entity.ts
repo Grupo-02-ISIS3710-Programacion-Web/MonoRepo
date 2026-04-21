@@ -1,18 +1,43 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 import { Category, ProductType, SkinType } from 'src/enums/enums';
 import { Comentario } from 'src/modules/comentarios/entities/comentario.entity';
 
-export class Producto {
-  id!: string;
+@Schema({ timestamps: true })
+export class Producto extends Document {
+
+  @Prop({ required: true })
   name!: string;
+
+  @Prop({ required: true })
   brand!: string;
+
+  @Prop({ required: true })
   description!: string;
-  skin_type!: Array<number | SkinType>;
-  product_type!: number | ProductType;
-  category!: Array<number | Category>;
+
+  @Prop({ required: true, type: [Number], ref: 'SkinTypeCatalog' })
+  skin_type!: number[];
+
+  @Prop({ required: true, type: Number, ref: 'ProductTypeCatalog' })
+  product_type!: number;
+
+  @Prop({ required: true, type: [Number], ref: 'CategoryCatalog' })
+  category!: number[];
+
+  @Prop({ required: true, type: [String] })
   ingredients!: string[];
-  rating!: number;
-  review_count!: number;
+
+  @Prop({ required: true, type: [String] })
   image_url!: string[];
+
+  @Prop({ default: 0 })
+  rating!: number;
+
+  @Prop({ default: 0 })
+  review_count!: number;
+
+  @Prop({ default: false })
   deleted!: boolean;
-  comments?: Comentario[];
 }
+
+export const ProductoSchema = SchemaFactory.createForClass(Producto);

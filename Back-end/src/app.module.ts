@@ -7,7 +7,8 @@ import { ComentariosModule } from './modules/comentarios/comentarios.module';
 import { RutinasModule } from './modules/rutinas/rutinas.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ProductoSchema } from './schema/producto.schema';
+import { SeedModule } from './modules/seed/seed.module';
+import { ProductoSchema } from './modules/productos/entities/producto.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProductoSchema } from './schema/producto.schema';
     ComentariosModule,
     RutinasModule,
     UsuariosModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],
