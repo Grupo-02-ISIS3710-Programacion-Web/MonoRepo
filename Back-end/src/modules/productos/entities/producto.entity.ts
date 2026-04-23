@@ -7,37 +7,37 @@ import { Comentario } from 'src/modules/comentarios/entities/comentario.entity';
 export class Producto extends Document {
 
   @Prop({ required: true })
-  name!: string;
+  name: string;
 
   @Prop({ required: true })
-  brand!: string;
+  brand: string;
 
   @Prop({ required: true })
-  description!: string;
+  description: string;
 
   @Prop({ required: true, type: [Number], ref: 'SkinTypeCatalog' })
-  skin_type!: number[];
+  skin_type: number[];
 
   @Prop({ required: true, type: Number, ref: 'ProductTypeCatalog' })
-  product_type!: number;
+  product_type: number;
 
   @Prop({ required: true, type: [Number], ref: 'CategoryCatalog' })
-  category!: number[];
+  category: number[];
 
   @Prop({ required: true, type: [String] })
-  ingredients!: string[];
+  ingredients: string[];
 
   @Prop({ required: true, type: [String] })
-  image_url!: string[];
+  image_url: string[];
 
   @Prop({ default: 0 })
-  rating!: number;
+  rating: number;
 
   @Prop({ default: 0 })
-  review_count!: number;
+  review_count: number;
 
   @Prop({ default: false })
-  deleted!: boolean;
+  deleted: boolean;
 }
 
 export const ProductoSchema = SchemaFactory.createForClass(Producto);
