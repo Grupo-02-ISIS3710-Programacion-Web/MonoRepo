@@ -1,5 +1,5 @@
 // API client for communicating with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export interface ApiResponse<T> {
   data: T;
@@ -81,12 +81,18 @@ export async function loginUser(identifier: string, password: string) {
 }
 
 // Routines API
-export async function fetchRoutines(page?: number, language: string = 'es') {
-  const pageParam = page ? `?page=${page}` : '';
-  const result: any = await apiFetch(`/rutinas${pageParam}`, {
+export async function fetchRoutines(page?: number, language: string = 'es', sort?: string) {
+  const params = new URLSearchParams();
+  if (page) params.append('page', page.toString());
+  if (sort) params.append('sort', sort);
+
+  const queryString = params.toString();
+  const url = `/rutinas${queryString ? `?${queryString}` : ''}`;
+
+  const result: any = await apiFetch(url, {
     headers: { 'Accept-Language': language },
   });
-  
+
   if (result.routines) {
     return { ...result, routines: normalizeRoutines(result.routines) };
   }

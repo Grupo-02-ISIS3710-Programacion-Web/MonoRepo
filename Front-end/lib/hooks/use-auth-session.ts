@@ -23,7 +23,7 @@ const TEST_DEFAULT_USER: User = {
   bio: "Barrier-first skincare lover sharing simple routines and soothing product picks.",
   reviewCount: 18,
   favoriteProductIds: ["1", "5", "12", "14"],
-  createdRoutineIds: ["r1", "r7"],
+  createdRoutineIds: ["r1", "r7", "r13"],
 };
 
 export function useAuthSession() {

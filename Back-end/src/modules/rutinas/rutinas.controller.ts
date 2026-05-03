@@ -33,9 +33,12 @@ export class RutinasController {
   }
 
   @Get()
-  findAll(@Query('page') page?: string) {
+  findAll(
+    @Query('page') page?: string,
+    @Query('sort') sort?: 'newest' | 'mostCommented' | 'mostVoted',
+  ) {
     const pageNum = page ? parseInt(page, 10) : undefined;
-    return this.rutinasService.findAll(pageNum);
+    return this.rutinasService.findAll(pageNum, sort);
   }
 
   @Get('user/:userId')

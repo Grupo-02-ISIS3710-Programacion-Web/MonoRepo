@@ -14,6 +14,7 @@ export class RutinasService {
   async create(createRutinaDto: CreateRutinaDto) {
     const newRutina = new this.rutinaModel({
       ...createRutinaDto,
+      publishedAt: createRutinaDto.publishedAt || new Date().toISOString(),
       views: 0,
       deleted: false,
       upvotes: [],
@@ -22,14 +23,64 @@ export class RutinasService {
     return await newRutina.save();
   }
 
-  async findAll(page?: number) {
+  async findAll(page?: number, sort?: 'newest' | 'mostCommented' | 'mostVoted') {
     const pageSize = 20;
     const pageNum = page ? Math.max(1, page) : 1;
     const skip = (pageNum - 1) * pageSize;
 
+    // Manejar sorting con agregaciones para contar comentarios y votos
+    if (sort === 'mostCommented') {
+      const commentedResults = await this.rutinaModel.aggregate([
+        { $match: { deleted: false } },
+        { $addFields: { commentCount: { $size: { $ifNull: ['$comments', []] } } } },
+        { $sort: { commentCount: -1, publishedAt: -1 } },
+        { $skip: skip },
+        { $limit: pageSize },
+      ]);
+
+      const total = await this.rutinaModel.countDocuments({ deleted: false });
+
+      return {
+        routines: commentedResults,
+        total,
+        page: pageNum,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      };
+    }
+
+    if (sort === 'mostVoted') {
+      const votedResults = await this.rutinaModel.aggregate([
+        { $match: { deleted: false } },
+        { $addFields: {
+            upvoteCount: { $size: { $ifNull: ['$upvotes', []] } },
+            downvoteCount: { $size: { $ifNull: ['$downvotes', []] } },
+            netVotes: { $subtract: [
+              { $size: { $ifNull: ['$upvotes', []] } },
+              { $size: { $ifNull: ['$downvotes', []] } }
+            ]}
+          }
+        },
+        { $sort: { netVotes: -1, publishedAt: -1 } },
+        { $skip: skip },
+        { $limit: pageSize },
+      ]);
+
+      const total = await this.rutinaModel.countDocuments({ deleted: false });
+
+      return {
+        routines: votedResults,
+        total,
+        page: pageNum,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      };
+    }
+
+    // Por defecto, ordenar por fecha de publicación (más reciente primero)
     const routines = await this.rutinaModel
       .find({ deleted: false })
-      .sort({ createdAt: -1 })
+      .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(pageSize)
       .exec();
