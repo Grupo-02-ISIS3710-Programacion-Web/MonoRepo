@@ -4,22 +4,24 @@ import AuthRequiredCard from "@/components/auth/AuthRequiredCard"
 import UserInfo from "@/components/profile/userInfo"
 import RoutineContent from "@/components/profile/routineContent"
 import { ProductCard } from "@/components/products/product-card"
-import { Heart, Sun, SlidersHorizontal } from "lucide-react"
+import { Heart, Sun, SlidersHorizontal, Loader2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { getProducts } from "@/lib/api";
-import { getRoutines } from "@/lib/routine";
+import { fetchRoutinesByUserId } from "@/lib/api-client";
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
+import { Routine } from "@/types/routine";
 
 export default function Profile() {
 
     const t = useTranslations("Profile")
     const { user, isLoggedIn, isReady } = useAuthSession()
+    const locale = useLocale()
     const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn)
     const createAiRoutineHref = getProtectedRoute("/ai-routine", isLoggedIn)
     const products = getProducts()
@@ -31,6 +33,8 @@ export default function Profile() {
     const [inputValue, setInputValue] = useState("")
     const [routineDaily, setRoutineDaily] = useState("am")
     const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>([])
+    const [userRoutines, setUserRoutines] = useState<Routine[]>([])
+    const [isLoadingRoutines, setIsLoadingRoutines] = useState(false)
 
     const tabs = [
         { id: "routine", label: t("myRoutine"), icon: Sun },
@@ -45,21 +49,33 @@ export default function Profile() {
     useEffect(() => {
         if (!user) {
             setFavoriteProductIds([])
+            setUserRoutines([])
             return
         }
 
         setFavoriteProductIds(user.favoriteProductIds)
-    }, [user])
+        
+        // Fetch user routines from backend
+        const loadUserRoutines = async () => {
+            try {
+                setIsLoadingRoutines(true)
+                const data = await fetchRoutinesByUserId(user.id, 1, locale)
+                setUserRoutines(data.routines || [])
+            } catch (error) {
+                console.error("Failed to load user routines:", error)
+                setUserRoutines([])
+            } finally {
+                setIsLoadingRoutines(false)
+            }
+        }
+
+        loadUserRoutines()
+    }, [user, locale])
 
     const favoriteProducts = useMemo(() => {
         const favoriteProductIdSet = new Set(favoriteProductIds)
-
         return products.filter((product) => favoriteProductIdSet.has(product.id))
     }, [favoriteProductIds, products])
-
-    const userRoutineIdSet = useMemo(() => {
-        return new Set(user?.createdRoutineIds ?? [])
-    }, [user])
 
     const filteredFavorites = useMemo(() => {
         return favoriteProducts.filter((product) =>
@@ -67,6 +83,12 @@ export default function Profile() {
             product.brand.toLowerCase().includes(searchTerm.toLowerCase())
         )
     }, [favoriteProducts, searchTerm])
+
+    const filteredRoutines = useMemo(() => {
+        return userRoutines.filter((routine) =>
+            routine.type.toLowerCase() === routineDaily.toLowerCase()
+        );
+    }, [routineDaily, userRoutines]);
 
     const handleFavoriteSelect = (productIndex: number) => {
         const selectedProduct = filteredFavorites[productIndex]
@@ -93,13 +115,6 @@ export default function Profile() {
             currentFavoriteProductIds.filter((productId) => productId !== deselectedProduct.id)
         )
     }
-
-    const filteredRoutines = useMemo(() => {
-        return getRoutines().filter((routine) =>
-            userRoutineIdSet.has(routine.id) &&
-            routine.type.toLowerCase() === routineDaily
-        );
-    }, [routineDaily, userRoutineIdSet]);
 
     useEffect(() => {
         setVisibleCount(ITEMS_PER_PAGE)

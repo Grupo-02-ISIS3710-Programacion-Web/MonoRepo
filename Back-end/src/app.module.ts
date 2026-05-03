@@ -5,10 +5,10 @@ import { AppService } from './app.service';
 import { ProductosModule } from './modules/productos/productos.module';
 import { ComentariosModule } from './modules/comentarios/comentarios.module';
 import { RutinasModule } from './modules/rutinas/rutinas.module';
-import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SeedModule } from './modules/seed/seed.module';
 import { ProductoSchema } from './modules/productos/entities/producto.entity';
+import { RutinaSchema } from './modules/rutinas/entities/rutina.entity';
 
 @Module({
   imports: [
@@ -17,11 +17,13 @@ import { ProductoSchema } from './modules/productos/entities/producto.entity';
       envFilePath: '.env',
     }),
     MongooseModule.forRoot(`mongodb://admin:password123@mongodb:27017`),
-    MongooseModule.forFeature([{ name: 'Producto', schema: ProductoSchema }]),
+    MongooseModule.forFeature([
+      { name: 'Producto', schema: ProductoSchema },
+      { name: 'Rutina', schema: RutinaSchema },
+    ]),
     ProductosModule,
     ComentariosModule,
     RutinasModule,
-    UsuariosModule,
     SeedModule,
   ],
   controllers: [AppController],

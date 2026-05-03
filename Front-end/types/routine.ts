@@ -17,10 +17,11 @@ export interface Routine {
   description: string;
   publishedAt?: string;
   type: string;
-  skinType: SkinType;
+  skinType: string;
   steps: RoutineStep[];
   comments?: Comment[];
   upvotes?: string[];
   downvotes?: string[];
   views?: number;
+  deleted?: boolean;
 }

@@ -204,7 +204,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
       buildRecommendedProducts(
         products,
         selectedFocusAreaIds,
-        routineDraft.skinType,
+        routineDraft.skinType as SkinType,
         routineDraft.type,
       ),
     [products, routineDraft.skinType, routineDraft.type, selectedFocusAreaIds],

@@ -1,7 +1,6 @@
-"use client";
-
 import { Routine } from "@/types/routine";
 import { RoutineFormData } from "@/types/routine-form";
+import { SkinType } from "@/types/product";
 
 const AI_ROUTINE_DRAFT_STORAGE_KEY = "skin4all.ai-routine.draft";
 
@@ -14,7 +13,7 @@ export function mapRoutineToRoutineFormData(routine: Routine): RoutineFormData {
     name: routine.name,
     description: routine.description,
     type: routine.type,
-    skinType: routine.skinType,
+    skinType: routine.skinType as SkinType,
     steps: routine.steps
       .slice()
       .sort((left, right) => left.order - right.order)

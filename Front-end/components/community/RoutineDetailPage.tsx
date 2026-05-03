@@ -4,15 +4,16 @@ import { Link } from "@/i18n/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CommentSection from "@/components/comments/CommentsSection";
-import { getProductById, getUserById } from "@/lib/api";
-import { getRoutineById } from "@/lib/routine";
+import { getProductById } from "@/lib/api";
+import { fetchRoutineById, fetchUserById } from "@/lib/api-client";
 import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
-import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, MessageSquare, Moon, Sun } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, MessageSquare, Moon, Sun, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo } from "react";
-import { useRoutineVote } from "@/lib/hooks/use-routine-votes";
+import { useEffect, useMemo, useState } from "react";
+import { useRoutineApiVotes } from "@/lib/hooks/use-routine-api-votes";
 import { useLocaleDateFormatter } from "@/lib/hooks/use-locale-date-formatter";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
+import { Routine } from "@/types/routine";
 
 type RoutineDetailPageProps = Readonly<{
   routineId: string;
@@ -25,8 +26,11 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
   const locale = useLocale();
   const { user: loggedUser, isLoggedIn } = useAuthSession();
 
-  const routine = getRoutineById(routineId);
-  const user = routine ? getUserById(routine.userId) : undefined;
+  const [routine, setRoutine] = useState<Routine | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const currentUserId = loggedUser?.id ?? "";
   const comments = routine?.comments ?? [];
   const loginHref = `/login?redirect=${encodeURIComponent(`/routine/detail/${routineId}`)}`;
@@ -35,13 +39,51 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
     month: "short",
     year: "numeric",
   });
+
+  useEffect(() => {
+    const loadRoutineData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const routineData = await fetchRoutineById(routineId);
+        setRoutine(routineData);
+
+        if (routineData?.userId) {
+          try {
+            const userData = await fetchUserById(routineData.userId);
+            setUser(userData);
+          } catch (err) {
+            console.error("Failed to fetch user data:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load routine:", err);
+        setError(err instanceof Error ? err.message : "Failed to load routine");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRoutineData();
+  }, [routineId]);
+
   const {
-    routineUpvotes,
-    routineDownvotes,
-    hasUpvotedRoutine,
-    hasDownvotedRoutine,
-    handleRoutineVote,
-  } = useRoutineVote(routine?.upvotes ?? [], routine?.downvotes ?? [], currentUserId);
+    upvotes: routineUpvotes,
+    downvotes: routineDownvotes,
+    hasUpvoted: hasUpvotedRoutine,
+    hasDownvoted: hasDownvotedRoutine,
+    handleVote: handleRoutineVote,
+    setUpvotes: setRoutineUpvotes,
+    setDownvotes: setRoutineDownvotes,
+  } = useRoutineApiVotes(routineId, currentUserId);
+
+  // Initialize vote data when routine is loaded
+  useEffect(() => {
+    if (routine) {
+      setRoutineUpvotes(routine.upvotes ?? []);
+      setRoutineDownvotes(routine.downvotes ?? []);
+    }
+  }, [routine, setRoutineUpvotes, setRoutineDownvotes]);
 
   const publishedAtLabel = useMemo(() => {
     if (!routine?.publishedAt) {
@@ -50,12 +92,25 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
     return dateFormatter.format(new Date(routine.publishedAt));
   }, [dateFormatter, routine?.publishedAt]);
 
-  if (!routine) {
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-background px-4 py-8">
+        <div className="mx-auto max-w-4xl rounded-2xl border border-[#e6e9ef] bg-card p-8 text-center">
+          <div className="flex justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+          <p className="mt-4 text-[#646e84]">Cargando rutina...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !routine) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto max-w-4xl rounded-2xl border border-[#e6e9ef] bg-card p-8 text-center">
           <h1 className="text-2xl font-bold text-[#222739]">{t("notFoundTitle")}</h1>
-          <p className="mt-2 text-[#646e84]">{t("notFoundDescription")}</p>
+          <p className="mt-2 text-[#646e84]">{error || t("notFoundDescription")}</p>
           <Link href={backPath} className="mt-4 inline-flex items-center gap-2 text-primary hover:underline">
             <ArrowLeft size={16} />
             {t("backToDiscussions")}

@@ -1,25 +1,35 @@
 "use client";
 
-import { getUsers } from "@/lib/api";
-import { getRoutines } from "@/lib/routine";
-import { MessageSquare, Plus } from "lucide-react";
+import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from "@/lib/api-client";
+import { MessageSquare, Plus, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { SkinType } from "@/types/product";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRoutineVotesMap } from "@/lib/hooks/use-routine-votes";
 import { useLocaleDateFormatter } from "@/lib/hooks/use-locale-date-formatter";
 import { AnimatePresence, motion } from "motion/react";
 import RoutineCard from "@/components/community/RoutineCard";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
+import { Routine } from "@/types/routine";
+import { toast } from "sonner";
 
 type MobileTab = "newest" | "mostCommented" | "mostVoted";
 
 const mobileTabs: MobileTab[] = ["newest", "mostCommented", "mostVoted"];
-const skinTypeFilters = Object.values(SkinType);
+const skinTypeLabels: Record<string, string> = {
+  normal: "Normal",
+  seca: "Seca",
+  grasa: "Grasa",
+  mixta: "Mixta",
+  sensible: "Sensible",
+  acneica: "Acneica",
+  irritada: "Irritada",
+  opaca: "Opaca",
+  texturizada: "Texturizada",
+};
+
 const toTopicTag = (label: string) => `#${label.replace(/[^a-zA-Z0-9]+/g, "")}`;
 
 const FilterButtons = ({ active, onChange, counts, t, tSkin }: any) => (
@@ -27,9 +37,9 @@ const FilterButtons = ({ active, onChange, counts, t, tSkin }: any) => (
     <Button variant={active === "all" ? "default" : "outline"} onClick={() => onChange("all")} className="w-full justify-start">
       {t("allSkinTypes")}
     </Button>
-    {skinTypeFilters.map((skin: SkinType) => (
+    {Object.keys(skinTypeLabels).map((skin) => (
       <Button key={skin} variant={active === skin ? "default" : "outline"} onClick={() => onChange(skin)} className="w-full justify-between">
-        <span>{tSkin(skin)}</span>
+        <span>{skinTypeLabels[skin]}</span>
         <span className="text-xs opacity-75">({counts[skin] ?? 0})</span>
       </Button>
     ))}
@@ -54,14 +64,86 @@ export default function CommunityPage() {
   const isLoggedIn = !!user;
 
   const [activeTab, setActiveTab] = useState<MobileTab>("newest");
-  const [activeSkinFilter, setActiveSkinFilter] = useState<"all" | SkinType>("all");
+  const [activeSkinFilter, setActiveSkinFilter] = useState<"all" | string>("all");
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const currentUserId = user?.id ?? "";
   const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn);
   const createAiRoutineHref = getProtectedRoute("/ai-routine", isLoggedIn);
 
-  const routines = getRoutines();
-  const users = getUsers();
-  const { routineVotes, voteRoutine } = useRoutineVotesMap(routines, currentUserId);
+  useEffect(() => {
+    const loadRoutines = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchRoutines(1, locale);
+        setRoutines(data.routines || []);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load routines");
+        setRoutines([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRoutines();
+  }, [locale]);
+
+  const handleVote = async (routineId: string, direction: "up" | "down") => {
+    try {
+      const routineIndex = routines.findIndex(r => r.id === routineId);
+      if (routineIndex === -1) return;
+
+      const routine = routines[routineIndex];
+      const hasUpvoted = routine.upvotes?.includes(currentUserId) ?? false;
+      const hasDownvoted = routine.downvotes?.includes(currentUserId) ?? false;
+
+      let updatedRoutine = { ...routine };
+
+      if (direction === "up") {
+        if (hasUpvoted) {
+          // Remove upvote
+          await removeUpvote(routineId, currentUserId);
+          updatedRoutine.upvotes = (updatedRoutine.upvotes ?? []).filter(id => id !== currentUserId);
+          toast.success("Upvote removed");
+        } else {
+          // Add upvote and remove downvote if exists
+          await upvoteRoutine(routineId, currentUserId);
+          updatedRoutine.upvotes = [...(updatedRoutine.upvotes ?? []), currentUserId];
+          if (hasDownvoted) {
+            updatedRoutine.downvotes = (updatedRoutine.downvotes ?? []).filter(id => id !== currentUserId);
+          }
+          toast.success("Upvoted!");
+        }
+      } else {
+        // downvote
+        if (hasDownvoted) {
+          // Remove downvote
+          await removeDownvote(routineId, currentUserId);
+          updatedRoutine.downvotes = (updatedRoutine.downvotes ?? []).filter(id => id !== currentUserId);
+          toast.success("Downvote removed");
+        } else {
+          // Add downvote and remove upvote if exists
+          await downvoteRoutine(routineId, currentUserId);
+          updatedRoutine.downvotes = [...(updatedRoutine.downvotes ?? []), currentUserId];
+          if (hasUpvoted) {
+            updatedRoutine.upvotes = (updatedRoutine.upvotes ?? []).filter(id => id !== currentUserId);
+          }
+          toast.success("Downvoted!");
+        }
+      }
+
+      // Update the routine in the state
+      const updatedRoutines = [...routines];
+      updatedRoutines[routineIndex] = updatedRoutine;
+      setRoutines(updatedRoutines);
+    } catch (error) {
+      console.error("Failed to vote:", error);
+      toast.error("Failed to vote. Please try again.");
+    }
+  };
 
   const publishedDateFormatter = useLocaleDateFormatter(locale, {
     day: "2-digit",
@@ -71,13 +153,27 @@ export default function CommunityPage() {
 
   const posts = useMemo(() =>
     routines.map((routine) => {
-      const user = users.find(u => u.id === routine.userId) ?? users[0];
-      const votes = routineVotes[routine.id] ?? { upvotes: routine.upvotes ?? [], downvotes: routine.downvotes ?? [] };
       const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null;
       const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0;
-      return { id: routine.id, title: routine.name, excerpt: routine.description, userName: user?.name ?? "", avatarUrl: user?.avatarUrl ?? "", skinType: routine.skinType, tag: tSkin(routine.skinType), upvotes: votes.upvotes.length, downvotes: votes.downvotes.length, hasUpvoted: votes.upvotes.includes(currentUserId), hasDownvoted: votes.downvotes.includes(currentUserId), comments: routine.comments?.length ?? 0, views: routine.views ?? 0, publishedAt: publishedAtDate ? publishedDateFormatter.format(publishedAtDate) : "-", publishedAtTs };
+      return {
+        id: routine.id,
+        title: routine.name,
+        excerpt: routine.description,
+        userName: "",
+        avatarUrl: "",
+        skinType: routine.skinType,
+        tag: skinTypeLabels[routine.skinType] || routine.skinType,
+        upvotes: routine.upvotes?.length ?? 0,
+        downvotes: routine.downvotes?.length ?? 0,
+        hasUpvoted: routine.upvotes?.includes(currentUserId) ?? false,
+        hasDownvoted: routine.downvotes?.includes(currentUserId) ?? false,
+        comments: routine.comments?.length ?? 0,
+        views: routine.views ?? 0,
+        publishedAt: publishedAtDate ? publishedDateFormatter.format(publishedAtDate) : "-",
+        publishedAtTs,
+      };
     }),
-    [routineVotes, routines, tSkin, users, currentUserId, publishedDateFormatter]
+    [routines, currentUserId, publishedDateFormatter]
   );
 
   const postsBySkin = useMemo(() => activeSkinFilter === "all" ? posts : posts.filter(p => p.skinType === activeSkinFilter), [activeSkinFilter, posts]);
@@ -89,7 +185,7 @@ export default function CommunityPage() {
     return postsBySkin;
   }, [activeTab, postsBySkin]);
 
-  const skinTypeCounts = useMemo(() => routines.reduce((acc, r) => ({ ...acc, [r.skinType]: (acc[r.skinType] ?? 0) + 1 }), {} as Record<SkinType, number>), [routines]);
+  const skinTypeCounts = useMemo(() => routines.reduce((acc, r) => ({ ...acc, [r.skinType]: (acc[r.skinType] ?? 0) + 1 }), {} as Record<string, number>), [routines]);
 
   const mostDiscussed = useMemo(() =>
     [...postsBySkin].sort((a, b) => b.comments - a.comments).slice(0, 5).map(p => ({ id: p.id, title: p.title, comments: p.comments, skinTypeTag: toTopicTag(p.tag) })),
@@ -108,16 +204,33 @@ export default function CommunityPage() {
         transition={{ duration: 0.22, ease: "easeInOut" }}
         className="space-y-4"
       >
-        {visiblePosts.map((post, index) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut", delay: Math.min(index * 0.025, 0.1) }}
-          >
-            <RoutineCard post={post} onVote={isLoggedIn ? voteRoutine : undefined} tCommunity={t} tRoutine={tRoutine} size={size} showVoting={isLoggedIn} />
-          </motion.div>
-        ))}
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <div className="inline-flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <p className="mt-2">Cargando rutinas...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">
+            {error}
+          </div>
+        ) : visiblePosts.length > 0 ? (
+          visiblePosts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut", delay: Math.min(index * 0.025, 0.1) }}
+            >
+              <RoutineCard post={post} tCommunity={t} tRoutine={tRoutine} size={size} showVoting={isLoggedIn} onVote={handleVote} />
+            </motion.div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No hay rutinas para mostrar
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

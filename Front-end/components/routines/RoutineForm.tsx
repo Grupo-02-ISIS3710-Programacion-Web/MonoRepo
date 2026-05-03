@@ -141,7 +141,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
             name: routine.name,
             description: routine.description,
             type: routine.type,
-            skinType: routine.skinType,
+            skinType: routine.skinType as SkinType,
             steps: routineSteps
         });
 
@@ -226,7 +226,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
         remove(index);
     };
 
-    const onSubmit = (data: RoutineFormData) => {
+    const onSubmit = async (data: RoutineFormData) => {
         if (data.steps.length === 0) {
             setError("steps", { type: "manual", message: tSteps("errors.atLeastOneStep") });
             return;
@@ -238,28 +238,44 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
             return;
         }
 
-        const routine: Routine = {
-            id: mode === "edit" && routineId ? routineId : generateId(),
-            userId: user.id,
-            name: data.name,
-            description: data.description,
-            type: data.type,
-            skinType: data.skinType as SkinType,
-            steps: data.steps.map((step, index) => ({
-                id: step.id,
-                name: step.name,
-                order: index,
-                productId: step.product.id,
-                notes: step.notes
-            }))
-        };
+        try {
+            const routineData = {
+                userId: user.id,
+                name: data.name,
+                description: data.description,
+                type: data.type,
+                skinType: data.skinType,
+                steps: data.steps.map((step, index) => ({
+                    id: step.id,
+                    name: step.name,
+                    order: index,
+                    productId: step.product.id,
+                    notes: step.notes
+                }))
+            };
 
-        if (mode === "create") {
-            toast.success(tCreate("toasts.created"));
-        } else {
-            toast.success(tEdit("toasts.saved"));
+            if (mode === "create") {
+                const { createRoutine } = await import("@/lib/api-client");
+                await createRoutine(routineData);
+                toast.success(tCreate("toasts.created"));
+                // Clear draft and redirect
+                clearAiRoutineDraft();
+                // Redirect to profile or community
+                window.location.href = "/profile";
+            } else {
+                if (!routineId) {
+                    toast.error("Routine ID not found");
+                    return;
+                }
+                const { updateRoutine } = await import("@/lib/api-client");
+                await updateRoutine(routineId, routineData);
+                toast.success(tEdit("toasts.saved"));
+                window.location.href = "/profile";
+            }
+        } catch (error) {
+            console.error("Failed to save routine:", error);
+            toast.error(mode === "create" ? tCreate("toasts.error") : tEdit("toasts.error"));
         }
-        console.log(mode === "edit" ? "Routine edited" : "Routine created", routine);
     };
 
     if (mode === "edit" && isRoutineMissing) {

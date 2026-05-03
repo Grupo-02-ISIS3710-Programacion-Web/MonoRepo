@@ -1,5 +1,5 @@
 // API client for communicating with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/';
 
 export interface ApiResponse<T> {
   data: T;
@@ -29,6 +29,20 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     console.error(`Failed to fetch ${endpoint}:`, error);
     throw error;
   }
+}
+
+function normalizeRoutine(routine: any) {
+  return {
+    ...routine,
+    id: routine.id || routine._id,
+  };
+}
+
+function normalizeRoutines(data: any) {
+  if (Array.isArray(data)) {
+    return data.map(normalizeRoutine);
+  }
+  return normalizeRoutine(data);
 }
 
 // Products API
@@ -67,53 +81,105 @@ export async function loginUser(identifier: string, password: string) {
 }
 
 // Routines API
-export async function fetchRoutines() {
-  return apiFetch('/routines');
+export async function fetchRoutines(page?: number, language: string = 'es') {
+  const pageParam = page ? `?page=${page}` : '';
+  const result: any = await apiFetch(`/rutinas${pageParam}`, {
+    headers: { 'Accept-Language': language },
+  });
+  
+  if (result.routines) {
+    return { ...result, routines: normalizeRoutines(result.routines) };
+  }
+  return normalizeRoutines(result);
 }
 
 export async function fetchRoutineById(id: string) {
-  return apiFetch(`/routines/${id}`);
+  const result: any = await apiFetch(`/rutinas/${id}`);
+  return normalizeRoutine(result);
+}
+
+export async function fetchRoutinesByUserId(userId: string, page: number = 1, language: string = 'es') {
+  const result: any = await apiFetch(`/rutinas/user/${userId}?page=${page}`, {
+    headers: { 'Accept-Language': language },
+  });
+  
+  if (result.routines) {
+    return { ...result, routines: normalizeRoutines(result.routines) };
+  }
+  return normalizeRoutines(result);
 }
 
 export async function createRoutine(routine: any) {
-  return apiFetch('/routines', {
+  return apiFetch('/rutinas', {
     method: 'POST',
     body: JSON.stringify(routine),
   });
 }
 
 export async function updateRoutine(id: string, routine: any) {
-  return apiFetch(`/routines/${id}`, {
-    method: 'PUT',
+  return apiFetch(`/rutinas/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(routine),
   });
 }
 
 export async function deleteRoutine(id: string) {
-  return apiFetch(`/routines/${id}`, {
+  return apiFetch(`/rutinas/${id}`, {
     method: 'DELETE',
   });
 }
 
-export async function upvoteRoutine(id: string) {
-  return apiFetch(`/routines/${id}/upvote`, {
+export async function hardDeleteRoutine(id: string) {
+  return apiFetch(`/rutinas/${id}/hardDelete`, {
+    method: 'DELETE',
+  });
+}
+
+export async function upvoteRoutine(id: string, userId: string) {
+  return apiFetch(`/rutinas/${id}/upvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function downvoteRoutine(id: string, userId: string) {
+  return apiFetch(`/rutinas/${id}/downvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function removeUpvote(id: string, userId: string) {
+  return apiFetch(`/rutinas/${id}/remove-upvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function removeDownvote(id: string, userId: string) {
+  return apiFetch(`/rutinas/${id}/remove-downvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function incrementRoutineView(id: string) {
+  return apiFetch(`/rutinas/${id}/view`, {
     method: 'POST',
   });
 }
 
-export async function downvoteRoutine(id: string) {
-  return apiFetch(`/routines/${id}/downvote`, {
-    method: 'POST',
-  });
+export async function getRoutineVoteCounts(id: string): Promise<{ upvotes: number; downvotes: number; views: number }> {
+  return apiFetch(`/rutinas/${id}/votes`);
 }
 
 // Comments API
 export async function fetchComments(routineId: string) {
-  return apiFetch(`/routines/${routineId}/comments`);
+  return apiFetch(`/rutinas/${routineId}/comments`);
 }
 
 export async function createComment(routineId: string, comment: any) {
-  return apiFetch(`/routines/${routineId}/comments`, {
+  return apiFetch(`/rutinas/${routineId}/comments`, {
     method: 'POST',
     body: JSON.stringify(comment),
   });
