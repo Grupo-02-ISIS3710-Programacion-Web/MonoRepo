@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AiService } from './ai.service';
 import { GenerateRoutineDto } from './dto/generate-routine.dto';
@@ -8,6 +8,8 @@ import { ChatRequestDto } from './dto/chat-request.dto';
 @ApiTags('IA - Rutinas Inteligentes')
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
+
   constructor(private readonly aiService: AiService) {}
 
   @Post('routines/generate')
@@ -37,6 +39,7 @@ export class AiController {
   })
   @ApiResponse({ status: 500, description: 'Error al generar la rutina con IA' })
   async generateRoutine(@Body() dto: GenerateRoutineDto) {
+    this.logger.log(`Solicitud recibida: POST /ai/routines/generate - Usuario ${dto.userId}, piel: ${dto.skinType}, tipo: ${dto.type}`);
     try {
       return await this.aiService.generateRoutine({
         userId: dto.userId,
@@ -47,6 +50,7 @@ export class AiController {
         preferredProductIds: dto.preferredProductIds,
       });
     } catch (error) {
+      this.logger.error(`Error en POST /ai/routines/generate: ${error.message}`, error.stack);
       throw new HttpException(
         { message: 'Error al generar rutina con IA', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -73,6 +77,7 @@ export class AiController {
     }
   })
   async suggestProducts(@Body() dto: SuggestProductsDto) {
+    this.logger.log(`Solicitud recibida: POST /ai/products/suggest - Paso: ${dto.stepName}, piel: ${dto.skinType}`);
     try {
       return await this.aiService.suggestProducts({
         skinType: dto.skinType,
@@ -81,6 +86,7 @@ export class AiController {
         concerns: dto.concerns,
       });
     } catch (error) {
+      this.logger.error(`Error en POST /ai/products/suggest: ${error.message}`, error.stack);
       throw new HttpException(
         { message: 'Error al sugerir productos', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -104,6 +110,7 @@ export class AiController {
     }
   })
   async chatWithAI(@Body() dto: ChatRequestDto) {
+    this.logger.log(`Solicitud recibida: POST /ai/agent/chat - Usuario ${dto.userId}, ${dto.messages.length} mensajes`);
     try {
       return await this.aiService.chatWithAI({
         userId: dto.userId,
@@ -111,6 +118,7 @@ export class AiController {
         routineContext: dto.routineContext,
       });
     } catch (error) {
+      this.logger.error(`Error en POST /ai/agent/chat: ${error.message}`, error.stack);
       throw new HttpException(
         { message: 'Error en la conversación con IA', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -141,9 +149,11 @@ export class AiController {
     @Body('query') query: string,
     @Body('skinType') skinType?: string,
   ) {
+    this.logger.log(`Solicitud recibida: POST /ai/agent/search - Consulta: "${query}"${skinType ? `, piel: ${skinType}` : ''}`);
     try {
       return await this.aiService.searchWithAI(query, skinType);
     } catch (error) {
+      this.logger.error(`Error en POST /ai/agent/search: ${error.message}`, error.stack);
       throw new HttpException(
         { message: 'Error en búsqueda con IA', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -168,14 +178,17 @@ export class AiController {
     }
   })
   async syncProductEmbeddings() {
+    this.logger.log('Solicitud recibida: POST /ai/products/sync-embeddings');
     try {
       const result = await this.aiService.syncProductEmbeddings();
+      this.logger.log(`Embeddings sincronizados: ${result.synced} nuevos, ${result.skipped} con error`);
       return {
         message: 'Embeddings sincronizados correctamente',
         synced: result.synced,
         skipped: result.skipped,
       };
     } catch (error) {
+      this.logger.error(`Error en POST /ai/products/sync-embeddings: ${error.message}`, error.stack);
       throw new HttpException(
         { message: 'Error sincronizando embeddings', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR

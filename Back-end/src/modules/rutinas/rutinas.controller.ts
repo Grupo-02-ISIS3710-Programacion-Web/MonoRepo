@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Logger } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RutinasService } from './rutinas.service';
 import { CreateRutinaDto } from './dto/create-rutina.dto';
@@ -8,6 +8,8 @@ import { Rutina } from './entities/rutina.entity';
 @ApiTags('Rutinas')
 @Controller('rutinas')
 export class RutinasController {
+  private readonly logger = new Logger(RutinasController.name);
+
   constructor(private readonly rutinasService: RutinasService) {}
 
   @Post()
@@ -37,7 +39,13 @@ export class RutinasController {
   @ApiResponse({ status: 201, description: 'Rutina creada exitosamente', type: Rutina })
   @ApiResponse({ status: 400, description: 'Datos inválidos proporcionados' })
   create(@Body() createRutinaDto: CreateRutinaDto) {
-    return this.rutinasService.create(createRutinaDto);
+    this.logger.log(`Solicitud recibida: POST /rutinas - Usuario ${createRutinaDto.userId}, rutina "${createRutinaDto.name}"`);
+    try {
+      return this.rutinasService.create(createRutinaDto);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Get()
@@ -90,8 +98,14 @@ export class RutinasController {
     @Query('page') page?: string,
     @Query('sort') sort?: 'newest' | 'mostCommented' | 'mostVoted',
   ) {
-    const pageNum = page ? parseInt(page, 10) : undefined;
-    return this.rutinasService.findAll(pageNum, sort);
+    this.logger.log(`Solicitud recibida: GET /rutinas - página ${page || '1'}, orden: ${sort || 'newest'}`);
+    try {
+      const pageNum = page ? parseInt(page, 10) : undefined;
+      return this.rutinasService.findAll(pageNum, sort);
+    } catch (error) {
+      this.logger.error(`Error en GET /rutinas: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Get('user/:userId')
@@ -112,7 +126,13 @@ export class RutinasController {
   })
   @ApiResponse({ status: 200, description: 'Rutinas del usuario obtenidas exitosamente' })
   findByUserId(@Param('userId') userId: string, @Query('page') page: string = '1') {
-    return this.rutinasService.findByUserId(userId, parseInt(page, 10));
+    this.logger.log(`Solicitud recibida: GET /rutinas/user/${userId} - página ${page}`);
+    try {
+      return this.rutinasService.findByUserId(userId, parseInt(page, 10));
+    } catch (error) {
+      this.logger.error(`Error en GET /rutinas/user/${userId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Get(':id')
@@ -128,7 +148,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Rutina encontrada', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   findOne(@Param('id') id: string) {
-    return this.rutinasService.findOne(id);
+    this.logger.log(`Solicitud recibida: GET /rutinas/${id}`);
+    try {
+      return this.rutinasService.findOne(id);
+    } catch (error) {
+      this.logger.error(`Error en GET /rutinas/${id}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Patch(':id')
@@ -156,7 +182,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Rutina actualizada exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   update(@Param('id') id: string, @Body() updateRutinaDto: UpdateRutinaDto) {
-    return this.rutinasService.update(id, updateRutinaDto);
+    this.logger.log(`Solicitud recibida: PATCH /rutinas/${id}`);
+    try {
+      return this.rutinasService.update(id, updateRutinaDto);
+    } catch (error) {
+      this.logger.error(`Error en PATCH /rutinas/${id}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Delete(':id')
@@ -172,7 +204,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Rutina eliminada exitosamente (borrado lógico)' })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   softDelete(@Param('id') id: string) {
-    return this.rutinasService.softDelete(id);
+    this.logger.log(`Solicitud recibida: DELETE /rutinas/${id} (borrado lógico)`);
+    try {
+      return this.rutinasService.softDelete(id);
+    } catch (error) {
+      this.logger.error(`Error en DELETE /rutinas/${id}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Delete(':id/hardDelete')
@@ -188,7 +226,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Rutina eliminada permanentemente' })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   hardDelete(@Param('id') id: string) {
-    return this.rutinasService.hardDelete(id);
+    this.logger.log(`Solicitud recibida: DELETE /rutinas/${id}/hardDelete (borrado físico)`);
+    try {
+      return this.rutinasService.hardDelete(id);
+    } catch (error) {
+      this.logger.error(`Error en DELETE /rutinas/${id}/hardDelete: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post(':id/upvote')
@@ -217,7 +261,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Voto positivo registrado exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   upvote(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.rutinasService.upvote(id, userId);
+    this.logger.log(`Solicitud recibida: POST /rutinas/${id}/upvote - Usuario ${userId}`);
+    try {
+      return this.rutinasService.upvote(id, userId);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/upvote: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post(':id/downvote')
@@ -246,7 +296,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Voto negativo registrado exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   downvote(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.rutinasService.downvote(id, userId);
+    this.logger.log(`Solicitud recibida: POST /rutinas/${id}/downvote - Usuario ${userId}`);
+    try {
+      return this.rutinasService.downvote(id, userId);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/downvote: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post(':id/remove-upvote')
@@ -275,7 +331,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Voto positivo removido exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   removeUpvote(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.rutinasService.removeUpvote(id, userId);
+    this.logger.log(`Solicitud recibida: POST /rutinas/${id}/remove-upvote - Usuario ${userId}`);
+    try {
+      return this.rutinasService.removeUpvote(id, userId);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/remove-upvote: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post(':id/remove-downvote')
@@ -304,7 +366,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Voto negativo removido exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   removeDownvote(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.rutinasService.removeDownvote(id, userId);
+    this.logger.log(`Solicitud recibida: POST /rutinas/${id}/remove-downvote - Usuario ${userId}`);
+    try {
+      return this.rutinasService.removeDownvote(id, userId);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/remove-downvote: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post(':id/view')
@@ -320,7 +388,13 @@ export class RutinasController {
   @ApiResponse({ status: 200, description: 'Visualización registrada exitosamente', type: Rutina })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   incrementView(@Param('id') id: string) {
-    return this.rutinasService.incrementView(id);
+    this.logger.debug(`Solicitud recibida: POST /rutinas/${id}/view`);
+    try {
+      return this.rutinasService.incrementView(id);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/view: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Get(':id/votes')
@@ -346,6 +420,12 @@ export class RutinasController {
   })
   @ApiResponse({ status: 404, description: 'Rutina no encontrada' })
   getVoteCounts(@Param('id') id: string) {
-    return this.rutinasService.getVoteCounts(id);
+    this.logger.debug(`Solicitud recibida: GET /rutinas/${id}/votes`);
+    try {
+      return this.rutinasService.getVoteCounts(id);
+    } catch (error) {
+      this.logger.error(`Error en GET /rutinas/${id}/votes: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 }

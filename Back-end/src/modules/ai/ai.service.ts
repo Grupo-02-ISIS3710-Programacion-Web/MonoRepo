@@ -74,8 +74,9 @@ export class AiService implements OnModuleInit {
         category: p.category,
         ingredients: p.ingredients?.slice(0, 5) || [],
       }));
+      this.logger.debug(`Productos cargados: ${this.availableProducts.length} disponibles`);
     } catch (error) {
-      this.logger.error('Error cargando productos:', error);
+      this.logger.error(`Error cargando productos: ${error.message}`, error.stack);
       this.availableProducts = [];
     }
   }
@@ -133,6 +134,7 @@ export class AiService implements OnModuleInit {
     steps: { name: string; productId: string; notes: string }[];
     suggestedProducts?: { productId: string; reason: string }[];
   }> {
+    this.logger.log(`Generando rutina para usuario ${params.userId}: tipo de piel=${params.skinType}, tipo=${params.type}, pasos=${params.stepCount || 3}, preocupaciones=${params.concerns?.join(', ') || 'general'}`);
     await this.loadAvailableProducts();
 
     const filteredProducts = this.availableProducts.filter(p => {
@@ -141,6 +143,8 @@ export class AiService implements OnModuleInit {
         params.preferredProductIds.includes(p.id);
       return matchesSkinType && matchesPreferred;
     });
+
+    this.logger.debug(`Productos filtrados para rutina: ${filteredProducts.length} de ${this.availableProducts.length}`);
 
     const productList = this.formatProductsForPrompt(
       filteredProducts.length > 0 ? filteredProducts : this.availableProducts.slice(0, 20)
@@ -154,6 +158,7 @@ export class AiService implements OnModuleInit {
       .replace('{availableProducts}', productList);
 
     try {
+      this.logger.log('Invocando modelo de IA para generar rutina...');
       const response = await this.chatModel.invoke([new HumanMessage(prompt)]);
       const content = response.content.toString();
       const parsed = this.parseJsonResponse(content);
@@ -162,7 +167,7 @@ export class AiService implements OnModuleInit {
 
       const steps = (parsed.steps || []).map((step: any, index: number) => {
         if (!validProductIds.has(step.productId)) {
-          this.logger.warn(`Invalid productId from AI: ${step.productId}. Skipping step.`);
+          this.logger.warn(`ID de producto inválido de IA: ${step.productId}. Paso omitido.`);
           return null;
         }
         return {
@@ -175,9 +180,11 @@ export class AiService implements OnModuleInit {
       }).filter(Boolean);
 
       if (steps.length === 0) {
+        this.logger.error('La IA no devolvió productos válidos');
         throw new Error('No valid products were returned by the AI');
       }
 
+      this.logger.log(`Rutina generada exitosamente: "${parsed.name || 'sin nombre'}" con ${steps.length} pasos`);
       return {
         name: parsed.name || `Rutina ${params.type === 'am' ? 'de mañana' : 'de noche'}`,
         description: parsed.description || 'Rutina generada por IA',
@@ -185,7 +192,7 @@ export class AiService implements OnModuleInit {
         suggestedProducts: [],
       };
     } catch (error) {
-      this.logger.error('Error generando rutina con IA:', error);
+      this.logger.error(`Error generando rutina con IA: ${error.message}`, error.stack);
       throw new Error(`Error al generar rutina: ${error.message}`);
     }
   }
@@ -199,6 +206,7 @@ export class AiService implements OnModuleInit {
     category?: string;
     concerns?: string[];
   }): Promise<{ suggestions: { productId: string; reason: string }[] }> {
+    this.logger.log(`Sugiriendo productos para paso "${params.stepName}", tipo de piel=${params.skinType}, categoría=${params.category || 'cualquiera'}`);
     await this.loadAvailableProducts();
 
     let filteredProducts = this.availableProducts.filter(p => {
@@ -208,8 +216,11 @@ export class AiService implements OnModuleInit {
     });
 
     if (filteredProducts.length === 0) {
+      this.logger.warn('No se encontraron productos filtrados, usando primeros 15 disponibles');
       filteredProducts = this.availableProducts.slice(0, 15);
     }
+
+    this.logger.debug(`Productos candidatos para sugerencia: ${filteredProducts.length}`);
 
     const productList = this.formatProductsForPrompt(filteredProducts.slice(0, 15));
 
@@ -225,14 +236,15 @@ export class AiService implements OnModuleInit {
       const content = response.content.toString();
       const parsed = this.parseJsonResponse(content);
 
-      return {
-        suggestions: (parsed.suggestions || []).slice(0, 4).map((s: any) => ({
-          productId: s.productId || '',
-          reason: s.reason || 'Producto adecuado para este paso',
-        })),
-      };
+      const suggestions = (parsed.suggestions || []).slice(0, 4).map((s: any) => ({
+        productId: s.productId || '',
+        reason: s.reason || 'Producto adecuado para este paso',
+      }));
+
+      this.logger.log(`Sugerencias generadas: ${suggestions.length} productos para "${params.stepName}"`);
+      return { suggestions };
     } catch (error) {
-      this.logger.error('Error sugiriendo productos:', error);
+      this.logger.error(`Error sugiriendo productos: ${error.message}`, error.stack);
       return { suggestions: [] };
     }
   }
@@ -253,6 +265,7 @@ export class AiService implements OnModuleInit {
     recommendedProducts?: { productId: string; reason: string; otherAlternatives?: { id: string; reason: string }[] }[];
     draftUpdate?: { steps?: { productId: string; name: string; notes: string }[] };
   }> {
+    this.logger.log(`Chat IA - usuario ${params.userId}: ${params.messages.length} mensajes en historial, ${params.routineContext?.currentSteps?.length || 0} pasos en rutina actual`);
     await this.loadAvailableProducts();
 
     const langchainMessages: (SystemMessage | HumanMessage)[] = [
@@ -312,6 +325,7 @@ export class AiService implements OnModuleInit {
           draftUpdate.steps = draftUpdate.steps.filter((step: any) => validProductIds.has(step.productId));
         }
 
+        this.logger.log(`Chat IA - respuesta enviada: ${recommendedProducts.length} productos recomendados${draftUpdate?.steps?.length ? `, ${draftUpdate.steps.length} pasos actualizados en borrador` : ''}`);
         return {
           response: parsed.message || content,
           recommendedProducts: recommendedProducts.length > 0 ? recommendedProducts : undefined,
@@ -319,11 +333,11 @@ export class AiService implements OnModuleInit {
         };
       } catch (parseError) {
         // If JSON parsing fails, return the raw text as message
-        this.logger.warn('Failed to parse JSON from AI response, returning as plain text');
+        this.logger.warn('No se pudo parsear JSON de respuesta IA, devolviendo como texto plano');
         return { response: content };
       }
     } catch (error) {
-      this.logger.error('Error en chat con IA:', error);
+      this.logger.error(`Error en chat con IA: ${error.message}`, error.stack);
       throw new Error(`Error en la conversación: ${error.message}`);
     }
   }
@@ -388,6 +402,8 @@ Key Ingredients: ${ingredients}`;
       deleted: { $ne: true },
     }).exec();
 
+    this.logger.log(`Generando embeddings para ${products.length} productos sin embedding`);
+
     for (const product of products) {
       try {
         const embedding = await this.generateProductEmbedding(product);
@@ -396,15 +412,18 @@ Key Ingredients: ${ingredients}`;
         }).exec();
         synced++;
       } catch (error) {
-        this.logger.error(`Error generating embedding for product ${product._id}:`, error);
+        this.logger.error(`Error generando embedding para producto ${product._id}: ${error.message}`, error.stack);
         skipped++;
       }
     }
 
+    this.logger.log(`Embeddings finalizados: ${synced} sincronizados, ${skipped} con error`);
     return { synced, skipped };
   }
 
   async searchWithVectorSearch(query: string, skinType?: string, limit: number = 10): Promise<any[]> {
+    this.logger.log(`Búsqueda vectorial: "${query}"${skinType ? `, tipo de piel: ${skinType}` : ''}, límite: ${limit}`);
+
     const queryEmbedding = await this.embeddings.embedQuery(query);
 
     let skinTypeId: number | undefined;
@@ -430,6 +449,8 @@ Key Ingredients: ${ingredients}`;
     ];
 
     const results = await this.productoModel.aggregate(pipeline).exec();
+
+    this.logger.log(`Búsqueda vectorial completada: ${results.length} resultados para "${query}"`);
 
     const [skinTypes, productTypes, categories] = await Promise.all([
       this.skinTypeCatalogModel.find().lean().exec(),
@@ -460,7 +481,10 @@ Key Ingredients: ${ingredients}`;
    * Búsqueda inteligente de productos usando Vector Search e IA
    */
   async searchWithAI(query: string, skinType?: string) {
+    this.logger.log(`Búsqueda IA: "${query}"${skinType ? `, tipo de piel: ${skinType}` : ''}`);
     const vectorResults = await this.searchWithVectorSearch(query, skinType, 10);
+
+    this.logger.log(`Buscando explicaciones de relevancia con IA para ${vectorResults.length} productos...`);
 
     // For each result, generate relevance explanation using the LLM
     const results = await Promise.all(
@@ -484,11 +508,13 @@ Explica brevemente (1-2 oraciones) por qué este producto es relevante para la b
             relevance: relevanceResponse.content.toString(),
           };
         } catch (err) {
+          this.logger.warn(`Error generando relevancia para producto ${product.name}: ${err.message}`);
           return { product, relevance: 'Producto relevante para tu búsqueda.' };
         }
       }),
     );
 
+    this.logger.log(`Búsqueda IA completada: ${results.length} resultados con explicaciones de relevancia`);
     return { results };
   }
 }
