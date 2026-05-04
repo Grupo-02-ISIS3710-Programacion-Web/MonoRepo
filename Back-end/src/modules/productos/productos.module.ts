@@ -20,5 +20,6 @@ import { ProductoSchema } from './entities/producto.entity';
   ],
   controllers: [ProductosController],
   providers: [ProductosService],
+  exports: [MongooseModule, ProductosService],
 })
-export class ProductosModule { }
+export class ProductosModule {}

@@ -44,6 +44,8 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     messages,
     inputValue,
     setInputValue,
+    isLoading,
+    isGeneratingRoutine,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
@@ -60,6 +62,7 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     moveStep,
     removeStep,
     submitMessage,
+    generateRoutine,
   } = useAiRoutineChat(user.id, user.name);
 
   const handleContinueToBuilder = () => {
@@ -123,6 +126,17 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
               </Sheet>
 
               <Sheet>
+                <Button
+                  type="button"
+                  variant="default"
+                  className="hidden md:inline-flex gap-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-5 text-white shadow-md transition hover:shadow-lg"
+                  onClick={generateRoutine}
+                  disabled={isGeneratingRoutine}
+                >
+                  <Sparkles size={16} className="transition group-hover:scale-110" />
+                  <span>{isGeneratingRoutine ? t("generating") : t("generateRoutine")}</span>
+                </Button>
+
                 <SheetTrigger asChild>
                   <Button
                     type="button"

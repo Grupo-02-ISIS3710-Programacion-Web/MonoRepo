@@ -23,7 +23,7 @@ const mobileTabs: MobileTab[] = ["newest", "mostCommented", "mostVoted"];
 
 const toTopicTag = (label: string) => `#${label.replace(/[^a-zA-Z0-9]+/g, "")}`;
 
-const skinTypeValues = Object.values(SkinType).filter((v): v is string => typeof v === "string");
+const skinTypeValues = Object.values(SkinType).filter((v) => typeof v === "string") as SkinType[];
 
 const FilterButtons = ({ active, onChange, counts, t, tSkin }: any) => (
   <>

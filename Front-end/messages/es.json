@@ -279,8 +279,19 @@
         "composer": {
             "label": "Indica lo que quieres lograr",
             "placeholder": "Describe tus preocupaciones, ingredientes que quieres usar o evitar, presupuesto, tiempo disponible y cualquier detalle relevante...",
-            "hint": "Esta pantalla simula la experiencia final. La lógica real del LLM se integrará después.",
+            "hint": "Escribe tu mensaje y presiona Enviar para chatear con la IA.",
             "send": "Enviar"
+        },
+        "generateRoutine": "Generar rutina con IA",
+        "generating": "Generando...",
+        "messages": {
+            "assistantIntro": "Hola {name}, cuéntame qué quieres mejorar y te iré guiando hacia una rutina más precisa.",
+            "userGoal": "Quiero una rutina simple que me ayude con deshidratación, sensibilidad y textura irregular.",
+            "assistantFollowUp": "Perfecto. Empezaré con una propuesta base y luego podremos seguir ajustando productos, pasos y notas desde esta misma conversación.",
+            "pendingReply": "Procesando respuesta...",
+            "errorReply": "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta nuevamente.",
+            "routineGenerated": "¡Rutina generada exitosamente! Revisa el borrador y ajusta lo que necesites.",
+            "errorGenerating": "Error al generar la rutina. Por favor, intenta nuevamente."
         },
         "messages": {
             "assistantIntro": "Hola {name}, cuéntame qué quieres mejorar y te iré guiando hacia una rutina más precisa.",

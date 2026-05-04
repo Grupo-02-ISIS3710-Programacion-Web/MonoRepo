@@ -127,7 +127,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                 }
 
                 const routineSteps = routine.steps
-                    .map((step) => {
+                    .map((step: any) => {
                         const product = products.find((item) => item.id === step.productId);
 
                         if (!product) {
@@ -142,8 +142,8 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                             notes: step.notes
                         };
                     })
-                    .filter((step): step is RoutineFormData["steps"][number] => step !== null)
-                    .sort((left, right) => left.order - right.order);
+                    .filter((step: any): step is RoutineFormData["steps"][number] => step !== null)
+                    .sort((left: any, right: any) => left.order - right.order);
 
                 reset({
                     name: routine.name,
@@ -153,8 +153,8 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                     steps: routineSteps
                 });
 
-                setSelectedProductIds(new Set(routineSteps.map((step) => step.product.id)));
-                previousProductsSignatureRef.current = routineSteps.map((step) => step.product.id).join(",");
+                setSelectedProductIds(new Set(routineSteps.map((step: any) => step.product.id)));
+                previousProductsSignatureRef.current = routineSteps.map((step: any) => step.product.id).join(",");
                 setIsInitialDataLoaded(true);
             } catch (err) {
                 console.error("Failed to load routine for editing:", err);

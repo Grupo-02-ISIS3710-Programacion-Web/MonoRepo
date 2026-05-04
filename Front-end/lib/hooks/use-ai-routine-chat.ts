@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { getProducts } from "@/lib/api";
 import { Product, SkinType } from "@/types/product";
 import { Routine, RoutineStep } from "@/types/routine";
+import {
+  generateRoutineWithAI,
+  suggestProductsWithAI,
+  chatWithAI as chatWithAI_API,
+  ChatMessage,
+} from "@/lib/api-client";
 
 type AiRoutineMessageRole = "assistant" | "user";
 
@@ -59,71 +65,6 @@ const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[
   minimalist: ["hydration", "sensitivity"],
 };
 
-const focusAreaProductIds: Record<(typeof focusAreaIds)[number], string[]> = {
-  hydration: ["12", "15", "5", "10"],
-  barrier: ["12", "14", "6", "1"],
-  texture: ["2", "3", "13", "5"],
-  sensitivity: ["12", "6", "14", "1"],
-};
-
-const pmPriorityIds = ["2", "3", "6", "9", "14"];
-
-function buildStep(product: Product, order: number, t: ReturnType<typeof useTranslations>): RoutineStep {
-  return {
-    id: `ai-step-${product.id}`,
-    name: t("draft.stepName", { order: order + 1 }),
-    order,
-    productId: product.id,
-    product,
-    notes: t("draft.stepNotes", { productName: product.name }),
-  };
-}
-
-function buildRecommendedProducts(
-  products: Product[],
-  selectedFocusAreaIds: string[],
-  selectedSkinType: SkinType,
-  routineType: string,
-) {
-  const recommendedIds = selectedFocusAreaIds.flatMap((focusAreaId) => {
-    return focusAreaProductIds[focusAreaId as keyof typeof focusAreaProductIds] ?? [];
-  });
-
-  const withRoutinePriority = routineType === "pm"
-    ? [...pmPriorityIds, ...recommendedIds]
-    : recommendedIds;
-
-  const uniqueIds = [...new Set(withRoutinePriority)];
-  const skinMatchedProducts = products.filter((product) =>
-    uniqueIds.includes(product.id) && product.skin_type.includes(selectedSkinType),
-  );
-  const fallbackProducts = products.filter((product) => uniqueIds.includes(product.id));
-
-  return (skinMatchedProducts.length > 0 ? skinMatchedProducts : fallbackProducts).slice(0, 6);
-}
-
-function reorderSteps(steps: RoutineStep[]) {
-  return steps.map((step, index) => ({
-    ...step,
-    order: index,
-  }));
-}
-
-function buildConversationIteration(message: string, t: ReturnType<typeof useTranslations>) {
-  return [
-    {
-      id: `user-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`,
-      role: "user" as const,
-      content: message,
-    },
-    {
-      id: `assistant-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`,
-      role: "assistant" as const,
-      content: t("messages.pendingReply"),
-    },
-  ];
-}
-
 export function useAiRoutineChat(userId: string, userName: string) {
   const t = useTranslations("AiRoutine");
   const products = useMemo(() => getProducts(), []);
@@ -133,39 +74,24 @@ export function useAiRoutineChat(userId: string, userName: string) {
     "hydration",
     "barrier",
   ]);
-  const [routineDraft, setRoutineDraft] = useState<Routine>(() => {
-    const initialRecommendedProducts = buildRecommendedProducts(
-      products,
-      ["hydration", "barrier"],
-      SkinType.MIXTA,
-      "am",
-    ).slice(0, 3);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingRoutine, setIsGeneratingRoutine] = useState(false);
 
-    return {
-      id: `ai-routine-${userId}`,
-      userId,
-      name: t("draft.initialName"),
-      description: t("draft.initialDescription"),
-      type: "am",
-      skinType: SkinType.MIXTA,
-      steps: initialRecommendedProducts.map((product, index) => buildStep(product, index, t)),
-    };
-  });
+  const [routineDraft, setRoutineDraft] = useState<Routine>(() => ({
+    id: `ai-routine-${userId}`,
+    userId,
+    name: t("draft.initialName"),
+    description: t("draft.initialDescription"),
+    type: "am",
+    skinType: SkinType.MIXTA,
+    steps: [],
+  }));
+
   const [messages, setMessages] = useState<AiRoutineMessage[]>([
     {
       id: "assistant-intro",
       role: "assistant",
       content: t("messages.assistantIntro", { name: userName }),
-    },
-    {
-      id: "user-goal",
-      role: "user",
-      content: t("messages.userGoal"),
-    },
-    {
-      id: "assistant-follow-up",
-      role: "assistant",
-      content: t("messages.assistantFollowUp"),
     },
   ]);
 
@@ -199,17 +125,6 @@ export function useAiRoutineChat(userId: string, userName: string) {
     [t],
   );
 
-  const recommendedProducts = useMemo(
-    () =>
-      buildRecommendedProducts(
-        products,
-        selectedFocusAreaIds,
-        routineDraft.skinType as SkinType,
-        routineDraft.type,
-      ),
-    [products, routineDraft.skinType, routineDraft.type, selectedFocusAreaIds],
-  );
-
   const appendPrompt = (prompt: string) => {
     setInputValue((currentValue) =>
       currentValue.trim()
@@ -231,10 +146,8 @@ export function useAiRoutineChat(userId: string, userName: string) {
         if (currentFocusAreas.length === 1) {
           return currentFocusAreas;
         }
-
         return currentFocusAreas.filter((id) => id !== focusAreaId);
       }
-
       return [...currentFocusAreas, focusAreaId];
     });
   };
@@ -256,20 +169,27 @@ export function useAiRoutineChat(userId: string, userName: string) {
       if (alreadySelected) {
         return {
           ...currentRoutineDraft,
-          steps: reorderSteps(
-            currentRoutineDraft.steps.filter((step) => step.productId !== product.id),
-          ),
+          steps: currentRoutineDraft.steps
+            .filter((step) => step.productId !== product.id)
+            .map((step, index) => ({ ...step, order: index })),
         };
       }
 
       const nextSteps = [
         ...currentRoutineDraft.steps,
-        buildStep(product, currentRoutineDraft.steps.length, t),
+        {
+          id: `ai-step-${product.id}-${Date.now()}`,
+          name: t("draft.stepName", { order: currentRoutineDraft.steps.length + 1 }),
+          order: currentRoutineDraft.steps.length,
+          productId: product.id,
+          product,
+          notes: t("draft.stepNotes", { productName: product.name }),
+        },
       ];
 
       return {
         ...currentRoutineDraft,
-        steps: reorderSteps(nextSteps),
+        steps: nextSteps,
       };
     });
   };
@@ -315,7 +235,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
 
       return {
         ...currentRoutineDraft,
-        steps: reorderSteps(nextSteps),
+        steps: nextSteps.map((step, index) => ({ ...step, order: index })),
       };
     });
   };
@@ -323,35 +243,154 @@ export function useAiRoutineChat(userId: string, userName: string) {
   const removeStep = (stepId: string) => {
     setRoutineDraft((currentRoutineDraft) => ({
       ...currentRoutineDraft,
-      steps: reorderSteps(
-        currentRoutineDraft.steps.filter((step) => step.id !== stepId),
-      ),
+      steps: currentRoutineDraft.steps
+        .filter((step) => step.id !== stepId)
+        .map((step, index) => ({ ...step, order: index })),
     }));
   };
 
-  const submitMessage = () => {
+  const submitMessage = useCallback(async () => {
     const trimmedValue = inputValue.trim();
 
-    if (!trimmedValue) {
+    if (!trimmedValue || isLoading) {
       return;
     }
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      ...buildConversationIteration(trimmedValue, t),
-    ]);
+    const userMessage: AiRoutineMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: trimmedValue,
+    };
+
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
     setInputValue("");
-  };
+    setIsLoading(true);
+
+    try {
+      const chatMessages: ChatMessage[] = messages
+        .filter((m) => m.id !== "assistant-intro")
+        .map((m) => ({
+          role: m.role === "user" ? "user" as const : "assistant" as const,
+          content: m.content,
+        }));
+
+      chatMessages.push({ role: "user", content: trimmedValue });
+
+      const response = await chatWithAI_API({
+        userId,
+        messages: chatMessages,
+        routineContext: {
+          skinType: routineDraft.skinType,
+          type: routineDraft.type,
+          currentSteps: routineDraft.steps,
+        },
+      });
+
+      const assistantMessage: AiRoutineMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: response.response,
+      };
+
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } catch (error) {
+      console.error("Error en chat con IA:", error);
+      const errorMessage: AiRoutineMessage = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: t("messages.errorReply"),
+      };
+      setMessages((currentMessages) => [...currentMessages, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [inputValue, isLoading, messages, userId, routineDraft, t]);
+
+  const generateRoutine = useCallback(async () => {
+    if (isGeneratingRoutine) return;
+
+    setIsGeneratingRoutine(true);
+
+    try {
+      const concerns = selectedFocusAreaIds.map((id) => {
+        const focusArea = focusAreas.find((f) => f.id === id);
+        return focusArea?.label || id;
+      });
+
+      const generatedRoutine = await generateRoutineWithAI({
+        userId,
+        skinType: routineDraft.skinType,
+        type: routineDraft.type as 'am' | 'pm',
+        concerns,
+        stepCount: 4,
+        preferredProductIds: routineDraft.steps.map((s) => s.productId),
+      });
+
+      if (generatedRoutine && generatedRoutine.steps) {
+        const productMap = new Map(products.map((p) => [p.id, p]));
+
+        const newSteps: RoutineStep[] = generatedRoutine.steps.map((step: any, index: number) => ({
+          id: step.id || `ai-step-${Date.now()}-${index}`,
+          name: step.name || `Paso ${index + 1}`,
+          order: index,
+          productId: step.productId,
+          product: productMap.get(step.productId) || undefined,
+          notes: step.notes || '',
+        }));
+
+        setRoutineDraft((current) => ({
+          ...current,
+          name: generatedRoutine.name || current.name,
+          description: generatedRoutine.description || current.description,
+          steps: newSteps,
+        }));
+
+        const successMessage: AiRoutineMessage = {
+          id: `system-${Date.now()}`,
+          role: "assistant",
+          content: t("messages.routineGenerated"),
+        };
+        setMessages((current) => [...current, successMessage]);
+      }
+    } catch (error) {
+      console.error("Error generando rutina:", error);
+      const errorMessage: AiRoutineMessage = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: t("messages.errorGenerating"),
+      };
+      setMessages((current) => [...current, errorMessage]);
+    } finally {
+      setIsGeneratingRoutine(false);
+    }
+  }, [isGeneratingRoutine, selectedFocusAreaIds, routineDraft, userId, products, focusAreas, t]);
+
+  const getProductSuggestions = useCallback(async (stepName: string, category?: string) => {
+    try {
+      const suggestions = await suggestProductsWithAI({
+        skinType: routineDraft.skinType,
+        stepName,
+        category,
+        concerns: selectedFocusAreaIds,
+      });
+      return suggestions.suggestions || [];
+    } catch (error) {
+      console.error("Error sugiriendo productos:", error);
+      return [];
+    }
+  }, [routineDraft.skinType, selectedFocusAreaIds]);
 
   return {
     messages,
     inputValue,
     setInputValue,
+    isLoading,
+    isGeneratingRoutine,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
-    recommendedProducts,
+    recommendedProducts: products.slice(0, 6),
     continuousRecommendations,
     appendPrompt,
     applyStarterPrompt,
@@ -363,5 +402,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
     moveStep,
     removeStep,
     submitMessage,
+    generateRoutine,
+    getProductSuggestions,
   };
 }

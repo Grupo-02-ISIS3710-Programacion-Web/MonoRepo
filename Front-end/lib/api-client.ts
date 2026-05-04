@@ -1,5 +1,5 @@
 // API client for communicating with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export interface ApiResponse<T> {
   data: T;
@@ -204,35 +204,98 @@ export async function deleteComment(id: string) {
   });
 }
 
-// AI API
-export async function generateRoutineWithAI(params: any) {
+// AI API - Functions for AI-powered routine generation
+
+export interface GenerateRoutineParams {
+  userId: string;
+  skinType: string;
+  type: 'am' | 'pm';
+  concerns?: string[];
+  stepCount?: number;
+  preferredProductIds?: string[];
+}
+
+export interface GenerateRoutineResponse {
+  name: string;
+  description: string;
+  steps: {
+    id: string;
+    name: string;
+    productId: string;
+    notes: string;
+    order: number;
+  }[];
+}
+
+export async function generateRoutineWithAI(params: GenerateRoutineParams): Promise<GenerateRoutineResponse> {
   return apiFetch('/ai/routines/generate', {
     method: 'POST',
     body: JSON.stringify(params),
   });
 }
 
-export async function suggestProductsWithAI(params: any) {
+export interface SuggestProductsParams {
+  skinType: string;
+  stepName: string;
+  category?: string;
+  concerns?: string[];
+}
+
+export interface SuggestProductsResponse {
+  suggestions: {
+    productId: string;
+    reason: string;
+  }[];
+}
+
+export async function suggestProductsWithAI(params: SuggestProductsParams): Promise<SuggestProductsResponse> {
   return apiFetch('/ai/products/suggest', {
     method: 'POST',
     body: JSON.stringify(params),
   });
 }
 
-export async function fetchAITools() {
-  return apiFetch('/ai/tools');
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
 }
 
-export async function chatWithAI(prompt: string) {
+export interface ChatWithAIParams {
+  userId: string;
+  messages: ChatMessage[];
+  routineContext?: {
+    skinType?: string;
+    type?: string;
+    currentSteps?: any[];
+  };
+}
+
+export interface ChatWithAIResponse {
+  response: string;
+}
+
+export async function chatWithAI(params: ChatWithAIParams): Promise<ChatWithAIResponse> {
   return apiFetch('/ai/agent/chat', {
     method: 'POST',
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify(params),
   });
 }
 
-export async function searchWithAI(query: string) {
+export interface SearchWithAIParams {
+  query: string;
+  skinType?: string;
+}
+
+export interface SearchWithAIResponse {
+  results: {
+    product: any;
+    relevance: string;
+  }[];
+}
+
+export async function searchWithAI(params: SearchWithAIParams): Promise<SearchWithAIResponse> {
   return apiFetch('/ai/agent/search', {
     method: 'POST',
-    body: JSON.stringify({ query }),
+    body: JSON.stringify(params),
   });
 }
