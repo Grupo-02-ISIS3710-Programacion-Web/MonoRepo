@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Product, SkinType } from "@/types/product";
@@ -11,6 +11,10 @@ import {
   chatWithAI as chatWithAI_API,
   fetchProductsBatch,
   ChatMessage,
+  createChat,
+  getChat,
+  saveChatMessage,
+  updateChatDraft,
 } from "@/lib/api-client";
 
 type AiRoutineMessageRole = "assistant" | "user";
@@ -76,8 +80,14 @@ const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[
   minimalist: ["hydration", "sensitivity"],
 };
 
-export function useAiRoutineChat(userId: string, userName: string) {
+export function useAiRoutineChat(
+  userId: string,
+  userName: string,
+  chatId?: string | null,
+  router?: { push: (url: string) => void },
+) {
   const t = useTranslations("AiRoutine");
+  const [isInitializing, setIsInitializing] = useState(!!chatId);
 
   const [inputValue, setInputValue] = useState("");
   const [selectedFocusAreaIds, setSelectedFocusAreaIds] = useState<string[]>([
@@ -86,6 +96,8 @@ export function useAiRoutineChat(userId: string, userName: string) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingRoutine, setIsGeneratingRoutine] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
+  const hasSentFirstMessage = useRef(false);
 
   const [routineDraft, setRoutineDraft] = useState<Routine>(() => ({
     id: `ai-routine-${userId}`,
@@ -106,6 +118,148 @@ export function useAiRoutineChat(userId: string, userName: string) {
   ]);
 
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  const draftSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load saved chat state on mount
+  useEffect(() => {
+    if (!chatId || !userId) {
+      setIsInitializing(false);
+      return;
+    }
+
+    const loadChat = async () => {
+      try {
+        const chat = await getChat(chatId, userId);
+        if (chat) {
+          // Restore messages
+          if (chat.messages && chat.messages.length > 0) {
+            // Collect all product IDs from saved messages
+            const allProductIds = new Set<string>();
+            chat.messages.forEach((m: any) => {
+              if (m.recommendedProducts) {
+                m.recommendedProducts.forEach((rec: any) => {
+                  allProductIds.add(rec.productId);
+                  if (rec.otherAlternatives) {
+                    rec.otherAlternatives.forEach((alt: any) => allProductIds.add(alt.id));
+                  }
+                });
+              }
+            });
+
+            // Resolve product details
+            let productMap = new Map<string, any>();
+            if (allProductIds.size > 0) {
+              try {
+                const batchResult = await fetchProductsBatch([...allProductIds]);
+                productMap = new Map(batchResult.map((p) => [p.id, p]));
+              } catch (error) {
+                console.error("Error resolving products for restored chat:", error);
+              }
+            }
+
+            const restoredMessages: AiRoutineMessage[] = [
+              {
+                id: "assistant-intro",
+                role: "assistant",
+                content: t("messages.assistantIntro", { name: userName }),
+              },
+              ...chat.messages.map((m: any) => {
+                const enrichedRecommendedProducts = (m.recommendedProducts || [])
+                  .map((rec: any) => {
+                    const product = productMap.get(rec.productId);
+                    const alternativesDetails = (rec.otherAlternatives || [])
+                      .map((alt: any) => productMap.get(alt.id))
+                      .filter(Boolean);
+                    return product ? {
+                      productId: rec.productId,
+                      reason: rec.reason,
+                      otherAlternatives: rec.otherAlternatives,
+                      product,
+                      alternativesDetails,
+                    } : null;
+                  })
+                  .filter(Boolean);
+
+                return {
+                  id: `restored-${Date.now()}-${Math.random()}`,
+                  role: m.role as AiRoutineMessageRole,
+                  content: m.content,
+                  recommendedProducts: enrichedRecommendedProducts.length > 0 ? enrichedRecommendedProducts : undefined,
+                  draftUpdate: m.draftUpdate || undefined,
+                };
+              }),
+            ];
+            setMessages(restoredMessages);
+          }
+
+          // Restore routine draft
+          if (chat.routineDraft) {
+            const draft = chat.routineDraft;
+            setRoutineDraft({
+              id: `ai-routine-${userId}`,
+              userId,
+              name: draft.name || t("draft.initialName"),
+              description: draft.description || t("draft.initialDescription"),
+              type: draft.type || "am",
+              skinType: draft.skinType || SkinType.MIXTA,
+              steps: (draft.steps || []).map((step: any, index: number) => ({
+                ...step,
+                order: index,
+              })),
+            });
+          }
+
+          // Restore focus areas
+          if (chat.selectedFocusAreaIds && chat.selectedFocusAreaIds.length > 0) {
+            setSelectedFocusAreaIds(chat.selectedFocusAreaIds);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading chat:", error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    loadChat();
+  }, [chatId, userId, t, userName]);
+
+  // Debounced draft save
+  const saveDraftToBackend = useCallback((draft: Routine, chatIdToSave: string) => {
+    if (!chatIdToSave) return;
+
+    if (draftSaveTimerRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+    }
+
+    draftSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await updateChatDraft(chatIdToSave, userId, {
+          name: draft.name,
+          description: draft.description,
+          type: draft.type,
+          skinType: draft.skinType,
+          steps: draft.steps.map((s) => ({
+            id: s.id,
+            name: s.name,
+            order: s.order,
+            productId: s.productId,
+            notes: s.notes ?? "",
+          })),
+        });
+      } catch (error) {
+        console.error("Error saving draft:", error);
+      }
+    }, 5000);
+  }, [userId]);
+
+  // Save draft whenever it changes (debounced)
+  useEffect(() => {
+    if (activeChatId) {
+      saveDraftToBackend(routineDraft, activeChatId);
+    }
+  }, [routineDraft, activeChatId, saveDraftToBackend]);
 
   const starterPrompts = useMemo<AiRoutineStarterPrompt[]>(
     () =>
@@ -311,7 +465,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
         if (uniqueIds.length > 0) {
           try {
             const batchResult = await fetchProductsBatch(uniqueIds);
-            const productMap = new Map(batchResult.map((p) => [p._id?.toString() || p.id, p]));
+            const productMap = new Map(batchResult.map((p) => [p.id, p]));
 
             resolvedProducts = response.recommendedProducts.map((rec) => {
               const product = productMap.get(rec.productId);
@@ -323,11 +477,8 @@ export function useAiRoutineChat(userId: string, userName: string) {
                 productId: rec.productId,
                 reason: rec.reason,
                 otherAlternatives: rec.otherAlternatives,
-                product: product ? { ...product, id: product._id?.toString() || product.id } : undefined,
-                alternativesDetails: alternativesDetails.map((a) => ({
-                  ...a,
-                  id: a._id?.toString() || a.id,
-                })),
+                product,
+                alternativesDetails,
               };
             }).filter((r) => r.product);
           } catch (error) {
@@ -352,6 +503,41 @@ export function useAiRoutineChat(userId: string, userName: string) {
       };
 
       setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+
+      // Create chat on first message if no active chat
+      let currentChatId = activeChatId;
+      if (!currentChatId) {
+        if (!hasSentFirstMessage.current) {
+          hasSentFirstMessage.current = true;
+          const newChat = await createChat(userId, selectedFocusAreaIds);
+          currentChatId = newChat.chatId;
+          setActiveChatId(currentChatId);
+          if (router) {
+            router.push(`/ai-routine?chatId=${currentChatId}`);
+          }
+        }
+      }
+
+      // Save user message
+      if (currentChatId) {
+        await saveChatMessage(currentChatId, userId, {
+          role: "user",
+          content: trimmedValue,
+        });
+
+        // Save AI response
+        await saveChatMessage(currentChatId, userId, {
+          role: "assistant",
+          content: response.response,
+          recommendedProducts: response.recommendedProducts,
+          draftUpdate: response.draftUpdate,
+        });
+      }
+
+      // Apply draft updates from AI response
+      if (response.draftUpdate?.steps) {
+        // Handle draft updates if needed
+      }
     } catch (error) {
       console.error("Error en chat con IA:", error);
       const errorMessage: AiRoutineMessage = {
@@ -363,7 +549,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, messages, userId, routineDraft, t]);
+  }, [inputValue, isLoading, messages, userId, routineDraft, t, activeChatId, selectedFocusAreaIds, router]);
 
   const getProductSuggestions = useCallback(async (stepName: string, category?: string) => {
     try {
@@ -411,12 +597,14 @@ export function useAiRoutineChat(userId: string, userName: string) {
     inputValue,
     setInputValue,
     isLoading,
+    isInitializing,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
     recommendedProducts,
     continuousRecommendations,
+    activeChatId,
     appendPrompt,
     applyStarterPrompt,
     toggleFocusArea,

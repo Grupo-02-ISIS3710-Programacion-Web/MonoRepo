@@ -97,7 +97,6 @@ export class ProductosController {
     },
   })
   async findBatch(@Body() body: BatchProductoDto) {
-    const products = await this.productosService.findByIds(body.productIds);
-    return products;
+    return this.productosService.findByIds(body.productIds);
   }
 }

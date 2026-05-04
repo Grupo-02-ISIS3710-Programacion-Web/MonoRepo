@@ -8,6 +8,7 @@ import { RutinasModule } from './modules/rutinas/rutinas.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SeedModule } from './modules/seed/seed.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ChatsModule } from './modules/chats/chats.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AiModule } from './modules/ai/ai.module';
     RutinasModule,
     SeedModule,
     AiModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

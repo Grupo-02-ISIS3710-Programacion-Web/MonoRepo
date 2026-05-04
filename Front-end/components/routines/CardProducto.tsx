@@ -11,15 +11,14 @@ type CardProductoProps = Readonly<{
     compact?: boolean;
 }>;
 
-const getCategoryLabel = (category: string | string[] | undefined): string => {
+const getCategoryLabel = (category: string | number | (string | number)[] | undefined): string => {
     if (!category) return "";
     
-    // Handle array - take first element
     if (Array.isArray(category)) {
         return category.length > 0 ? getCategoryLabel(category[0]) : "";
     }
     
-    // Handle string
+    const catStr = String(category);
     const categoryMap: Record<string, string> = {
         hidratacion: "HYDRATION",
         limpieza: "CLEANSER",
@@ -28,7 +27,7 @@ const getCategoryLabel = (category: string | string[] | undefined): string => {
         reparacion: "REPAIR",
         antioxidante: "ANTIOXIDANT"
     };
-    return categoryMap[category] || category.toUpperCase();
+    return categoryMap[catStr.toLowerCase()] || catStr.toUpperCase();
 };
 
 export default function CardProducto({

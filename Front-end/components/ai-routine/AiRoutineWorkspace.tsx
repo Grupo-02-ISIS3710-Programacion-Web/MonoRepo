@@ -1,11 +1,12 @@
 "use client";
 
-import { FilePenLine, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { FilePenLine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 import { Link, useRouter } from "@/i18n/navigation";
-import { saveAiRoutineDraft } from "@/lib/ai-routine-draft";
 import { useAiRoutineChat } from "@/lib/hooks/use-ai-routine-chat";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
@@ -40,11 +41,15 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
   const t = useTranslations("AiRoutine");
   const tSkin = useTranslations("SkinTypes");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const chatId = searchParams.get("chatId");
+
   const {
     messages,
     inputValue,
     setInputValue,
     isLoading,
+    isInitializing,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
@@ -62,11 +67,41 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     removeStep,
     submitMessage,
     addProductToRoutine,
-  } = useAiRoutineChat(user.id, user.name);
+  } = useAiRoutineChat(user.id, user.name, chatId, router);
 
-  const handleContinueToBuilder = () => {
-    saveAiRoutineDraft(routineDraft);
-    router.push("/routine/crear");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveRoutine = async () => {
+    if (routineDraft.steps.length === 0) {
+      toast.warning(t("draft.save.warningNoSteps"));
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { createRoutine } = await import("@/lib/api-client");
+      await createRoutine({
+        userId: user.id,
+        name: routineDraft.name,
+        description: routineDraft.description,
+        type: routineDraft.type,
+        skinType: routineDraft.skinType,
+        steps: routineDraft.steps.map((step, index) => ({
+          id: step.id,
+          name: step.name,
+          order: index,
+          productId: step.productId,
+          notes: step.notes ?? "",
+        })),
+      });
+      toast.success(t("draft.save.success"));
+      router.push("/profile");
+    } catch (error) {
+      console.error("Failed to save routine:", error);
+      toast.error(t("draft.save.error"));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSuggestedProductToggle = (product: typeof recommendedProducts[number]) => {
@@ -77,6 +112,14 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
       toast.success(t("recommendedProducts.toast.added", { name: product.name }));
     }
   };
+
+  if (isInitializing) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading chat...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background pb-24">
@@ -121,49 +164,58 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
                       t={t}
                     />
                   </div>
-                </SheetContent>
-              </Sheet>
-
-              <SheetTrigger asChild>
-                <Button
-                  type="button"
-                  className="group hidden md:inline-flex gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-md transition hover:shadow-lg"
-                >
-                  <Sparkles size={16} className="transition group-hover:scale-110" />
-                  <span>{t("mobileDraft.open")}</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full p-0 sm:max-w-2xl xl:max-w-3xl">
-                <div className="flex h-full flex-col">
-                  <SheetHeader className="border-b px-6 py-5 text-left">
-                    <SheetTitle>{t("mobileDraft.title")}</SheetTitle>
-                    <SheetDescription>{t("mobileDraft.description")}</SheetDescription>
-                  </SheetHeader>
-
-                  <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                    <DraftEditor
-                      title={t("draft.title")}
-                      description={t("draft.description")}
-                      continueLabel={t("draft.actions.continue")}
-                      routineDraft={routineDraft}
-                      t={t}
-                      tSkin={tSkin}
-                      updateRoutineField={updateRoutineField}
-                      updateStepName={updateStepName}
-                      updateStepNotes={updateStepNotes}
-                      moveStep={moveStep}
-                      removeStep={removeStep}
-                      onContinue={handleContinueToBuilder}
-                    />
-                  </div>
-
-                  <SheetFooter className="border-t px-6 py-4 sm:justify-start">
+                  <SheetFooter className="border-t pt-4">
                     <SheetClose asChild>
-                      <Button type="button" variant="outline">{t("mobileDraft.close")}</Button>
+                      <Button type="button" variant="outline">Close</Button>
                     </SheetClose>
                   </SheetFooter>
-                </div>
-              </SheetContent>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_380px] lg:gap-8">
+            <div className="space-y-6 min-w-0">
+              <section className="space-y-6">
+                <ChatPanel
+                  userName={user.name}
+                  messages={messages}
+                  inputValue={inputValue}
+                  setInputValue={setInputValue}
+                  onSubmit={submitMessage}
+                  t={t}
+                  addProductToRoutine={addProductToRoutine}
+                  isLoading={isLoading}
+                />
+
+                <StarterPromptsPanel
+                  starterPrompts={starterPrompts}
+                  focusAreas={focusAreas}
+                  selectedFocusAreaIds={selectedFocusAreaIds}
+                  applyStarterPrompt={applyStarterPrompt}
+                  toggleFocusArea={toggleFocusArea}
+                  t={t}
+                />
+              </section>
+            </div>
+
+            <div className="hidden md:block">
+              <div className="sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border bg-card p-5">
+                <DraftEditor
+                  title={t("draft.title")}
+                  description={t("draft.description")}
+                  continueLabel={t("draft.actions.continue")}
+                  routineDraft={routineDraft}
+                  t={t}
+                  tSkin={tSkin}
+                  updateRoutineField={updateRoutineField}
+                  updateStepName={updateStepName}
+                  updateStepNotes={updateStepNotes}
+                  moveStep={moveStep}
+                  removeStep={removeStep}
+                  onContinue={handleSaveRoutine}
+                />
+              </div>
             </div>
           </div>
 
@@ -196,7 +248,7 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
                 updateStepNotes={updateStepNotes}
                 moveStep={moveStep}
                 removeStep={removeStep}
-                onContinue={handleContinueToBuilder}
+                onContinue={handleSaveRoutine}
               />
             </div>
             <DrawerFooter>
@@ -205,30 +257,6 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
               </DrawerClose>
             </DrawerFooter>
           </DrawerContent>
-
-          <div className="space-y-6">
-            <section className="space-y-6">
-              <ChatPanel
-                userName={user.name}
-                messages={messages}
-                inputValue={inputValue}
-                setInputValue={setInputValue}
-                onSubmit={submitMessage}
-                t={t}
-                addProductToRoutine={addProductToRoutine}
-                isLoading={isLoading}
-              />
-
-              <StarterPromptsPanel
-                starterPrompts={starterPrompts}
-                focusAreas={focusAreas}
-                selectedFocusAreaIds={selectedFocusAreaIds}
-                applyStarterPrompt={applyStarterPrompt}
-                toggleFocusArea={toggleFocusArea}
-                t={t}
-              />
-            </section>
-          </div>
         </Drawer>
       </div>
     </main>

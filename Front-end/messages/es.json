@@ -341,10 +341,15 @@
             "empty": "Aún no has agregado productos al borrador. Usa las recomendaciones para construir la rutina.",
             "unknownProduct": "Producto no encontrado",
             "actions": {
-                "continue": "Continuar en el constructor",
+                "continue": "Guardar rutina",
                 "moveUp": "Mover paso hacia arriba",
                 "moveDown": "Mover paso hacia abajo",
                 "removeStep": "Eliminar paso"
+            },
+            "save": {
+                "warningNoSteps": "Añade al menos un producto antes de guardar.",
+                "success": "¡Rutina guardada exitosamente!",
+                "error": "Error al guardar la rutina. Inténtalo de nuevo."
             }
         },
         "recommendedProducts": {

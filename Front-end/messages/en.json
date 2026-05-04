@@ -331,10 +331,15 @@
             "empty": "You have not added products to the draft yet. Use the suggestions to build the routine.",
             "unknownProduct": "Unknown product",
             "actions": {
-                "continue": "Continue in builder",
+                "continue": "Save routine",
                 "moveUp": "Move step up",
                 "moveDown": "Move step down",
                 "removeStep": "Remove step"
+            },
+            "save": {
+                "warningNoSteps": "Add at least one product before saving.",
+                "success": "Routine saved successfully!",
+                "error": "Failed to save routine. Please try again."
             }
         },
         "recommendedProducts": {

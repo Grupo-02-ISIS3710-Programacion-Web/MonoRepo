@@ -96,9 +96,43 @@ export class ProductosService implements OnModuleInit {
     return await this.productoModel.findById(id).exec();
   }
 
-  async findByIds(ids: string[]): Promise<Producto[]> {
+  async findByIds(ids: string[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    return await this.productoModel.find({ _id: { $in: ids }, deleted: false }).exec();
+    const products = await this.productoModel.find({ _id: { $in: ids }, deleted: false }).lean().exec();
+    return this.normalizeProducts(products);
+  }
+
+  async findAllNormalized(): Promise<any[]> {
+    const products = await this.productoModel.find({ deleted: false }).lean().exec();
+    return this.normalizeProducts(products);
+  }
+
+  private async normalizeProducts(products: any[]): Promise<any[]> {
+    if (!products.length) return [];
+
+    const [skinTypes, productTypes, categories] = await Promise.all([
+      this.skinTypeCatalogModel.find().lean().exec(),
+      this.productTypeCatalogModel.find().lean().exec(),
+      this.categoryCatalogModel.find().lean().exec(),
+    ]);
+
+    const skinTypeMap = new Map(skinTypes.map((s) => [s._id, s.code]));
+    const productTypeMap = new Map(productTypes.map((p) => [p._id, p.code]));
+    const categoryMap = new Map(categories.map((c) => [c._id, c.code]));
+
+    return products.map((p) => ({
+      id: p._id?.toString(),
+      name: p.name,
+      brand: p.brand,
+      description: p.description,
+      skin_type: (p.skin_type || []).map((id: number) => skinTypeMap.get(id) || id),
+      product_type: productTypeMap.get(p.product_type) || p.product_type,
+      category: (p.category || []).map((id: number) => categoryMap.get(id) || id),
+      ingredients: p.ingredients || [],
+      image_url: p.image_url || [],
+      rating: p.rating ?? 0,
+      review_count: p.review_count ?? 0,
+    }));
   }
 
   async update(
