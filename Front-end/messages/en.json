@@ -226,6 +226,16 @@
             "manualBuilder": "Open manual builder",
             "suggestions": "View suggestions"
         },
+        "generateRoutine": "Generate routine with AI",
+        "generating": "Generating...",
+        "chat": {
+            "productRecommendation": {
+                "addToRoutine": "Add to Routine",
+                "added": "Added",
+                "alternatives": "Alternatives",
+                "reason": "Why recommended"
+            }
+        },
         "suggestionsSheet": {
             "title": "Suggestions",
             "description": "Browse suggested products and shortcuts to keep refining the conversation."
@@ -283,7 +293,9 @@
             "assistantIntro": "Hi {name}, tell me what you want to improve and I will help shape a more precise routine.",
             "userGoal": "I want a simple routine that helps with dehydration, sensitivity, and uneven texture.",
             "assistantFollowUp": "Perfect. I will start from a base proposal and then we can keep adjusting products, steps, and notes from this conversation.",
-            "pendingReply": "Preview response: the assistant's next iteration will appear here once the LLM logic is connected."
+            "pendingReply": "Preview response: the assistant's next iteration will appear here once the LLM logic is connected.",
+            "routineGenerated": "Routine generated successfully! Review the draft and adjust as needed.",
+            "errorGenerating": "Error generating routine. Please try again."
         },
         "draft": {
             "title": "Routine draft",
@@ -335,6 +347,15 @@
             "toast": {
                 "added": "{name} was added to the draft"
             }
+        },
+        "suggestionsModal": {
+            "title": "AI Suggested Products",
+            "description": "Select the products you want to add to your routine. These will replace the current step products.",
+            "selectAll": "Select all",
+            "deselectAll": "Deselect all",
+            "selected": "selected",
+            "addToRoutine": "Add to routine",
+            "cancel": "Cancel"
         },
         "continuousRecommendations": {
             "title": "Continuous recommendations",

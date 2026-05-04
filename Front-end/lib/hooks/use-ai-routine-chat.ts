@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { getProducts } from "@/lib/api";
 import { Product, SkinType } from "@/types/product";
 import { Routine, RoutineStep } from "@/types/routine";
@@ -18,6 +19,16 @@ export type AiRoutineMessage = Readonly<{
   id: string;
   role: AiRoutineMessageRole;
   content: string;
+  recommendedProducts?: {
+    productId: string;
+    reason: string;
+    otherAlternatives?: string[];
+    product?: Product;
+    alternativesDetails?: Product[];
+  }[];
+  draftUpdate?: {
+    steps?: RoutineStep[];
+  };
 }>;
 
 export type AiRoutineStarterPrompt = Readonly<{
@@ -94,6 +105,8 @@ export function useAiRoutineChat(userId: string, userName: string) {
       content: t("messages.assistantIntro", { name: userName }),
     },
   ]);
+
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
   const starterPrompts = useMemo<AiRoutineStarterPrompt[]>(
     () =>
@@ -286,10 +299,20 @@ export function useAiRoutineChat(userId: string, userName: string) {
         },
       });
 
+      // Simply pass through the backend response - products already populated!
       const assistantMessage: AiRoutineMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content: response.response,
+        recommendedProducts: response.recommendedProducts && response.recommendedProducts.length > 0
+          ? response.recommendedProducts.map((rec: any) => ({
+              productId: rec.productId || rec.product?.id || "",
+              reason: rec.reason || "",
+              // Map backend otherAlternatives (with product details) to alternativesDetails
+              alternativesDetails: rec.otherAlternatives || [],
+              product: rec.product,
+            }))
+          : undefined,
       };
 
       setMessages((currentMessages) => [...currentMessages, assistantMessage]);
@@ -306,65 +329,6 @@ export function useAiRoutineChat(userId: string, userName: string) {
     }
   }, [inputValue, isLoading, messages, userId, routineDraft, t]);
 
-  const generateRoutine = useCallback(async () => {
-    if (isGeneratingRoutine) return;
-
-    setIsGeneratingRoutine(true);
-
-    try {
-      const concerns = selectedFocusAreaIds.map((id) => {
-        const focusArea = focusAreas.find((f) => f.id === id);
-        return focusArea?.label || id;
-      });
-
-      const generatedRoutine = await generateRoutineWithAI({
-        userId,
-        skinType: routineDraft.skinType,
-        type: routineDraft.type as 'am' | 'pm',
-        concerns,
-        stepCount: 4,
-        preferredProductIds: routineDraft.steps.map((s) => s.productId),
-      });
-
-      if (generatedRoutine && generatedRoutine.steps) {
-        const productMap = new Map(products.map((p) => [p.id, p]));
-
-        const newSteps: RoutineStep[] = generatedRoutine.steps.map((step: any, index: number) => ({
-          id: step.id || `ai-step-${Date.now()}-${index}`,
-          name: step.name || `Paso ${index + 1}`,
-          order: index,
-          productId: step.productId,
-          product: productMap.get(step.productId) || undefined,
-          notes: step.notes || '',
-        }));
-
-        setRoutineDraft((current) => ({
-          ...current,
-          name: generatedRoutine.name || current.name,
-          description: generatedRoutine.description || current.description,
-          steps: newSteps,
-        }));
-
-        const successMessage: AiRoutineMessage = {
-          id: `system-${Date.now()}`,
-          role: "assistant",
-          content: t("messages.routineGenerated"),
-        };
-        setMessages((current) => [...current, successMessage]);
-      }
-    } catch (error) {
-      console.error("Error generando rutina:", error);
-      const errorMessage: AiRoutineMessage = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: t("messages.errorGenerating"),
-      };
-      setMessages((current) => [...current, errorMessage]);
-    } finally {
-      setIsGeneratingRoutine(false);
-    }
-  }, [isGeneratingRoutine, selectedFocusAreaIds, routineDraft, userId, products, focusAreas, t]);
-
   const getProductSuggestions = useCallback(async (stepName: string, category?: string) => {
     try {
       const suggestions = await suggestProductsWithAI({
@@ -380,17 +344,42 @@ export function useAiRoutineChat(userId: string, userName: string) {
     }
   }, [routineDraft.skinType, selectedFocusAreaIds]);
 
+  const addProductToRoutine = useCallback((product: Product, stepName?: string, notes?: string) => {
+    setRoutineDraft((current) => {
+      const alreadyInRoutine = current.steps.some(step => step.productId === product.id);
+      
+      if (alreadyInRoutine) {
+        return current;
+      }
+
+      const newStep: RoutineStep = {
+        id: `ai-step-${product.id}-${Date.now()}`,
+        name: stepName || `Paso ${current.steps.length + 1}`,
+        order: current.steps.length,
+        productId: product.id,
+        product,
+        notes: notes || `Usar ${product.name} según las necesidades de tu piel.`,
+      };
+
+      return {
+        ...current,
+        steps: [...current.steps, newStep],
+      };
+    });
+
+    toast.success(t("recommendedProducts.toast.added", { name: product.name }));
+  }, [t]);
+
   return {
     messages,
     inputValue,
     setInputValue,
     isLoading,
-    isGeneratingRoutine,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
-    recommendedProducts: products.slice(0, 6),
+    recommendedProducts,
     continuousRecommendations,
     appendPrompt,
     applyStarterPrompt,
@@ -402,7 +391,6 @@ export function useAiRoutineChat(userId: string, userName: string) {
     moveStep,
     removeStep,
     submitMessage,
-    generateRoutine,
-    getProductSuggestions,
+    addProductToRoutine,
   };
 }

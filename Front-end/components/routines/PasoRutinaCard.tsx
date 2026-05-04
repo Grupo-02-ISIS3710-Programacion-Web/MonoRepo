@@ -13,7 +13,7 @@ import { RoutineFormData } from "@/types/routine-form";
 type PasoRutinaCardProps = Readonly<{
     index: number;
     totalSteps: number;
-    product: Product;
+    product?: Product;
     stepId: string;
     register?: UseFormRegister<RoutineFormData>;
     nameError?: string;
@@ -113,7 +113,7 @@ export default function PasoRutinaCard({
                     {nameError && <p className="text-sm text-red-600">{nameError}</p>}
                 </div>
 
-                <CardProducto product={product} showButton={false} compact />
+                {product && <CardProducto product={product} showButton={false} compact />}
 
                 <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">{t("descriptionLabel")}</p>

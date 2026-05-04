@@ -31,6 +31,8 @@ export type ChatPanelProps = Readonly<{
   setInputValue: (value: string) => void;
   onSubmit: () => void;
   t: Translator;
+  addProductToRoutine?: (product: Product, stepName?: string, notes?: string) => void;
+  isLoading?: boolean;
 }>;
 
 export type StarterPromptsPanelProps = Readonly<{

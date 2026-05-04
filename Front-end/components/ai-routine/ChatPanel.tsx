@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bot, MessageSquareText, SendHorizontal } from "lucide-react";
+import { Bot, MessageSquareText, SendHorizontal, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
 import { ChatPanelProps } from "@/components/ai-routine/types";
+import ChatProductRecommendation from "@/components/ai-routine/ChatProductRecommendation";
 
 export default function ChatPanel({
   userName,
@@ -14,6 +16,8 @@ export default function ChatPanel({
   setInputValue,
   onSubmit,
   t,
+  addProductToRoutine,
+  isLoading,
 }: ChatPanelProps) {
   return (
     <Card className="overflow-hidden border-[#e8ebf1] py-0 shadow-none">
@@ -60,11 +64,61 @@ export default function ChatPanel({
                             : t("chat.userLabel", { name: userName })}
                         </span>
                       </div>
-                      <p className="text-sm leading-6">{message.content}</p>
+                      <div className="text-sm leading-6 prose prose-sm max-w-none">
+                        {isAssistant ? (
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        ) : (
+                          <p>{message.content}</p>
+                        )}
+                      </div>
+
+                      {/* Render product recommendations inline */}
+                      {message.recommendedProducts && message.recommendedProducts.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          {message.recommendedProducts.map((rec, idx) => (
+                            rec.product && (
+                              <ChatProductRecommendation
+                                key={`${message.id}-rec-${idx}`}
+                                product={rec.product}
+                                reason={rec.reason}
+                                alternativesDetails={rec.alternativesDetails}
+                                onAddToRoutine={(product) => addProductToRoutine?.(product)}
+                              />
+                            )
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 );
               })}
+
+              {/* Show thinking indicator while loading */}
+              {isLoading && (
+                <motion.div
+                  key="thinking"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-start"
+                >
+                  <div className="max-w-[88%] rounded-3xl border px-4 py-3 border-border bg-card text-card-foreground">
+                    <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide opacity-80">
+                      <Bot size={14} />
+                      <span>{t("chat.assistantLabel")}</span>
+                      <Loader2 size={14} className="animate-spin" />
+                    </div>
+                    <div className="text-sm leading-6">
+                      <p className="text-muted-foreground italic">AI is thinking...</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Please wait while we generate your personalized routine.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        This may take a few seconds...
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
 

@@ -45,7 +45,6 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     inputValue,
     setInputValue,
     isLoading,
-    isGeneratingRoutine,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
@@ -62,7 +61,7 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     moveStep,
     removeStep,
     submitMessage,
-    generateRoutine,
+    addProductToRoutine,
   } = useAiRoutineChat(user.id, user.name);
 
   const handleContinueToBuilder = () => {
@@ -125,59 +124,46 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
                 </SheetContent>
               </Sheet>
 
-              <Sheet>
+              <SheetTrigger asChild>
                 <Button
                   type="button"
-                  variant="default"
-                  className="hidden md:inline-flex gap-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-5 text-white shadow-md transition hover:shadow-lg"
-                  onClick={generateRoutine}
-                  disabled={isGeneratingRoutine}
+                  className="group hidden md:inline-flex gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-md transition hover:shadow-lg"
                 >
                   <Sparkles size={16} className="transition group-hover:scale-110" />
-                  <span>{isGeneratingRoutine ? t("generating") : t("generateRoutine")}</span>
+                  <span>{t("mobileDraft.open")}</span>
                 </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full p-0 sm:max-w-2xl xl:max-w-3xl">
+                <div className="flex h-full flex-col">
+                  <SheetHeader className="border-b px-6 py-5 text-left">
+                    <SheetTitle>{t("mobileDraft.title")}</SheetTitle>
+                    <SheetDescription>{t("mobileDraft.description")}</SheetDescription>
+                  </SheetHeader>
 
-                <SheetTrigger asChild>
-                  <Button
-                    type="button"
-                    className="group hidden md:inline-flex gap-2 rounded-full bg-primary px-5 text-primary-foreground shadow-md transition hover:shadow-lg"
-                  >
-                    <Sparkles size={16} className="transition group-hover:scale-110" />
-                    <span>{t("mobileDraft.open")}</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full p-0 sm:max-w-2xl xl:max-w-3xl">
-                  <div className="flex h-full flex-col">
-                    <SheetHeader className="border-b px-6 py-5 text-left">
-                      <SheetTitle>{t("mobileDraft.title")}</SheetTitle>
-                      <SheetDescription>{t("mobileDraft.description")}</SheetDescription>
-                    </SheetHeader>
-
-                    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                      <DraftEditor
-                        title={t("draft.title")}
-                        description={t("draft.description")}
-                        continueLabel={t("draft.actions.continue")}
-                        routineDraft={routineDraft}
-                        t={t}
-                        tSkin={tSkin}
-                        updateRoutineField={updateRoutineField}
-                        updateStepName={updateStepName}
-                        updateStepNotes={updateStepNotes}
-                        moveStep={moveStep}
-                        removeStep={removeStep}
-                        onContinue={handleContinueToBuilder}
-                      />
-                    </div>
-
-                    <SheetFooter className="border-t px-6 py-4 sm:justify-start">
-                      <SheetClose asChild>
-                        <Button type="button" variant="outline">{t("mobileDraft.close")}</Button>
-                      </SheetClose>
-                    </SheetFooter>
+                  <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                    <DraftEditor
+                      title={t("draft.title")}
+                      description={t("draft.description")}
+                      continueLabel={t("draft.actions.continue")}
+                      routineDraft={routineDraft}
+                      t={t}
+                      tSkin={tSkin}
+                      updateRoutineField={updateRoutineField}
+                      updateStepName={updateStepName}
+                      updateStepNotes={updateStepNotes}
+                      moveStep={moveStep}
+                      removeStep={removeStep}
+                      onContinue={handleContinueToBuilder}
+                    />
                   </div>
-                </SheetContent>
-              </Sheet>
+
+                  <SheetFooter className="border-t px-6 py-4 sm:justify-start">
+                    <SheetClose asChild>
+                      <Button type="button" variant="outline">{t("mobileDraft.close")}</Button>
+                    </SheetClose>
+                  </SheetFooter>
+                </div>
+              </SheetContent>
             </div>
           </div>
 
@@ -229,6 +215,8 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
                 setInputValue={setInputValue}
                 onSubmit={submitMessage}
                 t={t}
+                addProductToRoutine={addProductToRoutine}
+                isLoading={isLoading}
               />
 
               <StarterPromptsPanel

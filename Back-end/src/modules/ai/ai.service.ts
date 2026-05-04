@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ChatCohere } from '@langchain/community/chat_models/cohere';
+import { ChatCohere } from '@langchain/cohere';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { Rutina } from '../rutinas/entities/rutina.entity';
 import { Producto } from '../productos/entities/producto.entity';
@@ -33,7 +33,7 @@ export class AiService implements OnModuleInit {
 
     this.chatModel = new ChatCohere({
       apiKey: apiKey,
-      model: 'command-r-plus',
+      model: 'command-a-03-2025',
       temperature: 0.7,
     });
   }
@@ -111,6 +111,7 @@ export class AiService implements OnModuleInit {
     name: string;
     description: string;
     steps: { name: string; productId: string; notes: string }[];
+    suggestedProducts?: { productId: string; reason: string }[];
   }> {
     await this.loadAvailableProducts();
 
@@ -137,18 +138,31 @@ export class AiService implements OnModuleInit {
       const content = response.content.toString();
       const parsed = this.parseJsonResponse(content);
 
-      const steps = (parsed.steps || []).map((step: any, index: number) => ({
-        id: `ai_${Date.now()}_${index}`,
-        name: step.name || `Paso ${index + 1}`,
-        productId: step.productId || '',
-        notes: step.notes || '',
-        order: index,
-      }));
+      const validProductIds = new Set(this.availableProducts.map(p => p.id));
+      
+      const steps = (parsed.steps || []).map((step: any, index: number) => {
+        if (!validProductIds.has(step.productId)) {
+          this.logger.warn(`Invalid productId from AI: ${step.productId}. Skipping step.`);
+          return null;
+        }
+        return {
+          id: `ai_${Date.now()}_${index}`,
+          name: step.name || `Paso ${index + 1}`,
+          productId: step.productId,
+          notes: step.notes || '',
+          order: index,
+        };
+      }).filter(Boolean);
+
+      if (steps.length === 0) {
+        throw new Error('No valid products were returned by the AI');
+      }
 
       return {
         name: parsed.name || `Rutina ${params.type === 'am' ? 'de mañana' : 'de noche'}`,
         description: parsed.description || 'Rutina generada por IA',
-        steps,
+        steps: steps as any[],
+        suggestedProducts: [],
       };
     } catch (error) {
       this.logger.error('Error generando rutina con IA:', error);
@@ -214,7 +228,11 @@ export class AiService implements OnModuleInit {
       type?: string;
       currentSteps?: any[];
     };
-  }): Promise<{ response: string }> {
+  }): Promise<{
+    response: string;
+    recommendedProducts?: { productId: string; reason: string; otherAlternatives?: string[] }[];
+    draftUpdate?: { steps?: { productId: string; name: string; notes: string }[] };
+  }> {
     await this.loadAvailableProducts();
 
     const langchainMessages: (SystemMessage | HumanMessage)[] = [
@@ -223,7 +241,7 @@ export class AiService implements OnModuleInit {
 
     // Agregar contexto de productos disponibles
     if (this.availableProducts.length > 0) {
-      const productContext = `Productos disponibles en la tienda (muestra): ${this.formatProductsForPrompt(this.availableProducts.slice(0, 10))}`;
+      const productContext = `Productos disponibles en la tienda: ${this.formatProductsForPrompt(this.availableProducts.slice(0, 20))}`;
       langchainMessages.push(new SystemMessage(productContext));
     }
 
@@ -244,7 +262,61 @@ export class AiService implements OnModuleInit {
 
     try {
       const response = await this.chatModel.invoke(langchainMessages);
-      return { response: response.content.toString() };
+      const content = response.content.toString();
+      
+      // Parse JSON response
+      try {
+        const parsed = this.parseJsonResponse(content);
+        
+        // Validate product IDs
+        const validProductIds = new Set(this.availableProducts.map(p => p.id));
+        
+        const recommendedProducts = (parsed.recommendedProducts || [])
+          .filter((p: any) => validProductIds.has(p.productId))
+          .map((p: any) => {
+            const product = this.availableProducts.find(ap => ap.id === p.productId);
+            return {
+              productId: p.productId,
+              reason: p.reason || 'Producto recomendado',
+              product: product ? {
+                id: product.id,
+                name: product.name,
+                brand: product.brand,
+                description: product.description,
+                image_url: product.image_url,
+                skin_type: product.skin_type,
+                product_type: product.product_type,
+                category: product.category,
+              } : undefined,
+              otherAlternatives: (p.otherAlternatives || [])
+                .map((id: string) => {
+                  const alt = this.availableProducts.find(ap => ap.id === id);
+                  return alt ? {
+                    id: alt.id,
+                    name: alt.name,
+                    brand: alt.brand,
+                    image_url: alt.image_url,
+                  } : undefined;
+                })
+                .filter(Boolean)
+            };
+          }).filter((p: any) => p.product); // Only include if product was found
+        
+        const draftUpdate = parsed.draftUpdate || undefined;
+        if (draftUpdate?.steps) {
+          draftUpdate.steps = draftUpdate.steps.filter((step: any) => validProductIds.has(step.productId));
+        }
+        
+        return {
+          response: parsed.message || content,
+          recommendedProducts: recommendedProducts.length > 0 ? recommendedProducts : undefined,
+          draftUpdate
+        };
+      } catch (parseError) {
+        // If JSON parsing fails, return the raw text as message
+        this.logger.warn('Failed to parse JSON from AI response, returning as plain text');
+        return { response: content };
+      }
     } catch (error) {
       this.logger.error('Error en chat con IA:', error);
       throw new Error(`Error en la conversación: ${error.message}`);

@@ -1,5 +1,5 @@
 // API client for communicating with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export interface ApiResponse<T> {
   data: T;
@@ -272,6 +272,18 @@ export interface ChatWithAIParams {
 
 export interface ChatWithAIResponse {
   response: string;
+  recommendedProducts?: {
+    productId: string;
+    reason: string;
+    otherAlternatives?: string[];
+  }[];
+  draftUpdate?: {
+    steps?: {
+      productId: string;
+      name: string;
+      notes: string;
+    }[];
+  };
 }
 
 export async function chatWithAI(params: ChatWithAIParams): Promise<ChatWithAIResponse> {
