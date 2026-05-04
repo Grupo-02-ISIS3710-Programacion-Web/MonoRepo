@@ -230,7 +230,7 @@ export class AiService implements OnModuleInit {
     };
   }): Promise<{
     response: string;
-    recommendedProducts?: { productId: string; reason: string; otherAlternatives?: string[] }[];
+    recommendedProducts?: { productId: string; reason: string; otherAlternatives?: { id: string; reason: string }[] }[];
     draftUpdate?: { steps?: { productId: string; name: string; notes: string }[] };
   }> {
     await this.loadAvailableProducts();
@@ -268,39 +268,21 @@ export class AiService implements OnModuleInit {
       try {
         const parsed = this.parseJsonResponse(content);
         
-        // Validate product IDs
+        // Validate product IDs and return simplified response (IDs only, no product details)
         const validProductIds = new Set(this.availableProducts.map(p => p.id));
         
         const recommendedProducts = (parsed.recommendedProducts || [])
           .filter((p: any) => validProductIds.has(p.productId))
-          .map((p: any) => {
-            const product = this.availableProducts.find(ap => ap.id === p.productId);
-            return {
-              productId: p.productId,
-              reason: p.reason || 'Producto recomendado',
-              product: product ? {
-                id: product.id,
-                name: product.name,
-                brand: product.brand,
-                description: product.description,
-                image_url: product.image_url,
-                skin_type: product.skin_type,
-                product_type: product.product_type,
-                category: product.category,
-              } : undefined,
-              otherAlternatives: (p.otherAlternatives || [])
-                .map((id: string) => {
-                  const alt = this.availableProducts.find(ap => ap.id === id);
-                  return alt ? {
-                    id: alt.id,
-                    name: alt.name,
-                    brand: alt.brand,
-                    image_url: alt.image_url,
-                  } : undefined;
-                })
-                .filter(Boolean)
-            };
-          }).filter((p: any) => p.product); // Only include if product was found
+          .map((p: any) => ({
+            productId: p.productId,
+            reason: p.reason || 'Producto recomendado',
+            otherAlternatives: (p.otherAlternatives || [])
+              .filter((alt: any) => validProductIds.has(alt.id))
+              .map((alt: any) => ({
+                id: alt.id,
+                reason: alt.reason || 'Alternativa recomendada',
+              })),
+          }));
         
         const draftUpdate = parsed.draftUpdate || undefined;
         if (draftUpdate?.steps) {

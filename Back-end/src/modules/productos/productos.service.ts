@@ -96,6 +96,11 @@ export class ProductosService implements OnModuleInit {
     return await this.productoModel.findById(id).exec();
   }
 
+  async findByIds(ids: string[]): Promise<Producto[]> {
+    if (!ids || ids.length === 0) return [];
+    return await this.productoModel.find({ _id: { $in: ids }, deleted: false }).exec();
+  }
+
   async update(
     id: string,
     updateProductoDto: UpdateProductoDto,

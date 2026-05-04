@@ -275,7 +275,7 @@ export interface ChatWithAIResponse {
   recommendedProducts?: {
     productId: string;
     reason: string;
-    otherAlternatives?: string[];
+    otherAlternatives?: { id: string; reason: string }[];
   }[];
   draftUpdate?: {
     steps?: {
@@ -290,6 +290,13 @@ export async function chatWithAI(params: ChatWithAIParams): Promise<ChatWithAIRe
   return apiFetch('/ai/agent/chat', {
     method: 'POST',
     body: JSON.stringify(params),
+  });
+}
+
+export async function fetchProductsBatch(productIds: string[]): Promise<any[]> {
+  return apiFetch('/productos/batch', {
+    method: 'POST',
+    body: JSON.stringify({ productIds }),
   });
 }
 

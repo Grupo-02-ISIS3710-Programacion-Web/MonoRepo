@@ -89,7 +89,9 @@ Siempre responde en formato JSON válido con la siguiente estructura:
     {
       "productId": "ID_del_producto",
       "reason": "Por qué recomiendas este producto",
-      "otherAlternatives": ["ID1", "ID2"]
+      "otherAlternatives": [
+        { "id": "ID_alternativa_1", "reason": "Razón breve para esta alternativa" }
+      ]
     }
   ],
   "draftUpdate": {

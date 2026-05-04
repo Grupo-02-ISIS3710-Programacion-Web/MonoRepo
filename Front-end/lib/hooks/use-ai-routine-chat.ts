@@ -3,13 +3,13 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { getProducts } from "@/lib/api";
 import { Product, SkinType } from "@/types/product";
 import { Routine, RoutineStep } from "@/types/routine";
 import {
   generateRoutineWithAI,
   suggestProductsWithAI,
   chatWithAI as chatWithAI_API,
+  fetchProductsBatch,
   ChatMessage,
 } from "@/lib/api-client";
 
@@ -22,7 +22,7 @@ export type AiRoutineMessage = Readonly<{
   recommendedProducts?: {
     productId: string;
     reason: string;
-    otherAlternatives?: string[];
+    otherAlternatives?: { id: string; reason: string }[];
     product?: Product;
     alternativesDetails?: Product[];
   }[];
@@ -78,7 +78,6 @@ const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[
 
 export function useAiRoutineChat(userId: string, userName: string) {
   const t = useTranslations("AiRoutine");
-  const products = useMemo(() => getProducts(), []);
 
   const [inputValue, setInputValue] = useState("");
   const [selectedFocusAreaIds, setSelectedFocusAreaIds] = useState<string[]>([
@@ -299,18 +298,55 @@ export function useAiRoutineChat(userId: string, userName: string) {
         },
       });
 
-      // Simply pass through the backend response - products already populated!
+      // Resolve product details via batch endpoint
+      let resolvedProducts = response.recommendedProducts;
+      if (response.recommendedProducts && response.recommendedProducts.length > 0) {
+        const allIds = [
+          ...response.recommendedProducts.map((r) => r.productId),
+          ...response.recommendedProducts
+            .flatMap((r) => r.otherAlternatives?.map((a) => a.id) ?? []),
+        ];
+        const uniqueIds = [...new Set(allIds)];
+
+        if (uniqueIds.length > 0) {
+          try {
+            const batchResult = await fetchProductsBatch(uniqueIds);
+            const productMap = new Map(batchResult.map((p) => [p._id?.toString() || p.id, p]));
+
+            resolvedProducts = response.recommendedProducts.map((rec) => {
+              const product = productMap.get(rec.productId);
+              const alternativesDetails = (rec.otherAlternatives ?? [])
+                .map((alt) => productMap.get(alt.id))
+                .filter(Boolean);
+
+              return {
+                productId: rec.productId,
+                reason: rec.reason,
+                otherAlternatives: rec.otherAlternatives,
+                product: product ? { ...product, id: product._id?.toString() || product.id } : undefined,
+                alternativesDetails: alternativesDetails.map((a) => ({
+                  ...a,
+                  id: a._id?.toString() || a.id,
+                })),
+              };
+            }).filter((r) => r.product);
+          } catch (error) {
+            console.error("Error resolving product details:", error);
+          }
+        }
+      }
+
       const assistantMessage: AiRoutineMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content: response.response,
-        recommendedProducts: response.recommendedProducts && response.recommendedProducts.length > 0
-          ? response.recommendedProducts.map((rec: any) => ({
-              productId: rec.productId || rec.product?.id || "",
-              reason: rec.reason || "",
-              // Map backend otherAlternatives (with product details) to alternativesDetails
-              alternativesDetails: rec.otherAlternatives || [],
+        recommendedProducts: resolvedProducts && resolvedProducts.length > 0
+          ? resolvedProducts.map((rec: any) => ({
+              productId: rec.productId,
+              reason: rec.reason,
+              otherAlternatives: rec.otherAlternatives,
               product: rec.product,
+              alternativesDetails: rec.alternativesDetails,
             }))
           : undefined,
       };

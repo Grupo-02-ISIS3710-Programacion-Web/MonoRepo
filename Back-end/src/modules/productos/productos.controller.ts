@@ -12,6 +12,7 @@ import { ApiBody } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
+import { BatchProductoDto } from './dto/batch-producto.dto';
 
 @Controller('productos')
 export class ProductosController {
@@ -81,5 +82,22 @@ export class ProductosController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.productosService.remove(id);
+  }
+
+  @Post('batch')
+  @ApiBody({
+    type: BatchProductoDto,
+    examples: {
+      ejemplo: {
+        summary: 'Fetch multiple products by ID',
+        value: {
+          productIds: ['69f8832d56dcaa1b4eb44a30', '69f8832d56dcaa1b4eb44a27'],
+        },
+      },
+    },
+  })
+  async findBatch(@Body() body: BatchProductoDto) {
+    const products = await this.productosService.findByIds(body.productIds);
+    return products;
   }
 }
