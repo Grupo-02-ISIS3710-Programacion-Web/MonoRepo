@@ -50,8 +50,6 @@ jest.mock("@/lib/hooks/use-ai-routine-chat", () => ({
     focusAreas: [],
     selectedFocusAreaIds: [],
     routineDraft: { steps: [] },
-    recommendedProducts: [],
-    continuousRecommendations: [],
     appendPrompt: jest.fn(),
     applyStarterPrompt: mockApplyStarterPrompt,
     toggleFocusArea: jest.fn(),
@@ -108,11 +106,6 @@ jest.mock("@/components/ai-routine/StarterPromptsPanel", () => ({
 jest.mock("@/components/ai-routine/DraftEditor", () => ({
   __esModule: true,
   default: () => <div>Mocked DraftEditor</div>,
-}));
-
-jest.mock("@/components/ai-routine/SuggestionsSheetContent", () => ({
-  __esModule: true,
-  default: () => <div>Mocked SuggestionsSheetContent</div>,
 }));
 
 describe("AiRoutineWorkspace", () => {

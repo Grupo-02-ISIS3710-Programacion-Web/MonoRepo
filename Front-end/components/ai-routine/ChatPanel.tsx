@@ -51,7 +51,7 @@ export default function ChatPanel({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, ease: "easeOut", delay: Math.min(index * 0.03, 0.12) }}
-                  className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
+                  className={`flex ${isAssistant ? "justify-start" : "justify-end"} mb-4`}
                 >
                   <div
                     className={`max-w-[88%] rounded-3xl border px-4 py-3 ${isAssistant

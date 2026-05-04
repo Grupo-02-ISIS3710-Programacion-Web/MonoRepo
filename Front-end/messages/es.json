@@ -226,8 +226,7 @@
         "title": "Crea una rutina conversando con IA",
         "description": "Describe lo que buscas, ajusta el borrador en tiempo real y selecciona productos que ya existen dentro de Skin4All.",
         "headerActions": {
-            "manualBuilder": "Abrir constructor manual",
-            "suggestions": "Ver sugerencias"
+            "manualBuilder": "Abrir constructor manual"
         },
         "suggestionsSheet": {
             "title": "Sugerencias",
@@ -300,12 +299,7 @@
             "routineGenerated": "¡Rutina generada exitosamente! Revisa el borrador y ajusta lo que necesites.",
             "errorGenerating": "Error al generar la rutina. Por favor, intenta nuevamente."
         },
-        "messages": {
-            "assistantIntro": "Hola {name}, cuéntame qué quieres mejorar y te iré guiando hacia una rutina más precisa.",
-            "userGoal": "Quiero una rutina simple que me ayude con deshidratación, sensibilidad y textura irregular.",
-            "assistantFollowUp": "Perfecto. Empezaré con una propuesta base y luego podremos seguir ajustando productos, pasos y notas desde esta misma conversación.",
-            "pendingReply": "Respuesta simulada: aquí aparecerá la siguiente iteración del asistente cuando se conecte la lógica con el LLM."
-        },
+
         "draft": {
             "title": "Borrador de rutina",
             "description": "Este panel representa una estructura real del tipo Routine: nombre, descripción, tipo, tipo de piel y pasos con productos existentes.",

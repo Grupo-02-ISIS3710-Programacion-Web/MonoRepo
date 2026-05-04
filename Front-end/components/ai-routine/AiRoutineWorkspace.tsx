@@ -20,20 +20,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import ChatPanel from "@/components/ai-routine/ChatPanel";
 import DraftEditor from "@/components/ai-routine/DraftEditor";
 import StarterPromptsPanel from "@/components/ai-routine/StarterPromptsPanel";
-import SuggestionsSheetContent from "@/components/ai-routine/SuggestionsSheetContent";
 
 type AiRoutineWorkspaceProps = Readonly<{ user: User }>;
 
@@ -54,8 +43,6 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
-    recommendedProducts,
-    continuousRecommendations,
     appendPrompt,
     applyStarterPrompt,
     toggleFocusArea,
@@ -104,15 +91,6 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
     }
   };
 
-  const handleSuggestedProductToggle = (product: typeof recommendedProducts[number]) => {
-    const isSelected = routineDraft.steps.some((step) => step.productId === product.id);
-    toggleProductInRoutine(product);
-
-    if (!isSelected) {
-      toast.success(t("recommendedProducts.toast.added", { name: product.name }));
-    }
-  };
-
   if (isInitializing) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
@@ -139,41 +117,33 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
               <Button asChild variant="outline">
                 <Link href="/routine/crear">{t("headerActions.manualBuilder")}</Link>
               </Button>
-
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button type="button" variant="outline">
-                    {t("headerActions.suggestions")}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
-                  <SheetHeader>
-                    <SheetTitle>{t("suggestionsSheet.title")}</SheetTitle>
-                    <SheetDescription>{t("suggestionsSheet.description")}</SheetDescription>
-                  </SheetHeader>
-                  <div className="px-4 pb-6">
-                    <SuggestionsSheetContent
-                      recommendedProducts={recommendedProducts}
-                      routineDraft={routineDraft}
-                      continuousRecommendations={continuousRecommendations}
-                      appendPrompt={appendPrompt}
-                      onToggleSuggestedProduct={handleSuggestedProductToggle}
-                      t={t}
-                    />
-                  </div>
-                  <SheetFooter className="border-t pt-4">
-                    <SheetClose asChild>
-                      <Button type="button" variant="outline">Close</Button>
-                    </SheetClose>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 overflow-hidden px-4 py-4 md:px-8 md:py-5 lg:gap-8">
+      <div className="mx-auto flex w-full max-w-[1400px] flex-1 gap-6 overflow-hidden px-2 py-4 md:px-4 md:py-5 lg:gap-8">
+        <div className="hidden md:flex md:w-[500px] md:flex-shrink-0">
+          <div className="flex w-full flex-col overflow-hidden rounded-2xl border bg-card">
+            <div className="overflow-y-auto p-5">
+              <DraftEditor
+                title={t("draft.title")}
+                description={t("draft.description")}
+                continueLabel={t("draft.actions.continue")}
+                routineDraft={routineDraft}
+                t={t}
+                tSkin={tSkin}
+                updateRoutineField={updateRoutineField}
+                updateStepName={updateStepName}
+                updateStepNotes={updateStepNotes}
+                moveStep={moveStep}
+                removeStep={removeStep}
+                onContinue={handleSaveRoutine}
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden">
           {messages.length > 0 ? (
             <div className="flex min-w-0 flex-1 flex-col min-h-0">
@@ -210,27 +180,6 @@ export default function AiRoutineWorkspace({ user }: AiRoutineWorkspaceProps) {
               />
             </>
           )}
-        </div>
-
-        <div className="hidden md:flex md:w-[380px] md:flex-shrink-0">
-          <div className="flex w-full flex-col overflow-hidden rounded-2xl border bg-card">
-            <div className="overflow-y-auto p-5">
-              <DraftEditor
-                title={t("draft.title")}
-                description={t("draft.description")}
-                continueLabel={t("draft.actions.continue")}
-                routineDraft={routineDraft}
-                t={t}
-                tSkin={tSkin}
-                updateRoutineField={updateRoutineField}
-                updateStepName={updateStepName}
-                updateStepNotes={updateStepNotes}
-                moveStep={moveStep}
-                removeStep={removeStep}
-                onContinue={handleSaveRoutine}
-              />
-            </div>
-          </div>
         </div>
       </div>
 

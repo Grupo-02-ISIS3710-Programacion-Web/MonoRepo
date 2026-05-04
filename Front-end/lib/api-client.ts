@@ -205,56 +205,6 @@ export async function deleteComment(id: string) {
 }
 
 // AI API - Functions for AI-powered routine generation
-
-export interface GenerateRoutineParams {
-  userId: string;
-  skinType: string;
-  type: 'am' | 'pm';
-  concerns?: string[];
-  stepCount?: number;
-  preferredProductIds?: string[];
-}
-
-export interface GenerateRoutineResponse {
-  name: string;
-  description: string;
-  steps: {
-    id: string;
-    name: string;
-    productId: string;
-    notes: string;
-    order: number;
-  }[];
-}
-
-export async function generateRoutineWithAI(params: GenerateRoutineParams): Promise<GenerateRoutineResponse> {
-  return apiFetch('/ai/routines/generate', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
-}
-
-export interface SuggestProductsParams {
-  skinType: string;
-  stepName: string;
-  category?: string;
-  concerns?: string[];
-}
-
-export interface SuggestProductsResponse {
-  suggestions: {
-    productId: string;
-    reason: string;
-  }[];
-}
-
-export async function suggestProductsWithAI(params: SuggestProductsParams): Promise<SuggestProductsResponse> {
-  return apiFetch('/ai/products/suggest', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
-}
-
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -315,25 +265,6 @@ export function normalizeProduct(doc: any): any {
     rating: doc.rating ?? 0,
     review_count: doc.review_count ?? 0,
   };
-}
-
-export interface SearchWithAIParams {
-  query: string;
-  skinType?: string;
-}
-
-export interface SearchWithAIResponse {
-  results: {
-    product: any;
-    relevance: string;
-  }[];
-}
-
-export async function searchWithAI(params: SearchWithAIParams): Promise<SearchWithAIResponse> {
-  return apiFetch('/ai/agent/search', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
 }
 
 // AI Chat Persistence API

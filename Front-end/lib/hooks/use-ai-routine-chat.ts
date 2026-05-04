@@ -6,8 +6,6 @@ import { toast } from "sonner";
 import { Product, SkinType } from "@/types/product";
 import { Routine, RoutineStep } from "@/types/routine";
 import {
-  generateRoutineWithAI,
-  suggestProductsWithAI,
   chatWithAI as chatWithAI_API,
   fetchProductsBatch,
   ChatMessage,
@@ -46,13 +44,6 @@ export type AiRoutineFocusArea = Readonly<{
   label: string;
 }>;
 
-export type AiRoutineContinuousRecommendation = Readonly<{
-  id: string;
-  title: string;
-  description: string;
-  prompt: string;
-}>;
-
 const starterPromptIds = [
   "hydration",
   "breakouts",
@@ -65,12 +56,6 @@ const focusAreaIds = [
   "barrier",
   "texture",
   "sensitivity",
-] as const;
-
-const continuousRecommendationIds = [
-  "adjustFrequency",
-  "swapTexture",
-  "simplifyNight",
 ] as const;
 
 const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[]> = {
@@ -116,8 +101,6 @@ export function useAiRoutineChat(
       content: t("messages.assistantIntro", { name: userName }),
     },
   ]);
-
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
   const draftSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -276,17 +259,6 @@ export function useAiRoutineChat(
       focusAreaIds.map((id) => ({
         id,
         label: t(`focusAreas.items.${id}`),
-      })),
-    [t],
-  );
-
-  const continuousRecommendations = useMemo<AiRoutineContinuousRecommendation[]>(
-    () =>
-      continuousRecommendationIds.map((id) => ({
-        id,
-        title: t(`continuousRecommendations.items.${id}.title`),
-        description: t(`continuousRecommendations.items.${id}.description`),
-        prompt: t(`continuousRecommendations.items.${id}.prompt`),
       })),
     [t],
   );
@@ -551,21 +523,6 @@ export function useAiRoutineChat(
     }
   }, [inputValue, isLoading, messages, userId, routineDraft, t, activeChatId, selectedFocusAreaIds, router]);
 
-  const getProductSuggestions = useCallback(async (stepName: string, category?: string) => {
-    try {
-      const suggestions = await suggestProductsWithAI({
-        skinType: routineDraft.skinType,
-        stepName,
-        category,
-        concerns: selectedFocusAreaIds,
-      });
-      return suggestions.suggestions || [];
-    } catch (error) {
-      console.error("Error sugiriendo productos:", error);
-      return [];
-    }
-  }, [routineDraft.skinType, selectedFocusAreaIds]);
-
   const addProductToRoutine = useCallback((product: Product, stepName?: string, notes?: string) => {
     setRoutineDraft((current) => {
       const alreadyInRoutine = current.steps.some(step => step.productId === product.id);
@@ -602,8 +559,6 @@ export function useAiRoutineChat(
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
-    recommendedProducts,
-    continuousRecommendations,
     activeChatId,
     appendPrompt,
     applyStarterPrompt,

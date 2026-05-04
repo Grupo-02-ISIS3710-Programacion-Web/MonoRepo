@@ -285,14 +285,14 @@
         "composer": {
             "label": "Tell the AI what you want to achieve",
             "placeholder": "Describe your concerns, ingredients you want to use or avoid, budget, time available, and any relevant preferences...",
-            "hint": "This screen currently simulates the final experience. The real LLM logic will be integrated later.",
+            "hint": "Write your message and press Send to chat with the AI.",
             "send": "Send"
         },
         "messages": {
             "assistantIntro": "Hi {name}, tell me what you want to improve and I will help shape a more precise routine.",
             "userGoal": "I want a simple routine that helps with dehydration, sensitivity, and uneven texture.",
             "assistantFollowUp": "Perfect. I will start from a base proposal and then we can keep adjusting products, steps, and notes from this conversation.",
-            "pendingReply": "Preview response: the assistant's next iteration will appear here once the LLM logic is connected.",
+            "pendingReply": "Processing response...",
             "routineGenerated": "Routine generated successfully! Review the draft and adjust as needed.",
             "errorGenerating": "Error generating routine. Please try again."
         },

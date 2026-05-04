@@ -27,7 +27,7 @@ export default function ChatProductRecommendation({
   stepName,
   notes
 }: ProductRecommendationProps) {
-  const [showAlternatives, setShowAlternatives] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(true);
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAdd = () => {
@@ -75,7 +75,7 @@ export default function ChatProductRecommendation({
                 {getFirstCategory(product.category)}
               </Badge>
             )}
-            <p className="mt-1 text-xs text-muted-foreground italic truncate">"{reason}"</p>
+            <p className="mt-1 text-xs text-muted-foreground italic">"{reason}"</p>
             
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               {!isAdded ? (
@@ -134,7 +134,7 @@ export default function ChatProductRecommendation({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{alt.name}</p>
+                    <p className="text-xs font-medium">{alt.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{alt.brand}</p>
                   </div>
                   <Button 
