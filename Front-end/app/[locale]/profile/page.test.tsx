@@ -5,6 +5,7 @@ import Profile from "./page";
 // mocks
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "es",
 }));
 
 jest.mock("next/link", () => ({
@@ -34,6 +35,18 @@ const mockSession = {
 
 jest.mock("@/lib/hooks/use-auth-session", () => ({
   useAuthSession: () => mockSession,
+}));
+
+jest.mock("@/lib/api", () => ({
+  getProducts: () => [],
+}));
+
+jest.mock("@/lib/api-client", () => ({
+  fetchRoutinesByUserId: jest.fn(() => Promise.resolve({ routines: [] })),
+}));
+
+jest.mock("@/lib/protected-route", () => ({
+  getProtectedRoute: (path: string) => path,
 }));
 
 describe("HU-03: Profile Page", () => {

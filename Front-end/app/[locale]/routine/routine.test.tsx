@@ -118,6 +118,24 @@ jest.mock("@/lib/api", () => ({
     getProducts: () => mockedProducts,
 }));
 
+jest.mock("@/lib/api-client", () => ({
+    fetchRoutineById: jest.fn(() => Promise.resolve({
+        id: "r1",
+        userId: "u1",
+        name: "Rutina básica de mañana",
+        description: "Rutina sencilla de 3 pasos para comenzar el día con la piel limpia e hidratada.",
+        type: "am",
+        skinType: "normal",
+        steps: [
+            { id: "s1", name: "Paso 1", order: 0, productId: "12", notes: "Nota 1" },
+            { id: "s2", name: "Paso 2", order: 1, productId: "5", notes: "Nota 2" },
+        ],
+    })),
+    createRoutine: jest.fn(() => Promise.resolve({})),
+    updateRoutine: jest.fn(() => Promise.resolve({})),
+    deleteRoutine: jest.fn(() => Promise.resolve({})),
+}));
+
 jest.mock("@/lib/hooks/use-auth-session", () => ({
     useAuthSession: () => mockSession,
 }));
@@ -143,6 +161,10 @@ jest.mock("sonner", () => ({
         error: jest.fn(),
         info: jest.fn(),
     },
+}));
+
+jest.mock("@/lib/protected-route", () => ({
+    getProtectedRoute: (path: string) => path,
 }));
 
 describe("HU-04: Gestionar mis rutinas", () => {
@@ -223,13 +245,15 @@ describe("HU-04: Gestionar mis rutinas", () => {
         });
     });
 
-    test("Dado que elimino una rutina desde perfil, cuando confirmo en el dialogo, entonces la rutina desaparece de la lista", () => {
+    test("Dado que elimino una rutina desde perfil, cuando confirmo en el dialogo, entonces la rutina desaparece de la lista", async () => {
         render(<RoutineContent filteredRoutines={[mockRoutines[0]]} />);
 
         fireEvent.click(screen.getByTitle("RoutineContent.deleteDialog.title"));
         fireEvent.click(screen.getByRole("button", { name: "RoutineContent.deleteDialog.delete" }));
 
-        expect(screen.queryByText("Morning Basic")).not.toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.queryByText("Morning Basic")).not.toBeInTheDocument();
+        });
     });
 });
 
