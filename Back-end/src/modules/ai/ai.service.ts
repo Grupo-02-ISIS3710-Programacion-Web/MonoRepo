@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ChatCohere } from '@langchain/cohere';
+import { ChatCohere, CohereEmbeddings } from '@langchain/cohere';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { Rutina } from '../rutinas/entities/rutina.entity';
 import { Producto } from '../productos/entities/producto.entity';
@@ -16,15 +16,22 @@ import {
 export class AiService implements OnModuleInit {
   private readonly logger = new Logger(AiService.name);
   private chatModel: ChatCohere;
+  private embeddings: CohereEmbeddings;
   private availableProducts: any[] = [];
 
   constructor(
     private configService: ConfigService,
     @InjectModel('Rutina') private rutinaModel: Model<Rutina>,
     @InjectModel('Producto') private productoModel: Model<Producto>,
-  ) {}
+    @InjectModel('SkinTypeCatalog')
+    private readonly skinTypeCatalogModel: Model<any>,
+    @InjectModel('ProductTypeCatalog')
+    private readonly productTypeCatalogModel: Model<any>,
+    @InjectModel('CategoryCatalog')
+    private readonly categoryCatalogModel: Model<any>,
+  ) { }
 
-  onModuleInit() {
+  async onModuleInit() {
     const apiKey = this.configService.get<string>('COHERE_API_KEY');
     if (!apiKey) {
       this.logger.error('COHERE_API_KEY no está configurada en las variables de entorno');
@@ -36,6 +43,19 @@ export class AiService implements OnModuleInit {
       model: 'command-a-03-2025',
       temperature: 0.7,
     });
+
+    this.embeddings = new CohereEmbeddings({
+      apiKey: apiKey,
+      model: 'embed-v4.0',
+    });
+
+    this.logger.log('Sincronizando embeddings de productos...');
+    try {
+      const result = await this.syncProductEmbeddings();
+      this.logger.log(`Embeddings sincronizados: ${result.synced} nuevos, ${result.skipped} con error`);
+    } catch (error) {
+      this.logger.error('Error sincronizando embeddings en init:', error.message);
+    }
   }
 
   /**
@@ -117,7 +137,7 @@ export class AiService implements OnModuleInit {
 
     const filteredProducts = this.availableProducts.filter(p => {
       const matchesSkinType = p.skin_type?.includes(params.skinType) || p.skin_type?.includes('all');
-      const matchesPreferred = !params.preferredProductIds?.length || 
+      const matchesPreferred = !params.preferredProductIds?.length ||
         params.preferredProductIds.includes(p.id);
       return matchesSkinType && matchesPreferred;
     });
@@ -139,7 +159,7 @@ export class AiService implements OnModuleInit {
       const parsed = this.parseJsonResponse(content);
 
       const validProductIds = new Set(this.availableProducts.map(p => p.id));
-      
+
       const steps = (parsed.steps || []).map((step: any, index: number) => {
         if (!validProductIds.has(step.productId)) {
           this.logger.warn(`Invalid productId from AI: ${step.productId}. Skipping step.`);
@@ -263,32 +283,35 @@ export class AiService implements OnModuleInit {
     try {
       const response = await this.chatModel.invoke(langchainMessages);
       const content = response.content.toString();
-      
+
       // Parse JSON response
       try {
         const parsed = this.parseJsonResponse(content);
-        
+
         // Validate product IDs and return simplified response (IDs only, no product details)
         const validProductIds = new Set(this.availableProducts.map(p => p.id));
-        
+
         const recommendedProducts = (parsed.recommendedProducts || [])
           .filter((p: any) => validProductIds.has(p.productId))
-          .map((p: any) => ({
-            productId: p.productId,
-            reason: p.reason || 'Producto recomendado',
-            otherAlternatives: (p.otherAlternatives || [])
+          .map((p: any) => {
+            const alternatives = (p.otherAlternatives || [])
               .filter((alt: any) => validProductIds.has(alt.id))
               .map((alt: any) => ({
                 id: alt.id,
                 reason: alt.reason || 'Alternativa recomendada',
-              })),
-          }));
-        
+              }));
+            return {
+              productId: p.productId,
+              reason: p.reason || 'Producto recomendado',
+              otherAlternatives: alternatives,
+            };
+          });
+
         const draftUpdate = parsed.draftUpdate || undefined;
         if (draftUpdate?.steps) {
           draftUpdate.steps = draftUpdate.steps.filter((step: any) => validProductIds.has(step.productId));
         }
-        
+
         return {
           response: parsed.message || content,
           recommendedProducts: recommendedProducts.length > 0 ? recommendedProducts : undefined,
@@ -305,57 +328,167 @@ export class AiService implements OnModuleInit {
     }
   }
 
-  /**
-   * Búsqueda inteligente de productos usando IA
-   */
-  async searchWithAI(query: string, skinType?: string): Promise<{ results: any[] }> {
-    await this.loadAvailableProducts();
+  // Helper methods for embeddings
+  private async loadCatalogCodes(model: Model<any>, ids: number[]): Promise<string[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+    const docs = await model.find({ _id: { $in: ids } }).exec();
+    return docs.map(doc => doc.code);
+  }
 
-    let searchProducts = this.availableProducts;
-    if (skinType) {
-      searchProducts = searchProducts.filter(
-        p => p.skin_type?.includes(skinType) || p.skin_type?.includes('all')
+  private async generateEmbeddingText(product: any): Promise<string> {
+    const categoryCodes = await this.loadCatalogCodes(
+      this.categoryCatalogModel,
+      product.category || [],
+    );
+
+    const skinTypeCodes = await this.loadCatalogCodes(
+      this.skinTypeCatalogModel,
+      product.skin_type || [],
+    );
+
+    let productTypeCode = product.product_type;
+    if (typeof product.product_type === 'number') {
+      const productTypeCodes = await this.loadCatalogCodes(
+        this.productTypeCatalogModel,
+        [product.product_type],
       );
+      productTypeCode = productTypeCodes[0] || product.product_type;
     }
 
-    const productList = this.formatProductsForPrompt(searchProducts.slice(0, 30));
+    const ingredients = (product.ingredients || []).join(', ');
 
-    const prompt = `
-El usuario busca: "${query}"
+    return `Name: ${product.name || ''}
+Brand: ${product.brand || ''}
+Description: ${product.description || ''}
+Product Type: ${productTypeCode || ''}
+Categories: ${categoryCodes.join(', ')}
+Skin Types: ${skinTypeCodes.join(', ')}
+Key Ingredients: ${ingredients}`;
+  }
 
-Productos disponibles:
-${productList}
+  // Embedding methods
+  async generateProductEmbedding(product: any): Promise<number[]> {
+    const text = await this.generateEmbeddingText(product);
+    const embedding = await this.embeddings.embedQuery(text);
+    return embedding;
+  }
 
-Instrucciones: Selecciona los 5 productos más relevantes para la búsqueda del usuario.
-Responde SOLO en formato JSON:
+  async syncProductEmbeddings(): Promise<{ synced: number; skipped: number }> {
+    let synced = 0;
+    let skipped = 0;
 
-{
-  "results": [
-    {
-      "productId": "ID del producto",
-      "relevance": "Por qué es relevante para la búsqueda"
+    const products = await this.productoModel.find({
+      $or: [
+        { embedding: { $exists: false } },
+        { embedding: { $size: 0 } },
+        { embedding: null },
+      ],
+      deleted: { $ne: true },
+    }).exec();
+
+    for (const product of products) {
+      try {
+        const embedding = await this.generateProductEmbedding(product);
+        await this.productoModel.findByIdAndUpdate(product._id, {
+          $set: { embedding: embedding },
+        }).exec();
+        synced++;
+      } catch (error) {
+        this.logger.error(`Error generating embedding for product ${product._id}:`, error);
+        skipped++;
+      }
     }
-  ]
-}
-`;
 
-    try {
-      const response = await this.chatModel.invoke([new HumanMessage(prompt)]);
-      const content = response.content.toString();
-      const parsed = this.parseJsonResponse(content);
+    return { synced, skipped };
+  }
 
-      const results = (parsed.results || []).map((r: any) => {
-        const product = this.availableProducts.find(p => p.id === r.productId);
-        return {
-          product: product || null,
-          relevance: r.relevance || 'Producto coincidente',
-        };
-      }).filter((r: any) => r.product !== null);
+  async searchWithVectorSearch(query: string, skinType?: string, limit: number = 10): Promise<any[]> {
+    const queryEmbedding = await this.embeddings.embedQuery(query);
 
-      return { results: results.slice(0, 5) };
-    } catch (error) {
-      this.logger.error('Error en búsqueda con IA:', error);
-      return { results: [] };
+    let skinTypeId: number | undefined;
+    if (skinType) {
+      const skinTypeDoc = await this.skinTypeCatalogModel.findOne({ code: skinType }).exec();
+      skinTypeId = skinTypeDoc?._id;
     }
+
+    const pipeline: any[] = [
+      {
+        $vectorSearch: {
+          index: 'product_embedding_index',
+          path: 'embedding',
+          queryVector: queryEmbedding,
+          numCandidates: 200,
+          limit: limit,
+          filter: {
+            deleted: false,
+            ...(skinTypeId ? { skin_type: skinTypeId } : {}),
+          },
+        },
+      },
+    ];
+
+    const results = await this.productoModel.aggregate(pipeline).exec();
+
+    const [skinTypes, productTypes, categories] = await Promise.all([
+      this.skinTypeCatalogModel.find().lean().exec(),
+      this.productTypeCatalogModel.find().lean().exec(),
+      this.categoryCatalogModel.find().lean().exec(),
+    ]);
+
+    const skinTypeMap = new Map(skinTypes.map((s) => [s._id, s.code]));
+    const productTypeMap = new Map(productTypes.map((p) => [p._id, p.code]));
+    const categoryMap = new Map(categories.map((c) => [c._id, c.code]));
+
+    return results.map((r) => ({
+      id: r._id?.toString(),
+      name: r.name,
+      brand: r.brand,
+      description: r.description,
+      skin_type: (r.skin_type || []).map((id: number) => skinTypeMap.get(id) || id),
+      product_type: productTypeMap.get(r.product_type) || r.product_type,
+      category: (r.category || []).map((id: number) => categoryMap.get(id) || id),
+      ingredients: r.ingredients || [],
+      image_url: r.image_url || [],
+      rating: r.rating ?? 0,
+      review_count: r.review_count ?? 0,
+    }));
+  }
+
+  /**
+   * Búsqueda inteligente de productos usando Vector Search e IA
+   */
+  async searchWithAI(query: string, skinType?: string) {
+    const vectorResults = await this.searchWithVectorSearch(query, skinType, 10);
+
+    // For each result, generate relevance explanation using the LLM
+    const results = await Promise.all(
+      vectorResults.map(async (product: any) => {
+        const relevancePrompt = `El usuario busca: "${query}"
+
+Este producto fue encontrado como relevante:
+- Nombre: ${product.name}
+- Marca: ${product.brand}
+- Descripción: ${product.description}
+- Tipo de piel: ${product.skin_type?.join(', ') || ''}
+
+Explica brevemente (1-2 oraciones) por qué este producto es relevante para la búsqueda del usuario. Responde en español.`;
+
+        try {
+          const relevanceResponse = await this.chatModel.invoke([
+            new HumanMessage(relevancePrompt),
+          ]);
+          return {
+            product,
+            relevance: relevanceResponse.content.toString(),
+          };
+        } catch (err) {
+          return { product, relevance: 'Producto relevante para tu búsqueda.' };
+        }
+      }),
+    );
+
+    return { results };
   }
 }

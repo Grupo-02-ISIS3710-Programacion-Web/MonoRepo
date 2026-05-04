@@ -8,7 +8,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
@@ -43,8 +43,14 @@ export class ProductosController {
   }
 
   @Get()
-  findAll() {
-    return this.productosService.findAll();
+  @ApiQuery({
+    name: 'includeEmbeddings',
+    required: false,
+    type: Boolean,
+    description: 'Include the embedding vector in the response (default: false)',
+  })
+  findAll(@Query('includeEmbeddings') includeEmbeddings?: string) {
+    return this.productosService.findAll(includeEmbeddings === 'true');
   }
 
   @Get('catalogos')
@@ -53,8 +59,14 @@ export class ProductosController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productosService.findOne(id);
+  @ApiQuery({
+    name: 'includeEmbeddings',
+    required: false,
+    type: Boolean,
+    description: 'Include the embedding vector in the response (default: false)',
+  })
+  findOne(@Param('id') id: string, @Query('includeEmbeddings') includeEmbeddings?: string) {
+    return this.productosService.findOne(id, includeEmbeddings === 'true');
   }
 
   @Patch(':id')

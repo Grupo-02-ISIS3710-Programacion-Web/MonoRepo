@@ -279,7 +279,6 @@
         "chat": {
             "title": "Chat",
             "description": "Ask for changes, request adjustments, and refine the routine step by step.",
-            "status": "Experience ready for AI integration",
             "assistantLabel": "Skin4All AI",
             "userLabel": "{name}"
         },

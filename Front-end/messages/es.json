@@ -280,7 +280,6 @@
         "chat": {
             "title": "Chat",
             "description": "Haz preguntas, pide ajustes y sigue afinando la rutina paso a paso.",
-            "status": "Experiencia lista para conectar con IA",
             "assistantLabel": "Skin4All AI",
             "userLabel": "{name}"
         },

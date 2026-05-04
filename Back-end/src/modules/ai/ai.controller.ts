@@ -150,4 +150,36 @@ export class AiController {
       );
     }
   }
+
+  @Post('products/sync-embeddings')
+  @ApiOperation({
+    summary: 'Sincronizar embeddings de productos',
+    description: 'Genera embeddings vectoriales para todos los productos que no los tienen. Se ejecuta automáticamente al iniciar la aplicación.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Embeddings sincronizados',
+    schema: {
+      example: {
+        message: 'Embeddings sincronizados correctamente',
+        synced: 42,
+        skipped: 0,
+      }
+    }
+  })
+  async syncProductEmbeddings() {
+    try {
+      const result = await this.aiService.syncProductEmbeddings();
+      return {
+        message: 'Embeddings sincronizados correctamente',
+        synced: result.synced,
+        skipped: result.skipped,
+      };
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error sincronizando embeddings', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 }

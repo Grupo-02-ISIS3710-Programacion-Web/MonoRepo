@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductosService } from './productos.service';
 import { ProductosController } from './productos.controller';
@@ -8,6 +8,7 @@ import {
   SkinTypeCatalogSchema,
 } from 'src/schema/catalog.schema';
 import { ProductoSchema } from './entities/producto.entity';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ProductoSchema } from './entities/producto.entity';
       { name: 'ProductTypeCatalog', schema: ProductTypeCatalogSchema },
       { name: 'CategoryCatalog', schema: CategoryCatalogSchema },
     ]),
+    forwardRef(() => AiModule),
   ],
   controllers: [ProductosController],
   providers: [ProductosService],

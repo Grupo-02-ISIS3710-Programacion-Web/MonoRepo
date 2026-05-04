@@ -36,6 +36,9 @@ export class Producto extends Document {
   @Prop({ default: 0 })
   review_count: number;
 
+  @Prop({ type: [Number], default: [] })
+  embedding?: number[];
+
   @Prop({ default: false })
   deleted: boolean;
 }
