@@ -162,7 +162,7 @@ export class RutinasService {
     this.logger.log(`Actualizando rutina ${id}: ${JSON.stringify(updateRutinaDto)}`);
     try {
       const updated = await this.rutinaModel
-        .findByIdAndUpdate(id, updateRutinaDto, { new: true })
+        .findByIdAndUpdate(id, updateRutinaDto, { returnDocument: 'after' })
         .exec();
       if (updated) {
         this.logger.log(`Rutina ${id} actualizada exitosamente`);
@@ -180,7 +180,7 @@ export class RutinasService {
     this.logger.log(`Marcando rutina ${id} como eliminada (borrado lógico)`);
     try {
       const deleted = await this.rutinaModel
-        .findByIdAndUpdate(id, { deleted: true }, { new: true })
+        .findByIdAndUpdate(id, { deleted: true }, { returnDocument: 'after' })
         .exec();
       if (deleted) {
         this.logger.log(`Rutina ${id} marcada como eliminada`);
@@ -336,7 +336,7 @@ export class RutinasService {
     this.logger.debug(`Registrando visualización para rutina ${id}`);
     try {
       const updated = await this.rutinaModel
-        .findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true })
+        .findByIdAndUpdate(id, { $inc: { views: 1 } }, { returnDocument: 'after' })
         .exec();
       if (updated) {
         this.logger.debug(`Visualización registrada: rutina ${id} tiene ahora ${updated.views} visualizaciones`);

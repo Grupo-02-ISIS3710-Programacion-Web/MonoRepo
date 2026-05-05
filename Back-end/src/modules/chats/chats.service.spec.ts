@@ -8,11 +8,19 @@ import { Model } from 'mongoose';
 describe('ChatsService (with in-memory MongoDB)', () => {
   let service: ChatsService;
   let chatModel: Model<Chat>;
+  let mongoUri: string;
+
+  beforeAll(async () => {
+    const { MongoMemoryServer } = require('mongodb-memory-server');
+    const server = await MongoMemoryServer.create();
+    mongoUri = server.getUri();
+    (global as any).__MONGO_SERVER_CHATS__ = server;
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        MongooseModule.forRoot(process.env.MONGO_MEMORY_URI),
+        MongooseModule.forRoot(mongoUri),
         MongooseModule.forFeature([{ name: Chat.name, schema: ChatSchema }]),
       ],
       providers: [ChatsService],
@@ -21,6 +29,13 @@ describe('ChatsService (with in-memory MongoDB)', () => {
     service = module.get<ChatsService>(ChatsService);
     chatModel = module.get<Model<Chat>>(getModelToken(Chat.name));
     await chatModel.deleteMany({});
+  });
+
+  afterAll(async () => {
+    const server = (global as any).__MONGO_SERVER_CHATS__;
+    if (server) {
+      await server.stop();
+    }
   });
 
   it('should be defined', () => {
