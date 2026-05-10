@@ -23,6 +23,7 @@ export default function ProductForm() {
     const skinTypes = Object.values(SkinType);
     const productTypes = Object.values(ProductType);
     const [ingredientsRaw, setIngredientsRaw] = useState("");
+    const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
     const createProductSchema = z.object({
         name: z.string().min(3, { message: t("errors.nameMin") }),
@@ -34,9 +35,6 @@ export default function ProductForm() {
         }),
         additional_categories: z.array(z.enum(Category)).optional().default([]),
         ingredients: z.array(z.string().min(2)).min(1, { message: t("errors.ingredientsRequired") }),
-        image_url: z.array(z.string().url({ message: t("errors.imageUrlInvalid") })).min(1, {
-        message: t("errors.imageUrlRequired"),
-        }),
         })
         .refine(
         (data) => !data.additional_categories.includes(data.primary_category),
@@ -50,11 +48,38 @@ export default function ProductForm() {
     type FormInput = z.input<typeof createProductSchema>;
     type FormValues = z.output<typeof createProductSchema>;
 
-    function onSubmit(data: FormValues) {
-        console.log(data)
-        toast.success("Producto enviado para revisión ✅", {
-            description: "Un administrador revisará la propuesta."
-        })
+    async function onSubmit(data: FormValues) {
+        if (!selectedFiles || selectedFiles.length === 0) {
+            toast.error(`${t("errors.imagesRequired")}`);
+            return;
+        }
+
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach(v => formData.append(key, v));
+            } else if (value !== undefined) {
+                formData.append(key, value as any);
+            }
+        });
+        Array.from(selectedFiles).forEach(file => {
+            formData.append("images", file); 
+        });
+
+        const res = await fetch("/api/productos", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (res.ok) {
+            toast.success("Producto enviado para revisión ✅", {
+                description: "Un administrador revisará la propuesta."
+            });
+            form.reset();
+            setSelectedFiles(null);
+        } else {
+            toast.error("Error al enviar el producto.");
+        }
     }
 
     const form = useForm<FormInput, unknown, FormValues>({
@@ -68,7 +93,6 @@ export default function ProductForm() {
             primary_category: undefined,
             additional_categories: [],
             ingredients: [],
-            image_url: []
         }
     })
 
@@ -400,22 +424,21 @@ export default function ProductForm() {
                     {/* IMAGE URL */}
 
                     <Controller
-                    name="image_url"
+                    name="images"
                     control={form.control}
                     render={({ field, fieldState }) => (
 
                         <Field data-invalid={fieldState.invalid}>
 
                         <FieldLabel className="text-primary">
-                            {t("imageUrl")}
+                            {t("images")}
                         </FieldLabel>
 
                         <Input
-                            placeholder="https://..."
-                            value={field.value[0] ?? ""}
-                            onChange={(e) =>
-                            field.onChange([e.target.value])
-                            }
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={e => setSelectedFiles(e.target.files)}
                         />
 
                         {fieldState.invalid && (
@@ -441,6 +464,7 @@ export default function ProductForm() {
                         onClick={() => {
                             form.reset();
                             setIngredientsRaw("");
+                            setSelectedFiles(null);
                         }}
                     >
                         Reset
