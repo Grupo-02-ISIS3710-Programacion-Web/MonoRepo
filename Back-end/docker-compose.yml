@@ -29,6 +29,9 @@ services:
       DB_USERNAME: admin
       DB_PASSWORD: password123
       DB_NAME: skin4all
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     ports:
       - '5001:5000'
     depends_on:

@@ -7,11 +7,17 @@ import {
   Param,
   Delete,
   Query,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('productos')
 export class ProductosController {
@@ -32,13 +38,24 @@ export class ProductosController {
           primary_category: 1,
           additional_categories: [5],
           ingredients: ['ceramida-3', 'niacinamida', 'glicerina'],
-          image_url: ['https://ejemplo.com/producto.jpg'],
         },
       },
     },
   })
-  create(@Body() createProductoDto: CreateProductoDto) {
-    return this.productosService.create(createProductoDto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() createProductoDto: CreateProductoDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2 MB
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    images: Express.Multer.File[],
+  ) {
+    return this.productosService.create(createProductoDto, images);
   }
 
   @Get()

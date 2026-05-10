@@ -9,6 +9,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SeedModule } from './modules/seed/seed.module';
 import { ProductoSchema } from './modules/productos/entities/producto.entity';
 import { RutinaSchema } from './modules/rutinas/entities/rutina.entity';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RutinaSchema } from './modules/rutinas/entities/rutina.entity';
     ComentariosModule,
     RutinasModule,
     SeedModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

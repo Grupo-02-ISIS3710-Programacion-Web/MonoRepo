@@ -7,5 +7,4 @@ export class CreateProductoDto {
   primary_category: number;
   additional_categories?: number[];
   ingredients: string[];
-  image_url: string[];
 }

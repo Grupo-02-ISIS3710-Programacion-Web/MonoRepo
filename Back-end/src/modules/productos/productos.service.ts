@@ -10,6 +10,7 @@ import {
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Producto } from './entities/producto.entity';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 interface CatalogDocument {
   _id: number;
@@ -30,6 +31,7 @@ export class ProductosService implements OnModuleInit {
     private readonly productTypeCatalogModel: Model<CatalogDocument>,
     @InjectModel('CategoryCatalog')
     private readonly categoryCatalogModel: Model<CatalogDocument>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -40,8 +42,18 @@ export class ProductosService implements OnModuleInit {
     ]);
   }
 
-  async create(createProductoDto: CreateProductoDto): Promise<Producto> {
+  async create(
+    createProductoDto: CreateProductoDto,
+    images: Express.Multer.File[],
+  ): Promise<Producto> {
     await this.validateCatalogIds(createProductoDto);
+
+    const imageUrls = await Promise.all(
+      images.map((file) =>
+        this.cloudinaryService.uploadBuffer(file.buffer, 'productos'),
+      ),
+    );
+
     const producto = new this.productoModel({
       name: createProductoDto.name,
       brand: createProductoDto.brand,
@@ -53,7 +65,7 @@ export class ProductosService implements OnModuleInit {
         ...(createProductoDto.additional_categories || []),
       ],
       ingredients: createProductoDto.ingredients,
-      image_url: createProductoDto.image_url,
+      image_url: imageUrls,
       rating: 0,
       review_count: 0,
       deleted: false,
@@ -125,8 +137,6 @@ export class ProductosService implements OnModuleInit {
       updateData.product_type = updateProductoDto.product_type;
     if (updateProductoDto.ingredients)
       updateData.ingredients = updateProductoDto.ingredients;
-    if (updateProductoDto.image_url)
-      updateData.image_url = updateProductoDto.image_url;
 
     if (updateProductoDto.primary_category) {
       const categories = [updateProductoDto.primary_category];
