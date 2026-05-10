@@ -12,6 +12,8 @@ import { RutinaSchema } from './modules/rutinas/entities/rutina.entity';
 import { UserModule } from './modules/user/user.module';
 import { UserSchema } from './modules/user/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './modules/ai/ai.module';
+import { ChatsModule } from './modules/chats/chats.module';
 
 @Module({
   imports: [
@@ -19,20 +21,27 @@ import { AuthModule } from './auth/auth.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MongooseModule.forRoot(`mongodb://admin:password123@mongodb:27017`),
+   
     MongooseModule.forFeature([
       { name: 'Producto', schema: ProductoSchema },
       { name: 'Rutina', schema: RutinaSchema },
       { name: 'User', schema: UserSchema },
     ]),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.MONGODB_URI,
+      }),
+    }),
     ProductosModule,
     ComentariosModule,
     RutinasModule,
     SeedModule,
     UserModule,
     AuthModule,
+    AiModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

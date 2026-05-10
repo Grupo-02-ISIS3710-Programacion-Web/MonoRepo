@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getProducts } from "@/lib/api";
+import { toast } from "sonner";
 import { Product, SkinType } from "@/types/product";
 import { Routine, RoutineStep } from "@/types/routine";
+import {
+  chatWithAI as chatWithAI_API,
+  fetchProductsBatch,
+  ChatMessage,
+  createChat,
+  getChat,
+  saveChatMessage,
+  updateChatDraft,
+} from "@/lib/api-client";
 
 type AiRoutineMessageRole = "assistant" | "user";
 
@@ -12,6 +21,16 @@ export type AiRoutineMessage = Readonly<{
   id: string;
   role: AiRoutineMessageRole;
   content: string;
+  recommendedProducts?: {
+    productId: string;
+    reason: string;
+    otherAlternatives?: { id: string; reason: string }[];
+    product?: Product;
+    alternativesDetails?: Product[];
+  }[];
+  draftUpdate?: {
+    steps?: RoutineStep[];
+  };
 }>;
 
 export type AiRoutineStarterPrompt = Readonly<{
@@ -23,13 +42,6 @@ export type AiRoutineStarterPrompt = Readonly<{
 export type AiRoutineFocusArea = Readonly<{
   id: string;
   label: string;
-}>;
-
-export type AiRoutineContinuousRecommendation = Readonly<{
-  id: string;
-  title: string;
-  description: string;
-  prompt: string;
 }>;
 
 const starterPromptIds = [
@@ -46,12 +58,6 @@ const focusAreaIds = [
   "sensitivity",
 ] as const;
 
-const continuousRecommendationIds = [
-  "adjustFrequency",
-  "swapTexture",
-  "simplifyNight",
-] as const;
-
 const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[]> = {
   hydration: ["hydration", "barrier"],
   breakouts: ["texture"],
@@ -59,115 +65,184 @@ const starterPromptFocusAreas: Record<(typeof starterPromptIds)[number], string[
   minimalist: ["hydration", "sensitivity"],
 };
 
-const focusAreaProductIds: Record<(typeof focusAreaIds)[number], string[]> = {
-  hydration: ["12", "15", "5", "10"],
-  barrier: ["12", "14", "6", "1"],
-  texture: ["2", "3", "13", "5"],
-  sensitivity: ["12", "6", "14", "1"],
-};
-
-const pmPriorityIds = ["2", "3", "6", "9", "14"];
-
-function buildStep(product: Product, order: number, t: ReturnType<typeof useTranslations>): RoutineStep {
-  return {
-    id: `ai-step-${product.id}`,
-    name: t("draft.stepName", { order: order + 1 }),
-    order,
-    productId: product.id,
-    product,
-    notes: t("draft.stepNotes", { productName: product.name }),
-  };
-}
-
-function buildRecommendedProducts(
-  products: Product[],
-  selectedFocusAreaIds: string[],
-  selectedSkinType: SkinType,
-  routineType: string,
+export function useAiRoutineChat(
+  userId: string,
+  userName: string,
+  chatId?: string | null,
+  router?: { push: (url: string) => void },
 ) {
-  const recommendedIds = selectedFocusAreaIds.flatMap((focusAreaId) => {
-    return focusAreaProductIds[focusAreaId as keyof typeof focusAreaProductIds] ?? [];
-  });
-
-  const withRoutinePriority = routineType === "pm"
-    ? [...pmPriorityIds, ...recommendedIds]
-    : recommendedIds;
-
-  const uniqueIds = [...new Set(withRoutinePriority)];
-  const skinMatchedProducts = products.filter((product) =>
-    uniqueIds.includes(product.id) && product.skin_type.includes(selectedSkinType),
-  );
-  const fallbackProducts = products.filter((product) => uniqueIds.includes(product.id));
-
-  return (skinMatchedProducts.length > 0 ? skinMatchedProducts : fallbackProducts).slice(0, 6);
-}
-
-function reorderSteps(steps: RoutineStep[]) {
-  return steps.map((step, index) => ({
-    ...step,
-    order: index,
-  }));
-}
-
-function buildConversationIteration(message: string, t: ReturnType<typeof useTranslations>) {
-  return [
-    {
-      id: `user-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`,
-      role: "user" as const,
-      content: message,
-    },
-    {
-      id: `assistant-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`,
-      role: "assistant" as const,
-      content: t("messages.pendingReply"),
-    },
-  ];
-}
-
-export function useAiRoutineChat(userId: string, userName: string) {
   const t = useTranslations("AiRoutine");
-  const products = useMemo(() => getProducts(), []);
+  const [isInitializing, setIsInitializing] = useState(!!chatId);
 
   const [inputValue, setInputValue] = useState("");
   const [selectedFocusAreaIds, setSelectedFocusAreaIds] = useState<string[]>([
     "hydration",
     "barrier",
   ]);
-  const [routineDraft, setRoutineDraft] = useState<Routine>(() => {
-    const initialRecommendedProducts = buildRecommendedProducts(
-      products,
-      ["hydration", "barrier"],
-      SkinType.MIXTA,
-      "am",
-    ).slice(0, 3);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingRoutine, setIsGeneratingRoutine] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
+  const hasSentFirstMessage = useRef(false);
 
-    return {
-      id: `ai-routine-${userId}`,
-      userId,
-      name: t("draft.initialName"),
-      description: t("draft.initialDescription"),
-      type: "am",
-      skinType: SkinType.MIXTA,
-      steps: initialRecommendedProducts.map((product, index) => buildStep(product, index, t)),
-    };
-  });
+  const [routineDraft, setRoutineDraft] = useState<Routine>(() => ({
+    id: `ai-routine-${userId}`,
+    userId,
+    name: t("draft.initialName"),
+    description: t("draft.initialDescription"),
+    type: "am",
+    skinType: SkinType.MIXTA,
+    steps: [],
+  }));
+
   const [messages, setMessages] = useState<AiRoutineMessage[]>([
     {
       id: "assistant-intro",
       role: "assistant",
       content: t("messages.assistantIntro", { name: userName }),
     },
-    {
-      id: "user-goal",
-      role: "user",
-      content: t("messages.userGoal"),
-    },
-    {
-      id: "assistant-follow-up",
-      role: "assistant",
-      content: t("messages.assistantFollowUp"),
-    },
   ]);
+
+  const draftSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load saved chat state on mount
+  useEffect(() => {
+    if (!chatId || !userId) {
+      setIsInitializing(false);
+      return;
+    }
+
+    const loadChat = async () => {
+      try {
+        const chat = await getChat(chatId, userId);
+        if (chat) {
+          // Restore messages
+          if (chat.messages && chat.messages.length > 0) {
+            // Collect all product IDs from saved messages
+            const allProductIds = new Set<string>();
+            chat.messages.forEach((m: any) => {
+              if (m.recommendedProducts) {
+                m.recommendedProducts.forEach((rec: any) => {
+                  allProductIds.add(rec.productId);
+                  if (rec.otherAlternatives) {
+                    rec.otherAlternatives.forEach((alt: any) => allProductIds.add(alt.id));
+                  }
+                });
+              }
+            });
+
+            // Resolve product details
+            let productMap = new Map<string, any>();
+            if (allProductIds.size > 0) {
+              try {
+                const batchResult = await fetchProductsBatch([...allProductIds]);
+                productMap = new Map(batchResult.map((p) => [p.id, p]));
+              } catch (error) {
+                console.error("Error resolving products for restored chat:", error);
+              }
+            }
+
+            const restoredMessages: AiRoutineMessage[] = [
+              {
+                id: "assistant-intro",
+                role: "assistant",
+                content: t("messages.assistantIntro", { name: userName }),
+              },
+              ...chat.messages.map((m: any) => {
+                const enrichedRecommendedProducts = (m.recommendedProducts || [])
+                  .map((rec: any) => {
+                    const product = productMap.get(rec.productId);
+                    const alternativesDetails = (rec.otherAlternatives || [])
+                      .map((alt: any) => productMap.get(alt.id))
+                      .filter(Boolean);
+                    return product ? {
+                      productId: rec.productId,
+                      reason: rec.reason,
+                      otherAlternatives: rec.otherAlternatives,
+                      product,
+                      alternativesDetails,
+                    } : null;
+                  })
+                  .filter(Boolean);
+
+                return {
+                  id: `restored-${Date.now()}-${Math.random()}`,
+                  role: m.role as AiRoutineMessageRole,
+                  content: m.content,
+                  recommendedProducts: enrichedRecommendedProducts.length > 0 ? enrichedRecommendedProducts : undefined,
+                  draftUpdate: m.draftUpdate || undefined,
+                };
+              }),
+            ];
+            setMessages(restoredMessages);
+          }
+
+          // Restore routine draft
+          if (chat.routineDraft) {
+            const draft = chat.routineDraft;
+            setRoutineDraft({
+              id: `ai-routine-${userId}`,
+              userId,
+              name: draft.name || t("draft.initialName"),
+              description: draft.description || t("draft.initialDescription"),
+              type: draft.type || "am",
+              skinType: draft.skinType || SkinType.MIXTA,
+              steps: (draft.steps || []).map((step: any, index: number) => ({
+                ...step,
+                order: index,
+              })),
+            });
+          }
+
+          // Restore focus areas
+          if (chat.selectedFocusAreaIds && chat.selectedFocusAreaIds.length > 0) {
+            setSelectedFocusAreaIds(chat.selectedFocusAreaIds);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading chat:", error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    loadChat();
+  }, [chatId, userId, t, userName]);
+
+  // Debounced draft save
+  const saveDraftToBackend = useCallback((draft: Routine, chatIdToSave: string) => {
+    if (!chatIdToSave) return;
+
+    if (draftSaveTimerRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+    }
+
+    draftSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await updateChatDraft(chatIdToSave, userId, {
+          name: draft.name,
+          description: draft.description,
+          type: draft.type,
+          skinType: draft.skinType,
+          steps: draft.steps.map((s) => ({
+            id: s.id,
+            name: s.name,
+            order: s.order,
+            productId: s.productId,
+            notes: s.notes ?? "",
+          })),
+        });
+      } catch (error) {
+        console.error("Error saving draft:", error);
+      }
+    }, 5000);
+  }, [userId]);
+
+  // Save draft whenever it changes (debounced)
+  useEffect(() => {
+    if (activeChatId) {
+      saveDraftToBackend(routineDraft, activeChatId);
+    }
+  }, [routineDraft, activeChatId, saveDraftToBackend]);
 
   const starterPrompts = useMemo<AiRoutineStarterPrompt[]>(
     () =>
@@ -186,28 +261,6 @@ export function useAiRoutineChat(userId: string, userName: string) {
         label: t(`focusAreas.items.${id}`),
       })),
     [t],
-  );
-
-  const continuousRecommendations = useMemo<AiRoutineContinuousRecommendation[]>(
-    () =>
-      continuousRecommendationIds.map((id) => ({
-        id,
-        title: t(`continuousRecommendations.items.${id}.title`),
-        description: t(`continuousRecommendations.items.${id}.description`),
-        prompt: t(`continuousRecommendations.items.${id}.prompt`),
-      })),
-    [t],
-  );
-
-  const recommendedProducts = useMemo(
-    () =>
-      buildRecommendedProducts(
-        products,
-        selectedFocusAreaIds,
-        routineDraft.skinType as SkinType,
-        routineDraft.type,
-      ),
-    [products, routineDraft.skinType, routineDraft.type, selectedFocusAreaIds],
   );
 
   const appendPrompt = (prompt: string) => {
@@ -231,10 +284,8 @@ export function useAiRoutineChat(userId: string, userName: string) {
         if (currentFocusAreas.length === 1) {
           return currentFocusAreas;
         }
-
         return currentFocusAreas.filter((id) => id !== focusAreaId);
       }
-
       return [...currentFocusAreas, focusAreaId];
     });
   };
@@ -256,20 +307,27 @@ export function useAiRoutineChat(userId: string, userName: string) {
       if (alreadySelected) {
         return {
           ...currentRoutineDraft,
-          steps: reorderSteps(
-            currentRoutineDraft.steps.filter((step) => step.productId !== product.id),
-          ),
+          steps: currentRoutineDraft.steps
+            .filter((step) => step.productId !== product.id)
+            .map((step, index) => ({ ...step, order: index })),
         };
       }
 
       const nextSteps = [
         ...currentRoutineDraft.steps,
-        buildStep(product, currentRoutineDraft.steps.length, t),
+        {
+          id: `ai-step-${product.id}-${Date.now()}`,
+          name: t("draft.stepName", { order: currentRoutineDraft.steps.length + 1 }),
+          order: currentRoutineDraft.steps.length,
+          productId: product.id,
+          product,
+          notes: t("draft.stepNotes", { productName: product.name }),
+        },
       ];
 
       return {
         ...currentRoutineDraft,
-        steps: reorderSteps(nextSteps),
+        steps: nextSteps,
       };
     });
   };
@@ -315,7 +373,7 @@ export function useAiRoutineChat(userId: string, userName: string) {
 
       return {
         ...currentRoutineDraft,
-        steps: reorderSteps(nextSteps),
+        steps: nextSteps.map((step, index) => ({ ...step, order: index })),
       };
     });
   };
@@ -323,36 +381,185 @@ export function useAiRoutineChat(userId: string, userName: string) {
   const removeStep = (stepId: string) => {
     setRoutineDraft((currentRoutineDraft) => ({
       ...currentRoutineDraft,
-      steps: reorderSteps(
-        currentRoutineDraft.steps.filter((step) => step.id !== stepId),
-      ),
+      steps: currentRoutineDraft.steps
+        .filter((step) => step.id !== stepId)
+        .map((step, index) => ({ ...step, order: index })),
     }));
   };
 
-  const submitMessage = () => {
+  const submitMessage = useCallback(async () => {
     const trimmedValue = inputValue.trim();
 
-    if (!trimmedValue) {
+    if (!trimmedValue || isLoading) {
       return;
     }
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      ...buildConversationIteration(trimmedValue, t),
-    ]);
+    const userMessage: AiRoutineMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: trimmedValue,
+    };
+
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
     setInputValue("");
-  };
+    setIsLoading(true);
+
+    try {
+      const chatMessages: ChatMessage[] = messages
+        .filter((m) => m.id !== "assistant-intro")
+        .map((m) => ({
+          role: m.role === "user" ? "user" as const : "assistant" as const,
+          content: m.content,
+        }));
+
+      chatMessages.push({ role: "user", content: trimmedValue });
+
+      const response = await chatWithAI_API({
+        userId,
+        messages: chatMessages,
+        routineContext: {
+          skinType: routineDraft.skinType,
+          type: routineDraft.type,
+          currentSteps: routineDraft.steps,
+        },
+      });
+
+      // Resolve product details via batch endpoint
+      let resolvedProducts = response.recommendedProducts;
+      if (response.recommendedProducts && response.recommendedProducts.length > 0) {
+        const allIds = [
+          ...response.recommendedProducts.map((r) => r.productId),
+          ...response.recommendedProducts
+            .flatMap((r) => r.otherAlternatives?.map((a) => a.id) ?? []),
+        ];
+        const uniqueIds = [...new Set(allIds)];
+
+        if (uniqueIds.length > 0) {
+          try {
+            const batchResult = await fetchProductsBatch(uniqueIds);
+            const productMap = new Map(batchResult.map((p) => [p.id, p]));
+
+            resolvedProducts = response.recommendedProducts.map((rec) => {
+              const product = productMap.get(rec.productId);
+              const alternativesDetails = (rec.otherAlternatives ?? [])
+                .map((alt) => productMap.get(alt.id))
+                .filter(Boolean);
+
+              return {
+                productId: rec.productId,
+                reason: rec.reason,
+                otherAlternatives: rec.otherAlternatives,
+                product,
+                alternativesDetails,
+              };
+            }).filter((r) => r.product);
+          } catch (error) {
+            console.error("Error resolving product details:", error);
+          }
+        }
+      }
+
+      const assistantMessage: AiRoutineMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: response.response,
+        recommendedProducts: resolvedProducts && resolvedProducts.length > 0
+          ? resolvedProducts.map((rec: any) => ({
+              productId: rec.productId,
+              reason: rec.reason,
+              otherAlternatives: rec.otherAlternatives,
+              product: rec.product,
+              alternativesDetails: rec.alternativesDetails,
+            }))
+          : undefined,
+      };
+
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+
+      // Create chat on first message if no active chat
+      let currentChatId = activeChatId;
+      if (!currentChatId) {
+        if (!hasSentFirstMessage.current) {
+          hasSentFirstMessage.current = true;
+          const newChat = await createChat(userId, selectedFocusAreaIds);
+          currentChatId = newChat.chatId;
+          setActiveChatId(currentChatId);
+          if (router) {
+            router.push(`/ai-routine?chatId=${currentChatId}`);
+          }
+        }
+      }
+
+      // Save user message
+      if (currentChatId) {
+        await saveChatMessage(currentChatId, userId, {
+          role: "user",
+          content: trimmedValue,
+        });
+
+        // Save AI response
+        await saveChatMessage(currentChatId, userId, {
+          role: "assistant",
+          content: response.response,
+          recommendedProducts: response.recommendedProducts,
+          draftUpdate: response.draftUpdate,
+        });
+      }
+
+      // Apply draft updates from AI response
+      if (response.draftUpdate?.steps) {
+        // Handle draft updates if needed
+      }
+    } catch (error) {
+      console.error("Error en chat con IA:", error);
+      const errorMessage: AiRoutineMessage = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: t("messages.errorReply"),
+      };
+      setMessages((currentMessages) => [...currentMessages, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [inputValue, isLoading, messages, userId, routineDraft, t, activeChatId, selectedFocusAreaIds, router]);
+
+  const addProductToRoutine = useCallback((product: Product, stepName?: string, notes?: string) => {
+    setRoutineDraft((current) => {
+      const alreadyInRoutine = current.steps.some(step => step.productId === product.id);
+      
+      if (alreadyInRoutine) {
+        return current;
+      }
+
+      const newStep: RoutineStep = {
+        id: `ai-step-${product.id}-${Date.now()}`,
+        name: stepName || `Paso ${current.steps.length + 1}`,
+        order: current.steps.length,
+        productId: product.id,
+        product,
+        notes: notes || `Usar ${product.name} según las necesidades de tu piel.`,
+      };
+
+      return {
+        ...current,
+        steps: [...current.steps, newStep],
+      };
+    });
+
+    toast.success(t("recommendedProducts.toast.added", { name: product.name }));
+  }, [t]);
 
   return {
     messages,
     inputValue,
     setInputValue,
+    isLoading,
+    isInitializing,
     starterPrompts,
     focusAreas,
     selectedFocusAreaIds,
     routineDraft,
-    recommendedProducts,
-    continuousRecommendations,
+    activeChatId,
     appendPrompt,
     applyStarterPrompt,
     toggleFocusArea,
@@ -363,5 +570,6 @@ export function useAiRoutineChat(userId: string, userName: string) {
     moveStep,
     removeStep,
     submitMessage,
+    addProductToRoutine,
   };
 }

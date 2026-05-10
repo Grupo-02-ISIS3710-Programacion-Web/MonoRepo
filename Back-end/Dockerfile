@@ -1,15 +1,11 @@
-FROM node:20
+FROM node:22-alpine
+
+RUN apk add --no-cache build-base python3
+
+COPY . ./app
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+RUN npm install
 
-RUN npm install -g pnpm
-
-RUN pnpm install
-
-COPY . .
-
-EXPOSE 5000
-
-CMD ["pnpm", "run", "start:dev"]
+CMD ["npm", "run", "start:dev"]

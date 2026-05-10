@@ -8,10 +8,11 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
+import { BatchProductoDto } from './dto/batch-producto.dto';
 
 @Controller('productos')
 export class ProductosController {
@@ -42,8 +43,14 @@ export class ProductosController {
   }
 
   @Get()
-  findAll() {
-    return this.productosService.findAll();
+  @ApiQuery({
+    name: 'includeEmbeddings',
+    required: false,
+    type: Boolean,
+    description: 'Include the embedding vector in the response (default: false)',
+  })
+  findAll(@Query('includeEmbeddings') includeEmbeddings?: string) {
+    return this.productosService.findAll(includeEmbeddings === 'true');
   }
 
   @Get('catalogos')
@@ -52,8 +59,14 @@ export class ProductosController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productosService.findOne(id);
+  @ApiQuery({
+    name: 'includeEmbeddings',
+    required: false,
+    type: Boolean,
+    description: 'Include the embedding vector in the response (default: false)',
+  })
+  findOne(@Param('id') id: string, @Query('includeEmbeddings') includeEmbeddings?: string) {
+    return this.productosService.findOne(id, includeEmbeddings === 'true');
   }
 
   @Patch(':id')
@@ -81,5 +94,21 @@ export class ProductosController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.productosService.remove(id);
+  }
+
+  @Post('batch')
+  @ApiBody({
+    type: BatchProductoDto,
+    examples: {
+      ejemplo: {
+        summary: 'Fetch multiple products by ID',
+        value: {
+          productIds: ['69f8832d56dcaa1b4eb44a30', '69f8832d56dcaa1b4eb44a27'],
+        },
+      },
+    },
+  })
+  async findBatch(@Body() body: BatchProductoDto) {
+    return this.productosService.findByIds(body.productIds);
   }
 }

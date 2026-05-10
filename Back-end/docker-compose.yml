@@ -1,48 +1,35 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:latest
     container_name: skin4all_mongodb
     restart: unless-stopped
     ports:
-      - '27017:27017'
+      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
       MONGO_INITDB_DATABASE: skin4all
     volumes:
-      - mongo_data:/data/db
-    networks:
-      - skin4all_network
+      - mongo-data:/data/db
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: skin4all_backend
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
-      PORT: 5000
-      DB_HOST: mongodb
-      DB_PORT: 27017
-      DB_USERNAME: admin
-      DB_PASSWORD: password123
-      DB_NAME: skin4all
+      - MONGODB_URI=${MONGODB_DOCKER_URI}
     ports:
-      - '5001:5000'
+      - "5001:5001"
     depends_on:
       - mongodb
-    networks:
-      - skin4all_network
     volumes:
       - .:/app
+      - node_modules:/app/node_modules
     command: npm run start:dev
 
 volumes:
-  mongo_data:
-
-
-networks:
-  skin4all_network:
-    driver: bridge
+  mongo-data:
+  node_modules:

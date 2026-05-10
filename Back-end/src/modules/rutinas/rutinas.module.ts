@@ -8,5 +8,6 @@ import { RutinaSchema } from './entities/rutina.entity';
   imports: [MongooseModule.forFeature([{ name: 'Rutina', schema: RutinaSchema }])],
   controllers: [RutinasController],
   providers: [RutinasService],
+  exports: [MongooseModule, RutinasService],
 })
 export class RutinasModule {}

@@ -1,5 +1,5 @@
 // API client for communicating with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export interface ApiResponse<T> {
   data: T;
@@ -81,12 +81,18 @@ export async function loginUser(identifier: string, password: string) {
 }
 
 // Routines API
-export async function fetchRoutines(page?: number, language: string = 'es') {
-  const pageParam = page ? `?page=${page}` : '';
-  const result: any = await apiFetch(`/rutinas${pageParam}`, {
+export async function fetchRoutines(page?: number, language: string = 'es', sort?: string) {
+  const params = new URLSearchParams();
+  if (page) params.append('page', page.toString());
+  if (sort) params.append('sort', sort);
+
+  const queryString = params.toString();
+  const url = `/rutinas${queryString ? `?${queryString}` : ''}`;
+
+  const result: any = await apiFetch(url, {
     headers: { 'Accept-Language': language },
   });
-  
+
   if (result.routines) {
     return { ...result, routines: normalizeRoutines(result.routines) };
   }
@@ -198,35 +204,113 @@ export async function deleteComment(id: string) {
   });
 }
 
-// AI API
-export async function generateRoutineWithAI(params: any) {
-  return apiFetch('/ai/routines/generate', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
+// AI API - Functions for AI-powered routine generation
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
 }
 
-export async function suggestProductsWithAI(params: any) {
-  return apiFetch('/ai/products/suggest', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
+export interface ChatWithAIParams {
+  userId: string;
+  messages: ChatMessage[];
+  routineContext?: {
+    skinType?: string;
+    type?: string;
+    currentSteps?: any[];
+  };
 }
 
-export async function fetchAITools() {
-  return apiFetch('/ai/tools');
+export interface ChatWithAIResponse {
+  response: string;
+  recommendedProducts?: {
+    productId: string;
+    reason: string;
+    otherAlternatives?: { id: string; reason: string }[];
+  }[];
+  draftUpdate?: {
+    steps?: {
+      productId: string;
+      name: string;
+      notes: string;
+    }[];
+  };
 }
 
-export async function chatWithAI(prompt: string) {
+export async function chatWithAI(params: ChatWithAIParams): Promise<ChatWithAIResponse> {
   return apiFetch('/ai/agent/chat', {
     method: 'POST',
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify(params),
   });
 }
 
-export async function searchWithAI(query: string) {
-  return apiFetch('/ai/agent/search', {
+export async function fetchProductsBatch(productIds: string[]): Promise<any[]> {
+  const results = await apiFetch<any[]>('/productos/batch', {
     method: 'POST',
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ productIds }),
+  });
+  return (results || []).map(normalizeProduct);
+}
+
+export function normalizeProduct(doc: any): any {
+  return {
+    id: doc._id?.toString() || doc.id,
+    name: doc.name,
+    brand: doc.brand,
+    description: doc.description,
+    skin_type: doc.skin_type || [],
+    product_type: doc.product_type,
+    category: doc.category || [],
+    ingredients: doc.ingredients || [],
+    image_url: doc.image_url || [],
+    rating: doc.rating ?? 0,
+    review_count: doc.review_count ?? 0,
+  };
+}
+
+// AI Chat Persistence API
+export async function createChat(userId: string, selectedFocusAreaIds?: string[]): Promise<{ chatId: string }> {
+  return apiFetch('/ai/chats', {
+    method: 'POST',
+    body: JSON.stringify({ userId, selectedFocusAreaIds }),
+  });
+}
+
+export async function getChat(chatId: string, userId: string): Promise<any> {
+  return apiFetch(`/ai/chats/${chatId}?userId=${userId}`);
+}
+
+export async function getUserChats(userId: string): Promise<any[]> {
+  return apiFetch(`/ai/chats?userId=${userId}`);
+}
+
+export async function saveChatMessage(chatId: string, userId: string, message: {
+  role: string;
+  content: string;
+  recommendedProducts?: any[];
+  draftUpdate?: any;
+}): Promise<any> {
+  return apiFetch(`/ai/chats/${chatId}/messages?userId=${userId}`, {
+    method: 'POST',
+    body: JSON.stringify(message),
+  });
+}
+
+export async function updateChatDraft(chatId: string, userId: string, draft: {
+  name?: string;
+  description?: string;
+  type?: string;
+  skinType?: string;
+  steps?: any[];
+}): Promise<any> {
+  return apiFetch(`/ai/chats/${chatId}/draft?userId=${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(draft),
+  });
+}
+
+export async function updateChatFocusAreas(chatId: string, userId: string, selectedFocusAreaIds: string[]): Promise<any> {
+  return apiFetch(`/ai/chats/${chatId}/focus-areas?userId=${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ selectedFocusAreaIds }),
   });
 }

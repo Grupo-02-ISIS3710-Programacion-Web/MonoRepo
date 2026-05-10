@@ -236,7 +236,7 @@ const users: User[] = [
         bio: "Focused on keeping my barrier healthy with lightweight hydration and gentle actives.",
         reviewCount: 18,
         favoriteProductIds: ["1", "5", "12", "14"],
-        createdRoutineIds: ["r1", "r7"]
+        createdRoutineIds: ["r1", "r7", "r13"]
     },
     {
         id: "u2",
@@ -250,7 +250,7 @@ const users: User[] = [
         bio: "Night routine fan, always looking for rich textures and effective anti-aging products.",
         reviewCount: 12,
         favoriteProductIds: ["1", "4", "10", "15"],
-        createdRoutineIds: ["r2", "r9"]
+        createdRoutineIds: ["r2", "r9", "r14", "r20"]
     },
     {
         id: "u3",
@@ -264,7 +264,7 @@ const users: User[] = [
         bio: "I keep things simple: exfoliate strategically, hydrate deeply, repeat consistently.",
         reviewCount: 9,
         favoriteProductIds: ["3", "6", "11", "14"],
-        createdRoutineIds: ["r6"]
+        createdRoutineIds: ["r6", "r11", "r17"]
     },
     {
         id: "u4",
@@ -278,7 +278,7 @@ const users: User[] = [
         bio: "Sharing routines that balance oil control with a healthy, calm skin barrier.",
         reviewCount: 15,
         favoriteProductIds: ["2", "5", "11", "13"],
-        createdRoutineIds: ["r3", "r8"]
+        createdRoutineIds: ["r3", "r8", "r15"]
     },
     {
         id: "u5",
@@ -292,7 +292,7 @@ const users: User[] = [
         bio: "If a product helps calm redness and lock in moisture, it probably ends up in my shelfie.",
         reviewCount: 11,
         favoriteProductIds: ["1", "6", "10", "14"],
-        createdRoutineIds: ["r4", "r10"]
+        createdRoutineIds: ["r4", "r10", "r16"]
     },
     {
         id: "u6",
@@ -306,7 +306,7 @@ const users: User[] = [
         bio: "I love antioxidant-heavy morning routines that brighten without overloading the skin.",
         reviewCount: 14,
         favoriteProductIds: ["2", "8", "12", "15"],
-        createdRoutineIds: ["r5"]
+        createdRoutineIds: ["r5", "r12", "r18"]
     }
 ];
 

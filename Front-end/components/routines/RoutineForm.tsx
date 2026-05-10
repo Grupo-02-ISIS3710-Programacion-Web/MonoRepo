@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
 import { getProducts } from "@/lib/api";
-import { getRoutineById } from "@/lib/routine";
+import { fetchRoutineById } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -110,44 +110,60 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
         }
 
         const routineId = searchParams.get("id");
-        const routine = routineId ? getRoutineById(routineId) : undefined;
-
-        if (!routine) {
+        if (!routineId) {
             setIsRoutineMissing(true);
             setIsInitialDataLoaded(true);
             return;
         }
 
-        const routineSteps = routine.steps
-            .map((step) => {
-                const product = products.find((item) => item.id === step.productId);
+        const loadRoutine = async () => {
+            try {
+                const routine = await fetchRoutineById(routineId);
 
-                if (!product) {
-                    return null;
+                if (!routine) {
+                    setIsRoutineMissing(true);
+                    setIsInitialDataLoaded(true);
+                    return;
                 }
 
-                return {
-                    id: step.id,
-                    name: step.name,
-                    order: step.order,
-                    product,
-                    notes: step.notes
-                };
-            })
-            .filter((step): step is RoutineFormData["steps"][number] => step !== null)
-            .sort((left, right) => left.order - right.order);
+                const routineSteps = routine.steps
+                    .map((step: any) => {
+                        const product = products.find((item) => item.id === step.productId);
 
-        reset({
-            name: routine.name,
-            description: routine.description,
-            type: routine.type,
-            skinType: routine.skinType as SkinType,
-            steps: routineSteps
-        });
+                        if (!product) {
+                            return null;
+                        }
 
-        setSelectedProductIds(new Set(routineSteps.map((step) => step.product.id)));
-        previousProductsSignatureRef.current = routineSteps.map((step) => step.product.id).join(",");
-        setIsInitialDataLoaded(true);
+                        return {
+                            id: step.id,
+                            name: step.name,
+                            order: step.order,
+                            product,
+                            notes: step.notes
+                        };
+                    })
+                    .filter((step: any): step is RoutineFormData["steps"][number] => step !== null)
+                    .sort((left: any, right: any) => left.order - right.order);
+
+                reset({
+                    name: routine.name,
+                    description: routine.description,
+                    type: routine.type,
+                    skinType: routine.skinType as SkinType,
+                    steps: routineSteps
+                });
+
+                setSelectedProductIds(new Set(routineSteps.map((step: any) => step.product.id)));
+                previousProductsSignatureRef.current = routineSteps.map((step: any) => step.product.id).join(",");
+                setIsInitialDataLoaded(true);
+            } catch (err) {
+                console.error("Failed to load routine for editing:", err);
+                setIsRoutineMissing(true);
+                setIsInitialDataLoaded(true);
+            }
+        };
+
+        loadRoutine();
     }, [mode, reset, searchParams]);
 
     useEffect(() => {

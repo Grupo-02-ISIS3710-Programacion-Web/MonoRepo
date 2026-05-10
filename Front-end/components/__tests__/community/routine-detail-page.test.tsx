@@ -1,11 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import RoutineDetailPage from '../../community/RoutineDetailPage'
-import { getRoutineById } from '@/lib/routine'
 import { getProductById, getUserById } from '@/lib/api'
+import { fetchRoutineById, fetchUserById, incrementRoutineView } from '@/lib/api-client'
 import { SkinType } from '@/types/product'
 
-jest.mock('@/lib/routine', () => ({
-    getRoutineById: jest.fn(),
+jest.mock('@/lib/api-client', () => ({
+    fetchRoutineById: jest.fn(),
+    fetchUserById: jest.fn(),
+    incrementRoutineView: jest.fn(() => Promise.resolve()),
+    upvoteRoutine: jest.fn(() => Promise.resolve()),
+    downvoteRoutine: jest.fn(() => Promise.resolve()),
+    removeUpvote: jest.fn(() => Promise.resolve()),
+    removeDownvote: jest.fn(() => Promise.resolve()),
 }))
 
 jest.mock('@/lib/api', () => ({
@@ -22,33 +28,56 @@ jest.mock('@/i18n/navigation', () => ({
     Link: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }))
 
+jest.mock('@/lib/hooks/use-auth-session', () => ({
+    useAuthSession: () => ({ user: { id: 'u2' }, isLoggedIn: true, isReady: true }),
+}))
+
+jest.mock('next-intl', () => ({
+    useTranslations: () => (key: string) => key,
+    useLocale: () => 'es',
+}))
+
+jest.mock('@/lib/hooks/use-locale-date-formatter', () => ({
+    useLocaleDateFormatter: () => ({
+        format: (date: Date) => date.toLocaleDateString(),
+    }),
+}))
+
 describe('community/RoutineDetailPage', () => {
     beforeEach(() => {
-        ; (getProductById as jest.Mock).mockReturnValue({
+        ;(getProductById as jest.Mock).mockReturnValue({
             id: 'p1',
             name: 'Hydra Cream',
             brand: 'Brand A',
             image_url: ['https://example.com/p1.png'],
         })
 
-            ; (getUserById as jest.Mock).mockReturnValue({
-                id: 'u1',
-                name: 'Sarah J.',
-                avatarUrl: 'https://example.com/u1.png',
-            })
+        ;(getUserById as jest.Mock).mockReturnValue({
+            id: 'u1',
+            name: 'Sarah J.',
+            avatarUrl: 'https://example.com/u1.png',
+        })
+
+        ;(fetchUserById as jest.Mock).mockResolvedValue({
+            id: 'u1',
+            name: 'Sarah J.',
+            avatarUrl: 'https://example.com/u1.png',
+        })
     })
 
-    it('renders not found state when routine does not exist', () => {
-        ; (getRoutineById as jest.Mock).mockReturnValue(undefined)
+    it('renders not found state when routine does not exist', async () => {
+        ;(fetchRoutineById as jest.Mock).mockResolvedValue(undefined)
 
         render(<RoutineDetailPage routineId="missing" />)
 
-        expect(screen.getByText('RoutineDetail.notFoundTitle')).toBeInTheDocument()
-        expect(screen.getByRole('link', { name: 'RoutineDetail.backToDiscussions' })).toHaveAttribute('href', '/community')
+        await waitFor(() => {
+            expect(screen.getByText('notFoundTitle')).toBeInTheDocument()
+        })
+        expect(screen.getByRole('link', { name: 'backToDiscussions' })).toHaveAttribute('href', '/community')
     })
 
-    it('renders routine data, votes and steps', () => {
-        ; (getRoutineById as jest.Mock).mockReturnValue({
+    it('renders routine data, votes and steps', async () => {
+        ;(fetchRoutineById as jest.Mock).mockResolvedValue({
             id: 'r1',
             userId: 'u1',
             name: 'Night Repair',
@@ -56,7 +85,7 @@ describe('community/RoutineDetailPage', () => {
             type: 'pm',
             skinType: SkinType.SECA,
             publishedAt: '2026-03-16T11:05:00.000Z',
-            upvotes: ['u2'],
+            upvotes: ['u3'],
             downvotes: [],
             comments: [{ id: 'c1' }],
             steps: [
@@ -67,21 +96,26 @@ describe('community/RoutineDetailPage', () => {
 
         render(<RoutineDetailPage routineId="r1" />)
 
-        expect(screen.getAllByText('Night Repair').length).toBeGreaterThan(0)
+        await waitFor(() => {
+            expect(screen.getAllByText('Night Repair').length).toBeGreaterThan(0)
+        })
         expect(screen.getByText('First note')).toBeInTheDocument()
         expect(screen.getByText('Second note')).toBeInTheDocument()
         expect(screen.getByText('Mocked comments section')).toBeInTheDocument()
 
-        const upvoteButton = screen.getByRole('button', { name: 'RoutineDetail.upvote' })
-        expect(upvoteButton).toHaveTextContent('1')
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('1')
+        })
 
-        fireEvent.click(upvoteButton)
+        fireEvent.click(screen.getByRole('button', { name: 'upvote' }))
 
-        expect(screen.getByRole('button', { name: 'RoutineDetail.upvote' })).toHaveTextContent('2')
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('2')
+        })
     })
 
-    it('toggles up/down votes in routine detail', () => {
-        ; (getRoutineById as jest.Mock).mockReturnValue({
+    it('toggles up/down votes in routine detail', async () => {
+        ;(fetchRoutineById as jest.Mock).mockResolvedValue({
             id: 'r2',
             userId: 'u1',
             name: 'AM Balance',
@@ -97,24 +131,34 @@ describe('community/RoutineDetailPage', () => {
 
         render(<RoutineDetailPage routineId="r2" />)
 
-        const upvoteButton = screen.getByRole('button', { name: 'RoutineDetail.upvote' })
-        const downvoteButton = screen.getByRole('button', { name: 'RoutineDetail.downvote' })
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('0')
+        })
+        const upvoteButton = screen.getByRole('button', { name: 'upvote' })
+        const downvoteButton = screen.getByRole('button', { name: 'downvote' })
 
-        expect(upvoteButton).toHaveTextContent('0')
         expect(downvoteButton).toHaveTextContent('0')
 
         fireEvent.click(upvoteButton)
-        expect(screen.getByRole('button', { name: 'RoutineDetail.upvote' })).toHaveTextContent('1')
-        expect(screen.getByRole('button', { name: 'RoutineDetail.downvote' })).toHaveTextContent('0')
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('1')
+        })
+        expect(screen.getByRole('button', { name: 'downvote' })).toHaveTextContent('0')
 
-        fireEvent.click(screen.getByRole('button', { name: 'RoutineDetail.upvote' }))
-        expect(screen.getByRole('button', { name: 'RoutineDetail.upvote' })).toHaveTextContent('0')
+        fireEvent.click(screen.getByRole('button', { name: 'upvote' }))
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('0')
+        })
 
-        fireEvent.click(screen.getByRole('button', { name: 'RoutineDetail.downvote' }))
-        expect(screen.getByRole('button', { name: 'RoutineDetail.downvote' })).toHaveTextContent('1')
+        fireEvent.click(screen.getByRole('button', { name: 'downvote' }))
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'downvote' })).toHaveTextContent('1')
+        })
 
-        fireEvent.click(screen.getByRole('button', { name: 'RoutineDetail.upvote' }))
-        expect(screen.getByRole('button', { name: 'RoutineDetail.upvote' })).toHaveTextContent('1')
-        expect(screen.getByRole('button', { name: 'RoutineDetail.downvote' })).toHaveTextContent('0')
+        fireEvent.click(screen.getByRole('button', { name: 'upvote' }))
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'upvote' })).toHaveTextContent('1')
+            expect(screen.getByRole('button', { name: 'downvote' })).toHaveTextContent('0')
+        })
     })
 })
