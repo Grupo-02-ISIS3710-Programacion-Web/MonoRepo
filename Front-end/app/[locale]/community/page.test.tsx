@@ -1,19 +1,46 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ComunidadPage from './page'
-import { getRoutines } from '@/lib/routine'
 import { getUsers } from '@/lib/api'
+import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from '@/lib/api-client'
 import { SkinType } from '@/types/product'
 
-jest.mock('@/lib/routine', () => ({
-    getRoutines: jest.fn(),
+jest.mock('@/lib/api-client', () => ({
+    fetchRoutines: jest.fn(),
+    upvoteRoutine: jest.fn(() => Promise.resolve()),
+    downvoteRoutine: jest.fn(() => Promise.resolve()),
+    removeUpvote: jest.fn(() => Promise.resolve()),
+    removeDownvote: jest.fn(() => Promise.resolve()),
 }))
 
 jest.mock('@/lib/api', () => ({
     getUsers: jest.fn(),
+    getUserById: jest.fn(() => ({ id: 'u1', name: 'Sarah J.', avatarUrl: 'https://example.com/u1.png' })),
 }))
 
 jest.mock('@/i18n/navigation', () => ({
     Link: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
+}))
+
+jest.mock('@/lib/hooks/use-auth-session', () => ({
+    useAuthSession: () => ({ user: { id: 'u2' }, isLoggedIn: true, isReady: true }),
+}))
+
+jest.mock('next-intl', () => ({
+    useTranslations: () => (key: string) => key,
+    useLocale: () => 'es',
+}))
+
+jest.mock('@/lib/hooks/use-locale-date-formatter', () => ({
+    useLocaleDateFormatter: () => ({
+        format: (date: Date) => date.toLocaleDateString(),
+    }),
+}))
+
+jest.mock('sonner', () => ({
+    toast: {
+        success: jest.fn(),
+        error: jest.fn(),
+    },
 }))
 
 jest.mock('@/components/community/RoutineCard', () => ({
@@ -37,11 +64,12 @@ jest.mock('@/components/community/RoutineCard', () => ({
 
 describe('app/[locale]/community/page', () => {
     beforeEach(() => {
-        ; (getUsers as jest.Mock).mockReturnValue([
+        ;(getUsers as jest.Mock).mockReturnValue([
             { id: 'u1', name: 'Sarah J.', avatarUrl: 'https://example.com/u1.png' },
         ])
 
-            ; (getRoutines as jest.Mock).mockReturnValue([
+        ;(fetchRoutines as jest.Mock).mockResolvedValue({
+            routines: [
                 {
                     id: 'r1',
                     userId: 'u1',
@@ -78,57 +106,78 @@ describe('app/[locale]/community/page', () => {
                     views: 1200,
                     publishedAt: '2026-03-15T11:05:00.000Z',
                 },
-            ])
+            ],
+            totalPages: 1,
+        })
     })
 
-    const getDesktopTitles = () =>
-        screen
-            .getAllByTestId('routine-card-title')
+    const getDesktopTitles = async () => {
+        const titles = await screen.findAllByTestId('routine-card-title')
+        return titles
             .slice(0, 3)
             .map((node) => node.textContent)
+    }
 
-    it('renders forum sections and routine cards', () => {
+    it('renders forum sections and routine cards', async () => {
         render(<ComunidadPage />)
 
-        expect(screen.getAllByText('CommunityPage.forumTitle').length).toBeGreaterThan(0)
-        expect(screen.getAllByText('Morning Routine').length).toBeGreaterThan(0)
+        await waitFor(() => {
+            expect(screen.getAllByText('forumTitle').length).toBeGreaterThan(0)
+        })
+        const titles = await screen.findAllByText('Morning Routine')
+        expect(titles.length).toBeGreaterThan(0)
         expect(screen.getAllByText('Night Routine').length).toBeGreaterThan(0)
-        expect(screen.getAllByRole('link', { name: 'CommunityPage.createPost' }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole('link', { name: /createPost/ }).length).toBeGreaterThan(0)
     })
 
-    it('reorders list when switching tabs', () => {
+    it('reorders list when switching tabs', async () => {
         render(<ComunidadPage />)
 
-        expect(getDesktopTitles()).toEqual(['Night Routine', 'Weekly Exfoliation', 'Morning Routine'])
+        const titles1 = await getDesktopTitles()
+        expect(titles1).toEqual(['Night Routine', 'Weekly Exfoliation', 'Morning Routine'])
 
-        fireEvent.click(screen.getAllByRole('button', { name: 'CommunityPage.tabs.mostCommented' })[0])
-        expect(getDesktopTitles()).toEqual(['Morning Routine', 'Weekly Exfoliation', 'Night Routine'])
+        fireEvent.click(screen.getAllByRole('button', { name: /tabs.mostCommented/ })[0])
+        await waitFor(async () => {
+            const titles = await screen.findAllByTestId('routine-card-title')
+            const first3 = titles.slice(0, 3).map(t => t.textContent)
+            expect(first3).toEqual(['Morning Routine', 'Weekly Exfoliation', 'Night Routine'])
+        }, { timeout: 3000 })
 
-        fireEvent.click(screen.getAllByRole('button', { name: 'CommunityPage.tabs.mostVoted' })[0])
-        expect(getDesktopTitles()).toEqual(['Weekly Exfoliation', 'Morning Routine', 'Night Routine'])
+        fireEvent.click(screen.getAllByRole('button', { name: /tabs.mostVoted/ })[0])
+        await waitFor(async () => {
+            const titles = await screen.findAllByTestId('routine-card-title')
+            const first3 = titles.slice(0, 3).map(t => t.textContent)
+            expect(first3).toEqual(['Weekly Exfoliation', 'Morning Routine', 'Night Routine'])
+        }, { timeout: 3000 })
     })
 
-    it('filters routines by selected skin type', () => {
+    it('filters routines by selected skin type', async () => {
         render(<ComunidadPage />)
 
-        fireEvent.click(screen.getAllByRole('button', { name: /SkinTypes.seca/ })[0])
+        await screen.findAllByTestId('routine-card-title')
 
-        const filteredTitles = screen
-            .getAllByTestId('routine-card-title')
-            .map((node) => node.textContent)
+        fireEvent.click(screen.getAllByRole('button', { name: /seca/ })[0])
 
-        expect(filteredTitles.every((title) => title === 'Night Routine')).toBe(true)
+        await waitFor(async () => {
+            const filteredTitles = (await screen.findAllByTestId('routine-card-title'))
+                .map((node) => node.textContent)
+
+            expect(filteredTitles.every((title) => title === 'Night Routine')).toBe(true)
+        })
     })
 
-    it('updates vote count when upvote is clicked', () => {
+    it('updates vote count when upvote is clicked', async () => {
         render(<ComunidadPage />)
 
-        const upvoteButton = screen.getAllByRole('button', { name: 'RoutineDetail.upvote' })[0]
+        const upvoteButtons = await screen.findAllByRole('button', { name: 'upvote' })
+        const upvoteButton = upvoteButtons[0]
 
         expect(upvoteButton).toHaveTextContent('0')
 
         fireEvent.click(upvoteButton)
 
-        expect(screen.getAllByRole('button', { name: 'RoutineDetail.upvote' })[0]).toHaveTextContent('1')
+        await waitFor(() => {
+            expect(screen.getAllByRole('button', { name: 'upvote' })[0]).toHaveTextContent('1')
+        })
     })
 })

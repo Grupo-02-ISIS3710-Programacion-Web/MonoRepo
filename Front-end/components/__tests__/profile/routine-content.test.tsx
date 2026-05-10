@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import RoutineContent from '../../profile/routineContent'
 import { mockRoutines } from '../../test-fixtures/routines'
 import { mockProducts } from '../../test-fixtures/products'
@@ -14,6 +14,18 @@ jest.mock('@/i18n/navigation', () => ({
       {children}
     </a>
   ),
+}))
+
+jest.mock('@/lib/hooks/use-auth-session', () => ({
+  useAuthSession: () => ({ isLoggedIn: true }),
+}))
+
+jest.mock('@/lib/protected-route', () => ({
+  getProtectedRoute: (path: string) => path,
+}))
+
+jest.mock('@/lib/api-client', () => ({
+  deleteRoutine: jest.fn(() => Promise.resolve()),
 }))
 
 jest.mock('sonner', () => ({
@@ -39,7 +51,7 @@ describe('RoutineContent', () => {
           {
             ...mockRoutines[0],
             id: 'r-missing',
-            steps: [{ id: 'sx', order: 1, product: 'not-found' }],
+            steps: [{ id: 'sx', order: 1, productId: 'not-found', name: 'Missing Step' }],
           },
         ]}
       />
@@ -48,13 +60,15 @@ describe('RoutineContent', () => {
     expect(screen.getByText('Producto no encontrado')).toBeInTheDocument()
   })
 
-  it('deletes a routine when confirmation is accepted', () => {
+  it('deletes a routine when confirmation is accepted', async () => {
     render(<RoutineContent filteredRoutines={[mockRoutines[0]]} />)
 
     fireEvent.click(screen.getByTitle('RoutineContent.deleteDialog.title'))
     fireEvent.click(screen.getByRole('button', { name: 'RoutineContent.deleteDialog.delete' }))
 
-    expect(screen.queryByText('Morning Basic')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('Morning Basic')).not.toBeInTheDocument()
+    })
     expect(toast.success).toHaveBeenCalledWith('Morning Basic RoutineContent.deleted')
   })
 })

@@ -1,6 +1,7 @@
 "use client";
 
 import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from "@/lib/api-client";
+import { getUserById } from "@/lib/api";
 import { MessageSquare, Plus, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,33 +14,25 @@ import RoutineCard from "@/components/community/RoutineCard";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
 import { Routine } from "@/types/routine";
+import { SkinType } from "@/types/product";
 import { toast } from "sonner";
 
 type MobileTab = "newest" | "mostCommented" | "mostVoted";
 
 const mobileTabs: MobileTab[] = ["newest", "mostCommented", "mostVoted"];
-const skinTypeLabels: Record<string, string> = {
-  normal: "Normal",
-  seca: "Seca",
-  grasa: "Grasa",
-  mixta: "Mixta",
-  sensible: "Sensible",
-  acneica: "Acneica",
-  irritada: "Irritada",
-  opaca: "Opaca",
-  texturizada: "Texturizada",
-};
 
 const toTopicTag = (label: string) => `#${label.replace(/[^a-zA-Z0-9]+/g, "")}`;
+
+const skinTypeValues = Object.values(SkinType).filter((v) => typeof v === "string") as SkinType[];
 
 const FilterButtons = ({ active, onChange, counts, t, tSkin }: any) => (
   <>
     <Button variant={active === "all" ? "default" : "outline"} onClick={() => onChange("all")} className="w-full justify-start">
       {t("allSkinTypes")}
     </Button>
-    {Object.keys(skinTypeLabels).map((skin) => (
+    {skinTypeValues.map((skin) => (
       <Button key={skin} variant={active === skin ? "default" : "outline"} onClick={() => onChange(skin)} className="w-full justify-between">
-        <span>{skinTypeLabels[skin]}</span>
+        <span>{tSkin(skin)}</span>
         <span className="text-xs opacity-75">({counts[skin] ?? 0})</span>
       </Button>
     ))}
@@ -67,7 +60,10 @@ export default function CommunityPage() {
   const [activeSkinFilter, setActiveSkinFilter] = useState<"all" | string>("all");
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const currentUserId = user?.id ?? "";
   const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn);
@@ -77,8 +73,10 @@ export default function CommunityPage() {
     const loadRoutines = async () => {
       try {
         setIsLoading(true);
-        const data = await fetchRoutines(1, locale);
+        setCurrentPage(1);
+        const data = await fetchRoutines(1, locale, activeTab);
         setRoutines(data.routines || []);
+        setTotalPages(data.totalPages || 1);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load routines");
@@ -89,7 +87,24 @@ export default function CommunityPage() {
     };
 
     loadRoutines();
-  }, [locale]);
+  }, [locale, activeTab]);
+
+  const loadMoreRoutines = async () => {
+    if (isLoadingMore || currentPage >= totalPages) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const data = await fetchRoutines(nextPage, locale, activeTab);
+      setRoutines(prev => [...prev, ...(data.routines || [])]);
+      setCurrentPage(nextPage);
+      setTotalPages(data.totalPages || totalPages);
+    } catch (err) {
+      console.error("Failed to load more routines:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleVote = async (routineId: string, direction: "up" | "down") => {
     try {
@@ -155,14 +170,15 @@ export default function CommunityPage() {
     routines.map((routine) => {
       const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null;
       const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0;
+      const user = getUserById(routine.userId);
       return {
         id: routine.id,
         title: routine.name,
         excerpt: routine.description,
-        userName: "",
-        avatarUrl: "",
+        userName: user?.name ?? "Anonymous",
+        avatarUrl: user?.avatarUrl ?? "https://i.pravatar.cc/80?img=29",
         skinType: routine.skinType,
-        tag: skinTypeLabels[routine.skinType] || routine.skinType,
+        tag: tSkin(routine.skinType) || routine.skinType,
         upvotes: routine.upvotes?.length ?? 0,
         downvotes: routine.downvotes?.length ?? 0,
         hasUpvoted: routine.upvotes?.includes(currentUserId) ?? false,
@@ -216,16 +232,37 @@ export default function CommunityPage() {
             {error}
           </div>
         ) : visiblePosts.length > 0 ? (
-          visiblePosts.map((post, index) => (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut", delay: Math.min(index * 0.025, 0.1) }}
-            >
-              <RoutineCard post={post} tCommunity={t} tRoutine={tRoutine} size={size} showVoting={isLoggedIn} onVote={handleVote} />
-            </motion.div>
-          ))
+          <>
+            {visiblePosts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut", delay: Math.min(index * 0.025, 0.1) }}
+              >
+                <RoutineCard post={post} tCommunity={t} tRoutine={tRoutine} size={size} showVoting={isLoggedIn} onVote={handleVote} />
+              </motion.div>
+            ))}
+            {currentPage < totalPages && (
+              <div className="text-center pt-4">
+                <Button
+                  onClick={loadMoreRoutines}
+                  disabled={isLoadingMore}
+                  variant="outline"
+                  size="lg"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Cargando...
+                    </>
+                  ) : (
+                    "Cargar más"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             No hay rutinas para mostrar

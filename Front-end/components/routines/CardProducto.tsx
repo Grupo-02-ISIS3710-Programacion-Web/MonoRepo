@@ -11,7 +11,14 @@ type CardProductoProps = Readonly<{
     compact?: boolean;
 }>;
 
-const getCategoryLabel = (category: string): string => {
+const getCategoryLabel = (category: string | number | (string | number)[] | undefined): string => {
+    if (!category) return "";
+    
+    if (Array.isArray(category)) {
+        return category.length > 0 ? getCategoryLabel(category[0]) : "";
+    }
+    
+    const catStr = String(category);
     const categoryMap: Record<string, string> = {
         hidratacion: "HYDRATION",
         limpieza: "CLEANSER",
@@ -20,7 +27,7 @@ const getCategoryLabel = (category: string): string => {
         reparacion: "REPAIR",
         antioxidante: "ANTIOXIDANT"
     };
-    return categoryMap[category] || category.toUpperCase();
+    return categoryMap[catStr.toLowerCase()] || catStr.toUpperCase();
 };
 
 export default function CardProducto({
@@ -29,8 +36,8 @@ export default function CardProducto({
     showButton = true,
     compact = false
 }: CardProductoProps) {
-    const primaryCategory = product.category[0] || "";
-    const imageUrl = product.image_url[0] || "/producto.jpg";
+    const primaryCategory = product?.category;
+    const imageUrl = (product?.image_url && product.image_url[0]) || "/producto.jpg";
     const t = useTranslations("CardProducto");
     return (
         <Card className="w-full bg-white shadow-sm">

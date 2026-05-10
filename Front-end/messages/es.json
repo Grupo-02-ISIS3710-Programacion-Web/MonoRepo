@@ -226,12 +226,19 @@
         "title": "Crea una rutina conversando con IA",
         "description": "Describe lo que buscas, ajusta el borrador en tiempo real y selecciona productos que ya existen dentro de Skin4All.",
         "headerActions": {
-            "manualBuilder": "Abrir constructor manual",
-            "suggestions": "Ver sugerencias"
+            "manualBuilder": "Abrir constructor manual"
         },
         "suggestionsSheet": {
             "title": "Sugerencias",
             "description": "Explora productos sugeridos y atajos para seguir refinando la conversación."
+        },
+        "chat": {
+            "productRecommendation": {
+                "addToRoutine": "Agregar a la rutina",
+                "added": "Agregado",
+                "alternatives": "Alternativas",
+                "reason": "Por qué se recomienda"
+            }
         },
         "mobileDraft": {
             "open": "Ver borrador",
@@ -272,22 +279,27 @@
         "chat": {
             "title": "Chat",
             "description": "Haz preguntas, pide ajustes y sigue afinando la rutina paso a paso.",
-            "status": "Experiencia lista para conectar con IA",
             "assistantLabel": "Skin4All AI",
             "userLabel": "{name}"
         },
         "composer": {
             "label": "Indica lo que quieres lograr",
             "placeholder": "Describe tus preocupaciones, ingredientes que quieres usar o evitar, presupuesto, tiempo disponible y cualquier detalle relevante...",
-            "hint": "Esta pantalla simula la experiencia final. La lógica real del LLM se integrará después.",
+            "hint": "Escribe tu mensaje y presiona Enviar para chatear con la IA.",
             "send": "Enviar"
         },
+        "generateRoutine": "Generar rutina con IA",
+        "generating": "Generando...",
         "messages": {
             "assistantIntro": "Hola {name}, cuéntame qué quieres mejorar y te iré guiando hacia una rutina más precisa.",
             "userGoal": "Quiero una rutina simple que me ayude con deshidratación, sensibilidad y textura irregular.",
-            "assistantFollowUp": "Perfecto. Empezaré con una propuesta base y luego podremos seguir ajustando productos, pasos y notas desde esta misma conversación.",
-            "pendingReply": "Respuesta simulada: aquí aparecerá la siguiente iteración del asistente cuando se conecte la lógica con el LLM."
+            "assistantFollowUp": "Perfecto. Empezaré con una propuesta base y luego podemos seguir ajustando productos, pasos y notas desde esta misma conversación.",
+            "pendingReply": "Procesando respuesta...",
+            "errorReply": "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta nuevamente.",
+            "routineGenerated": "¡Rutina generada exitosamente! Revisa el borrador y ajusta lo que necesites.",
+            "errorGenerating": "Error al generar la rutina. Por favor, intenta nuevamente."
         },
+
         "draft": {
             "title": "Borrador de rutina",
             "description": "Este panel representa una estructura real del tipo Routine: nombre, descripción, tipo, tipo de piel y pasos con productos existentes.",
@@ -322,10 +334,15 @@
             "empty": "Aún no has agregado productos al borrador. Usa las recomendaciones para construir la rutina.",
             "unknownProduct": "Producto no encontrado",
             "actions": {
-                "continue": "Continuar en el constructor",
+                "continue": "Guardar rutina",
                 "moveUp": "Mover paso hacia arriba",
                 "moveDown": "Mover paso hacia abajo",
                 "removeStep": "Eliminar paso"
+            },
+            "save": {
+                "warningNoSteps": "Añade al menos un producto antes de guardar.",
+                "success": "¡Rutina guardada exitosamente!",
+                "error": "Error al guardar la rutina. Inténtalo de nuevo."
             }
         },
         "recommendedProducts": {
@@ -338,6 +355,15 @@
             "toast": {
                 "added": "{name} se agrego al borrador"
             }
+        },
+        "suggestionsModal": {
+            "title": "Productos sugeridos por IA",
+            "description": "Selecciona los productos que quieres agregar a tu rutina. Estos reemplazarán los productos actuales de cada paso.",
+            "selectAll": "Seleccionar todos",
+            "deselectAll": "Deseleccionar todos",
+            "selected": "seleccionados",
+            "addToRoutine": "Agregar a la rutina",
+            "cancel": "Cancelar"
         },
         "continuousRecommendations": {
             "title": "Recomendaciones continuas",

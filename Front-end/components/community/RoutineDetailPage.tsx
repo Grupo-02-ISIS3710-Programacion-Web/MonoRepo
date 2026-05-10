@@ -4,12 +4,12 @@ import { Link } from "@/i18n/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CommentSection from "@/components/comments/CommentsSection";
-import { getProductById } from "@/lib/api";
-import { fetchRoutineById, fetchUserById } from "@/lib/api-client";
+import { getProductById, getUserById } from "@/lib/api";
+import { fetchRoutineById, fetchUserById, incrementRoutineView } from "@/lib/api-client";
 import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
 import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, MessageSquare, Moon, Sun, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRoutineApiVotes } from "@/lib/hooks/use-routine-api-votes";
 import { useLocaleDateFormatter } from "@/lib/hooks/use-locale-date-formatter";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
@@ -40,6 +40,8 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
     year: "numeric",
   });
 
+  const viewIncrementedRef = useRef(false);
+
   useEffect(() => {
     const loadRoutineData = async () => {
       try {
@@ -53,7 +55,11 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
             const userData = await fetchUserById(routineData.userId);
             setUser(userData);
           } catch (err) {
-            console.error("Failed to fetch user data:", err);
+            console.error("Failed to fetch user data from API:", err);
+            const mockUser = getUserById(routineData.userId);
+            if (mockUser) {
+              setUser(mockUser);
+            }
           }
         }
       } catch (err) {
@@ -65,6 +71,14 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
     };
 
     loadRoutineData();
+  }, [routineId]);
+
+  useEffect(() => {
+    if (viewIncrementedRef.current) return;
+    viewIncrementedRef.current = true;
+    incrementRoutineView(routineId).catch((err) => {
+      console.error("Failed to increment view:", err);
+    });
   }, [routineId]);
 
   const {

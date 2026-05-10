@@ -134,7 +134,7 @@ export default function DraftEditor({
                 <PasoRutinaCard
                   index={index}
                   totalSteps={routineDraft.steps.length}
-                  product={step.product!}
+                  product={step.product}
                   stepId={step.id}
                   nameValue={step.name}
                   notesValue={step.notes ?? ""}

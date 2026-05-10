@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -10,6 +10,7 @@ import {
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Producto } from './entities/producto.entity';
+import { AiService } from '../ai/ai.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 interface CatalogDocument {
@@ -23,6 +24,8 @@ interface CatalogDocument {
 
 @Injectable()
 export class ProductosService implements OnModuleInit {
+  private readonly logger = new Logger(ProductosService.name);
+
   constructor(
     @InjectModel('Producto') private readonly productoModel: Model<Producto>,
     @InjectModel('SkinTypeCatalog')
@@ -31,6 +34,8 @@ export class ProductosService implements OnModuleInit {
     private readonly productTypeCatalogModel: Model<CatalogDocument>,
     @InjectModel('CategoryCatalog')
     private readonly categoryCatalogModel: Model<CatalogDocument>,
+    @Inject(forwardRef(() => AiService))
+    private readonly aiService: AiService,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -70,11 +75,22 @@ export class ProductosService implements OnModuleInit {
       review_count: 0,
       deleted: false,
     });
-    return await producto.save();
+    const saved = await producto.save();
+
+    try {
+      const embedding = await this.aiService.generateProductEmbedding(saved);
+      return await this.productoModel
+        .findByIdAndUpdate(saved._id, { $set: { embedding } }, { new: true })
+        .exec();
+    } catch (error) {
+      this.logger.warn(`Failed to generate embedding for new product ${saved._id}: ${error.message}`);
+      return saved;
+    }
   }
 
-  async findAll(): Promise<Producto[]> {
-    return await this.productoModel.find({ deleted: false }).exec();
+  async findAll(includeEmbeddings = false): Promise<Producto[]> {
+    const projection = includeEmbeddings ? {} : { embedding: 0 };
+    return await this.productoModel.find({ deleted: false }, projection).exec();
   }
 
   async findCatalogs(language: CatalogLanguage = 'es') {
@@ -104,8 +120,48 @@ export class ProductosService implements OnModuleInit {
     };
   }
 
-  async findOne(id: string): Promise<Producto | null> {
-    return await this.productoModel.findById(id).exec();
+  async findOne(id: string, includeEmbeddings = false): Promise<Producto | null> {
+    const projection = includeEmbeddings ? {} : { embedding: 0 };
+    return await this.productoModel.findById(id, projection).exec();
+  }
+
+  async findByIds(ids: string[]): Promise<any[]> {
+    if (!ids || ids.length === 0) return [];
+    const products = await this.productoModel.find({ _id: { $in: ids }, deleted: false }).lean().exec();
+    return this.normalizeProducts(products);
+  }
+
+  async findAllNormalized(): Promise<any[]> {
+    const products = await this.productoModel.find({ deleted: false }).lean().exec();
+    return this.normalizeProducts(products);
+  }
+
+  private async normalizeProducts(products: any[]): Promise<any[]> {
+    if (!products.length) return [];
+
+    const [skinTypes, productTypes, categories] = await Promise.all([
+      this.skinTypeCatalogModel.find().lean().exec(),
+      this.productTypeCatalogModel.find().lean().exec(),
+      this.categoryCatalogModel.find().lean().exec(),
+    ]);
+
+    const skinTypeMap = new Map(skinTypes.map((s) => [s._id, s.code]));
+    const productTypeMap = new Map(productTypes.map((p) => [p._id, p.code]));
+    const categoryMap = new Map(categories.map((c) => [c._id, c.code]));
+
+    return products.map((p) => ({
+      id: p._id?.toString(),
+      name: p.name,
+      brand: p.brand,
+      description: p.description,
+      skin_type: (p.skin_type || []).map((id: number) => skinTypeMap.get(id) || id),
+      product_type: productTypeMap.get(p.product_type) || p.product_type,
+      category: (p.category || []).map((id: number) => categoryMap.get(id) || id),
+      ingredients: p.ingredients || [],
+      image_url: p.image_url || [],
+      rating: p.rating ?? 0,
+      review_count: p.review_count ?? 0,
+    }));
   }
 
   async update(
@@ -146,9 +202,26 @@ export class ProductosService implements OnModuleInit {
       updateData.category = categories;
     }
 
-    return await this.productoModel
+    const updated = await this.productoModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
+
+    if (updated && (
+      updateData.name || updateData.brand || updateData.description ||
+      updateData.skin_type || updateData.product_type || updateData.category ||
+      updateData.ingredients
+    )) {
+      try {
+        const embedding = await this.aiService.generateProductEmbedding(updated);
+        return await this.productoModel
+          .findByIdAndUpdate(id, { $set: { embedding } }, { new: true })
+          .exec();
+      } catch (error) {
+        this.logger.warn(`Failed to regenerate embedding for updated product ${id}: ${error.message}`);
+      }
+    }
+
+    return updated;
   }
 
   async remove(id: string): Promise<{ message: string }> {

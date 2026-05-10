@@ -7,8 +7,8 @@ import { ComentariosModule } from './modules/comentarios/comentarios.module';
 import { RutinasModule } from './modules/rutinas/rutinas.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SeedModule } from './modules/seed/seed.module';
-import { ProductoSchema } from './modules/productos/entities/producto.entity';
-import { RutinaSchema } from './modules/rutinas/entities/rutina.entity';
+import { AiModule } from './modules/ai/ai.module';
+import { ChatsModule } from './modules/chats/chats.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
@@ -17,18 +17,20 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MongooseModule.forRoot(`mongodb://admin:password123@mongodb:27017`),
-    MongooseModule.forFeature([
-      { name: 'Producto', schema: ProductoSchema },
-      { name: 'Rutina', schema: RutinaSchema },
-    ]),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.MONGODB_URI,
+      }),
+    }),
     ProductosModule,
     ComentariosModule,
     RutinasModule,
     SeedModule,
+    AiModule,
+    ChatsModule,
     CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

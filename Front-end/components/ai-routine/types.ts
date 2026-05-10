@@ -2,7 +2,7 @@
 
 import { Product, SkinType } from "@/types/product";
 import { Routine } from "@/types/routine";
-import { AiRoutineContinuousRecommendation, AiRoutineFocusArea, AiRoutineMessage, AiRoutineStarterPrompt } from "@/lib/hooks/use-ai-routine-chat";
+import { AiRoutineFocusArea, AiRoutineMessage, AiRoutineStarterPrompt } from "@/lib/hooks/use-ai-routine-chat";
 
 export type Translator = (key: string, values?: Record<string, string | number>) => string;
 
@@ -31,6 +31,8 @@ export type ChatPanelProps = Readonly<{
   setInputValue: (value: string) => void;
   onSubmit: () => void;
   t: Translator;
+  addProductToRoutine?: (product: Product, stepName?: string, notes?: string) => void;
+  isLoading?: boolean;
 }>;
 
 export type StarterPromptsPanelProps = Readonly<{
@@ -39,15 +41,6 @@ export type StarterPromptsPanelProps = Readonly<{
   selectedFocusAreaIds: string[];
   applyStarterPrompt: (starterPromptId: string, value: string) => void;
   toggleFocusArea: (focusAreaId: string) => void;
-  t: Translator;
-}>;
-
-export type SuggestionsSheetContentProps = Readonly<{
-  recommendedProducts: Product[];
-  routineDraft: Routine;
-  continuousRecommendations: AiRoutineContinuousRecommendation[];
-  appendPrompt: (prompt: string) => void;
-  onToggleSuggestedProduct: (product: Product) => void;
   t: Translator;
 }>;
 
