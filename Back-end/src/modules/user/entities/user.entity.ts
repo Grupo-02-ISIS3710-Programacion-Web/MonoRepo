@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SkinType } from 'src/enums/enums';
 
 @Schema({
   timestamps: true,
@@ -20,7 +21,7 @@ export class User {
     required: true,
     unique: true,
   })
-  correo: string;
+  email: string;
 
   @Prop({
     required: true,
@@ -30,13 +31,7 @@ export class User {
 
   @Prop({
     required: true,
-    enum: [
-      'Seca',
-      'Grasa',
-      'Mixta',
-      'Normal',
-      'Sensible',
-    ],
+    enum: Object.values(SkinType)
   })
   skinType: string;
 
