@@ -423,13 +423,8 @@ export default function ProductForm() {
 
                     {/* IMAGE URL */}
 
-                    <Controller
-                    name="images"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-
-                        <Field data-invalid={fieldState.invalid}>
-
+                    
+                    <Field>
                         <FieldLabel className="text-primary">
                             {t("images")}
                         </FieldLabel>
@@ -440,15 +435,7 @@ export default function ProductForm() {
                             multiple
                             onChange={e => setSelectedFiles(e.target.files)}
                         />
-
-                        {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                        )}
-
-                        </Field>
-
-                    )}
-                    />
+                    </Field>
 
                     </FieldGroup>
                 </CardContent>
