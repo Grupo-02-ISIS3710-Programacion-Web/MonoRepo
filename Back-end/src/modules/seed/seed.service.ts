@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Producto } from '../productos/entities/producto.entity';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { productosMock } from 'src/mocks/productos-mock';
-import { rutinasMock } from 'src/mocks/rutinas-mock';
+import { productosMock } from '../../mocks/productos-mock';
+import { rutinasMock } from '../../mocks/rutinas-mock';
 import { Rutina } from '../rutinas/entities/rutina.entity';
 
 @Injectable()
