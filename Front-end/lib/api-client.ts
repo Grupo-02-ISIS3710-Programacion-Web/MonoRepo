@@ -1,3 +1,5 @@
+import { normalizeProductForSubmission } from "./product-mapper";
+
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -10,13 +12,15 @@ export interface ApiResponse<T> {
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const headers = { ...(options.headers || {}) } as Record<string, string>;
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   try {
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!response.ok) {
@@ -47,21 +51,46 @@ function normalizeRoutines(data: any) {
 
 // Products API
 export async function fetchProducts() {
-  return apiFetch('/products');
+  return apiFetch('/productos');
 }
 
 export async function fetchProductById(id: string) {
-  return apiFetch(`/products/${id}`);
+  return apiFetch(`/productos/${id}`);
 }
 
 export async function fetchProductsByCategory(category: string) {
   const encoded = encodeURIComponent(category);
-  return apiFetch(`/products/category/${encoded}`);
+  return apiFetch(`/productos/category/${encoded}`);
 }
 
 export async function fetchProductsBySkinType(skinType: string) {
   const encoded = encodeURIComponent(skinType);
-  return apiFetch(`/products/skin-type/${encoded}`);
+  return apiFetch(`/productos/skin-type/${encoded}`);
+}
+
+export async function createProduct(product: any, images: File[]) {
+  const normalized = normalizeProductForSubmission(product);
+  
+  const form = new FormData();
+  form.append('name', normalized.name);
+  form.append('brand', normalized.brand);
+  form.append('description', normalized.description);
+  form.append('product_type', normalized.product_type);
+  form.append('primary_category', normalized.primary_category);
+  
+  if (normalized.skin_type.length > 0) 
+    form.append('skin_type', JSON.stringify(normalized.skin_type));
+  if (normalized.additional_categories.length > 0) 
+    form.append('additional_categories', JSON.stringify(normalized.additional_categories));
+  if (normalized.ingredients.length > 0) 
+    form.append('ingredients', JSON.stringify(normalized.ingredients));
+
+  images.forEach((image) => form.append('images', image));
+
+  return apiFetch('/productos', {
+    method: 'POST',
+    body: form,
+  });
 }
 
 // Users API

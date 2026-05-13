@@ -62,13 +62,29 @@ export class ProductosService implements OnModuleInit {
       throw new BadRequestException('At least one image is required');
     }
 
-    const toNumberArray = (val: any): number[] => {
-      if (Array.isArray(val)) return val.map(Number).filter((v) => !isNaN(v));
-      if (val !== undefined && val !== null && val !== '') {
-        const num = Number(val);
-        return isNaN(num) ? [] : [num];
+    const toNumberArray = (value: any): number[] => {
+      if (Array.isArray(value)) {
+        return value.map(Number).filter(Number.isFinite);
       }
-      return [];
+
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.map(Number).filter(Number.isFinite);
+          }
+          const single = Number(parsed);
+          return Number.isFinite(single) ? [single] : [];
+        } catch {
+          return trimmed.split(',').map(Number).filter(Number.isFinite);
+        }
+      }
+
+      const single = Number(value);
+      return Number.isFinite(single) ? [single] : [];
     };
 
     const skin_type = toNumberArray(createProductoDto.skin_type);

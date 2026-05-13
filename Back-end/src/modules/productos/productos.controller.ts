@@ -79,7 +79,6 @@ export class ProductosController {
     @Body() createProductoDto: CreateProductoDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
-    console.log(createProductoDto.skin_type);
     return this.productosService.create(createProductoDto, images);
   }
 

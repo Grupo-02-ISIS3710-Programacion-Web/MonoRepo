@@ -13,6 +13,7 @@ import { InputGroup, InputGroupTextarea } from "../ui/input-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList, ComboboxTrigger, ComboboxValue, useComboboxAnchor } from "../ui/combobox";
 import { Fragment, useState } from "react";
+import { createProduct } from "@/lib/api-client";
 
 export default function ProductForm() {
     const t = useTranslations("CreateProductPage");
@@ -54,30 +55,17 @@ export default function ProductForm() {
             return;
         }
 
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
-            if (Array.isArray(value)) {
-                value.forEach(v => formData.append(key, v));
-            } else if (value !== undefined) {
-                formData.append(key, value as any);
-            }
-        });
-        Array.from(selectedFiles).forEach(file => {
-            formData.append("images", file); 
-        });
-
-        const res = await fetch("/api/productos", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (res.ok) {
+        try {
+            const files = Array.from(selectedFiles);
+            await createProduct(data as any, files);
             toast.success("Producto enviado para revisión ✅", {
                 description: "Un administrador revisará la propuesta."
             });
             form.reset();
+            setIngredientsRaw("");
             setSelectedFiles(null);
-        } else {
+        } catch (err) {
+            console.error(err);
             toast.error("Error al enviar el producto.");
         }
     }
