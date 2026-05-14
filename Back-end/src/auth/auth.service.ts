@@ -26,16 +26,17 @@ export class AuthService {
 
   async register(createAuthDto: RegisterDtoUser) {
     try {
-      const { password, ...userData } = createAuthDto;
+
+      const { contrasenia, confirmarContrasenia, ...userData } = createAuthDto;
 
       const user = new this.userModel({
         ...userData,
-        password: bcrypt.hashSync(password, 10),
+        contrasenia: bcrypt.hashSync(contrasenia, 10),
       });
 
       await user.save();
 
-      const { password: _, ...userWithoutPassword } =
+      const { contrasenia: _, ...userWithoutPassword } =
         user.toObject();
 
       return {
@@ -48,40 +49,40 @@ export class AuthService {
       };
 
     } catch (error) {
-      this.handleBDErrors(error);
+      throw this.handleBDErrors(error);
     }
   }
-
+  
   async login(loginDto: LoginUserDto) {
     try {
-      const email = String(loginDto.email);
+
+      const email = loginDto.email.toLowerCase();
 
       const user = await this.userModel
-        .findOne({ email })
-        .select('+password +email +name');
+        .findOne({ email });
 
       if (!user) {
         throw new BadRequestException(
-          'Invalid credentials',
+          'Credenciales inválidas',
         );
       }
 
-      if (
-        !bcrypt.compareSync(
-          String(loginDto.password),
-          String(user.password),
-        )
-      ) {
+      const isPasswordValid = bcrypt.compareSync(
+        loginDto.contrasenia,
+        user.contrasenia,
+      );
+
+      if (!isPasswordValid) {
         throw new BadRequestException(
-          'Invalid credentials',
+          'Credenciales inválidas',
         );
       }
 
-      const { password: _, ...userWithoutPassword } =
+      const { contrasenia, ...userWithoutPassword } =
         user.toObject();
 
       return {
-        ...userWithoutPassword,
+        user: userWithoutPassword,
 
         token: this.getJwtToken({
           id: user.id,
@@ -112,14 +113,30 @@ export class AuthService {
 
 
   private handleBDErrors(error: any): never {
-    console.log(error);
 
-    if (error.code === 11000) {
-      throw new BadRequestException(error.message);
+  if (error.code === 11000) {
+
+    if (error.keyPattern?.email) {
+      throw new BadRequestException(
+        'Este correo ya está registrado'
+      );
     }
 
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
+    throw new BadRequestException(
+      'Ya existe un registro con esos datos'
     );
   }
+
+  if (error.name === 'ValidationError') {
+    throw new BadRequestException(
+      'Los datos enviados no son válidos'
+    );
+  }
+
+  console.error(error);
+
+  throw new InternalServerErrorException(
+    'Ocurrió un error inesperado'
+  );
+}
 }

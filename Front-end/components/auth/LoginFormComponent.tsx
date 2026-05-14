@@ -26,18 +26,33 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
     const [showPassword, setShowPassword] = useState(false)
     const [authError, setAuthError] = useState<string | null>(null)
 
-    const onSubmit: SubmitHandler<LoginForm> = (data) => {
-        setAuthError(null)
+    const onSubmit: SubmitHandler<LoginForm> = async (data) => {
 
-        const user = login(data.emailOrLogin, data.password)
-        if (!user) {
-            setAuthError(t("invalidCredentials"))
-            return
+        setAuthError(null);
+
+        try {
+
+            await login(
+                data.emailOrLogin,
+                data.password
+            );
+
+            const redirectTo =
+                initialRedirect || "/";
+
+            router.replace(redirectTo);
+
+        } catch (error) {
+
+            if (error instanceof Error) {
+                setAuthError(error.message);
+            } else {
+                setAuthError(
+                    t("invalidCredentials")
+                );
+            }
         }
-
-        const redirectTo = initialRedirect || "/home"
-        router.replace(redirectTo)
-    }
+    };
 
     return (
 

@@ -134,9 +134,9 @@ export default function Profile() {
 
                 <div className="col-span-6">
                     <UserInfo
-                        name={user.name}
-                        city={user.city}
-                        skinType={user.skinType}
+                        name={user.nombre}
+                        city={user.ciudad}
+                        skinType={user.tipoPiel}
                         reviews={user.reviewCount}
                         posts={user.createdRoutineIds.length}
                         bio={user.bio}

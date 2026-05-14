@@ -9,42 +9,77 @@ export class User {
   @Prop({
     required: true,
     minlength: 3,
+    trim: true,
   })
-  name: string;
+  nombre: string;
 
   @Prop({
     required: true,
   })
-  birthDate: Date;
+  fechaNacimiento: Date;
 
   @Prop({
     required: true,
     unique: true,
+    lowercase: true,
+    trim: true,
   })
   email: string;
 
   @Prop({
     required: true,
-    minlength: 6,
+    minlength: 8,
   })
-  password: string;
+  contrasenia: string;
 
   @Prop({
     required: true,
-    enum: Object.values(SkinType)
+    enum: Object.values(SkinType),
   })
-  skinType: string;
+  tipoPiel: SkinType;
+
+  @Prop({
+    required: true,
+    trim: true,
+  })
+  comoEnteroDeNosotros: string;
 
   @Prop({
     required: true,
   })
-  discoverySource: string;
+  probadoSkinCare: boolean;
+
+ 
 
   @Prop({
-    required: true,
+    trim: true,
+    default: '',
   })
-  usedProductsBefore: boolean;
+  ciudad: string;
+
+  @Prop({
+    trim: true,
+    default: '',
+    maxlength: 300,
+  })
+  bio: string;
+
+  @Prop({
+    default: '',
+  })
+  avatarUrl: string;
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  createdRoutineIds: string[];
+
+  @Prop({
+    default: 0,
+    min: 0,
+  })
+  reviewCount: number;
 }
 
-export const UserSchema =
-  SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User);

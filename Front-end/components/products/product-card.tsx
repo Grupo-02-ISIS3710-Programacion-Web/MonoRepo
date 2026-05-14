@@ -11,7 +11,9 @@ import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useProductFavorite } from "@/lib/hooks/use-product-favorite";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+
+import { useAuthSession } from "@/lib/hooks/use-auth-session";
 
 interface ProductCardProps {
     productIndex: number;
@@ -35,12 +37,19 @@ export function ProductCard({
 
     const t = useTranslations("ProductCard");
     const productHref = `/descubrir/${toLowerCaseAndReplaceSpacesWithHyphens(product.name)}`;
+
+    const { isLoggedIn } = useAuthSession();
     const { isFavorite, toggleFavorite } = useProductFavorite({
         product,
         productIndex,
         onFavoriteSelect,
         onFavoriteDeselect,
     });
+
+    
+
+    
+
 
     return (
         <Card className={`p-0 h-full overflow-hidden ${className ?? ""}`}>
@@ -62,7 +71,7 @@ export function ProductCard({
             <CardContent className="pb-5">
                 <div className="flex flex-row items-center justify-between pb-1">
                     <div className="text-primary font-bold">{product.brand}</div>
-                    {showFavoriteButton && (
+                    { showFavoriteButton && isLoggedIn&& (
                         <Button
                             variant={isFavorite ? "secondary" : "outline"}
                             size="sm"

@@ -8,6 +8,7 @@ import { tiposPiel } from "@/lib/constants/TipoPiel";
 import { formasEnteroDeNosotros } from "@/lib/constants/FormasDeContacto";
 import { DatePickerSimple } from "@/components/ui/datepicker";
 import { Link } from "@/i18n/navigation";
+import { useState } from "react";
 
 export type FormularioRegistro = {
     nombre: string;
@@ -37,7 +38,59 @@ export function FormularioRegistroComponent() {
 
     const campoObligatorio = t("validaciones.requerido");
 
-    const onSubmit: SubmitHandler<FormularioRegistro> = data => console.log(data);
+    const [mensaje, setMensaje] = useState("");
+    const [errorRegistro, setErrorRegistro] = useState("");
+
+    const onSubmit: SubmitHandler<FormularioRegistro> = async (data) => {
+
+        setMensaje("");
+        setErrorRegistro(""); 
+
+
+
+    try {
+
+        const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            }
+        );
+
+        const result = await response.json();
+
+       if (!response.ok) {
+
+        throw new Error(
+            Array.isArray(result.message)
+                ? result.message[0]
+                : result.message || "Ocurrió un error"
+        );
+}
+
+        localStorage.setItem("skin4all.auth.token", result.token);
+
+        setMensaje("Usuario registrado correctamente");
+
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 1500);
+
+    } catch (error) {
+
+        if (error instanceof Error) {
+            setErrorRegistro(error.message);
+        } else {
+            setErrorRegistro("Ocurrió un error inesperado");
+        }
+    }
+    };
+    
+    
     const haProbadoSkinCare = watch("probadoSkinCare");
 
     const selectClasses =
@@ -188,6 +241,17 @@ export function FormularioRegistroComponent() {
             <Button type="submit" className="w-full">
                 {t("botones.crearCuenta")}
             </Button>
+            {mensaje && (
+                <p className="text-green-600 text-sm text-center">
+                    {mensaje}
+                </p>
+            )}
+
+            {errorRegistro && (
+                <p className="text-red-500 text-sm text-center">
+                    {errorRegistro}
+                </p>
+            )}
             <p className="text-center text-sm">{t("footer.yaTienesCuenta")} <Link href="/login" className="text-primary underline underline-offset-2 hover:text-secondary">{t("botones.iniciarSesion")}</Link></p>
         </form>
     )
