@@ -4,7 +4,8 @@ import { getProducts } from "@/lib/api";
 import { productsFavorites } from "@/lib/favorites";
 import { normalizeSearchText } from "@/lib/string-utils";
 import { Category, Product, SkinType } from "@/types/product";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchProducts } from "../api-client";
 
 type DiscoveryFilters = {
     skinTypes: SkinType[];
@@ -19,7 +20,11 @@ const defaultFilters: DiscoveryFilters = {
 };
 
 export function useProductDiscovery(selectedCategory: Category | "ALL", searchQueryParam = "") {
-    const products = getProducts();
+    const [products, setProducts] = useState<Product[]>([]);
+
+    useEffect(() => {
+        fetchProducts().then(setProducts).catch(() => setProducts([]));
+    }, []);
     const searchQuery = normalizeSearchText(searchQueryParam);
     const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
     const [filters, setFilters] = useState<DiscoveryFilters>(defaultFilters);

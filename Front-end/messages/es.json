@@ -515,7 +515,7 @@
         "skinTypesPlaceholder": "Selecciona los tipos de piel del producto",
         "ingredients": "Ingredientes",
         "ingredientsPlaceholder": "Ej: niacinamida, glicerina, ceramidas",
-        "imageUrl": "URL de la imagen del producto",
+        "images": "Imágenes del producto",
         "errors": {
             "nameMin": "El nombre del producto debe tener al menos 3 caracteres",
             "brandMin": "La marca del producto debe tener al menos 3 caracteres",
@@ -523,9 +523,9 @@
             "skinTypeRequired": "Debe seleccionar al menos un tipo de piel",
             "productTypeRequired": "Debe seleccionar el tipo de producto",
             "primaryCategoryRequired": "Debe seleccionar al menos una categoría",
-            "imageUrlInvalid": "Una o más URLs de imagen no son válidas",
+            "imagesInvalid": "Uno o más archivos de imagen no son válidas",
             "ingredientsRequired": "Debe ingresar al menos un ingrediente",
-            "imageUrlRequired": "Debe incluir una url de imagen del producto válida"
+            "imagesRequired": "Debe incluir una imagen del producto válida"
         }
     },
     "registro": {

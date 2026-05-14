@@ -1,4 +1,11 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -11,6 +18,7 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Producto } from './entities/producto.entity';
 import { AiService } from '../ai/ai.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 interface CatalogDocument {
   _id: number;
@@ -35,6 +43,7 @@ export class ProductosService implements OnModuleInit {
     private readonly categoryCatalogModel: Model<CatalogDocument>,
     @Inject(forwardRef(() => AiService))
     private readonly aiService: AiService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -45,20 +54,68 @@ export class ProductosService implements OnModuleInit {
     ]);
   }
 
-  async create(createProductoDto: CreateProductoDto): Promise<Producto> {
-    await this.validateCatalogIds(createProductoDto);
+  async create(
+    createProductoDto: CreateProductoDto,
+    images: Express.Multer.File[],
+  ): Promise<Producto> {
+    if (!images || images.length === 0) {
+      throw new BadRequestException('At least one image is required');
+    }
+
+    const toNumberArray = (value: any): number[] => {
+      if (Array.isArray(value)) {
+        return value.map(Number).filter(Number.isFinite);
+      }
+
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.map(Number).filter(Number.isFinite);
+          }
+          const single = Number(parsed);
+          return Number.isFinite(single) ? [single] : [];
+        } catch {
+          return trimmed.split(',').map(Number).filter(Number.isFinite);
+        }
+      }
+
+      const single = Number(value);
+      return Number.isFinite(single) ? [single] : [];
+    };
+
+    const skin_type = toNumberArray(createProductoDto.skin_type);
+    const additional_categories = toNumberArray(
+      createProductoDto.additional_categories,
+    );
+    const product_type = Number(createProductoDto.product_type);
+    const primary_category = Number(createProductoDto.primary_category);
+
+    await this.validateCatalogIds({
+      skin_type,
+      product_type,
+      primary_category,
+      additional_categories,
+    });
+
+    const imageUrls = await Promise.all(
+      images.map((file) =>
+        this.cloudinaryService.uploadBuffer(file.buffer, 'productos'),
+      ),
+    );
+
     const producto = new this.productoModel({
       name: createProductoDto.name,
       brand: createProductoDto.brand,
       description: createProductoDto.description,
-      skin_type: createProductoDto.skin_type,
-      product_type: createProductoDto.product_type,
-      category: [
-        createProductoDto.primary_category,
-        ...(createProductoDto.additional_categories || []),
-      ],
+      skin_type,
+      product_type,
+      category: [primary_category, ...additional_categories],
       ingredients: createProductoDto.ingredients,
-      image_url: createProductoDto.image_url,
+      images: imageUrls,
       rating: 0,
       review_count: 0,
       deleted: false,
@@ -71,7 +128,9 @@ export class ProductosService implements OnModuleInit {
         .findByIdAndUpdate(saved._id, { $set: { embedding } }, { new: true })
         .exec();
     } catch (error) {
-      this.logger.warn(`Failed to generate embedding for new product ${saved._id}: ${error.message}`);
+      this.logger.warn(
+        `Failed to generate embedding for new product ${saved._id}: ${error.message}`,
+      );
       return saved;
     }
   }
@@ -108,19 +167,28 @@ export class ProductosService implements OnModuleInit {
     };
   }
 
-  async findOne(id: string, includeEmbeddings = false): Promise<Producto | null> {
+  async findOne(
+    id: string,
+    includeEmbeddings = false,
+  ): Promise<Producto | null> {
     const projection = includeEmbeddings ? {} : { embedding: 0 };
     return await this.productoModel.findById(id, projection).exec();
   }
 
   async findByIds(ids: string[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    const products = await this.productoModel.find({ _id: { $in: ids }, deleted: false }).lean().exec();
+    const products = await this.productoModel
+      .find({ _id: { $in: ids }, deleted: false })
+      .lean()
+      .exec();
     return this.normalizeProducts(products);
   }
 
   async findAllNormalized(): Promise<any[]> {
-    const products = await this.productoModel.find({ deleted: false }).lean().exec();
+    const products = await this.productoModel
+      .find({ deleted: false })
+      .lean()
+      .exec();
     return this.normalizeProducts(products);
   }
 
@@ -142,9 +210,13 @@ export class ProductosService implements OnModuleInit {
       name: p.name,
       brand: p.brand,
       description: p.description,
-      skin_type: (p.skin_type || []).map((id: number) => skinTypeMap.get(id) || id),
+      skin_type: (p.skin_type || []).map(
+        (id: number) => skinTypeMap.get(id) || id,
+      ),
       product_type: productTypeMap.get(p.product_type) || p.product_type,
-      category: (p.category || []).map((id: number) => categoryMap.get(id) || id),
+      category: (p.category || []).map(
+        (id: number) => categoryMap.get(id) || id,
+      ),
       ingredients: p.ingredients || [],
       image_url: p.image_url || [],
       rating: p.rating ?? 0,
@@ -181,8 +253,6 @@ export class ProductosService implements OnModuleInit {
       updateData.product_type = updateProductoDto.product_type;
     if (updateProductoDto.ingredients)
       updateData.ingredients = updateProductoDto.ingredients;
-    if (updateProductoDto.image_url)
-      updateData.image_url = updateProductoDto.image_url;
 
     if (updateProductoDto.primary_category) {
       const categories = [updateProductoDto.primary_category];
@@ -196,18 +266,26 @@ export class ProductosService implements OnModuleInit {
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
 
-    if (updated && (
-      updateData.name || updateData.brand || updateData.description ||
-      updateData.skin_type || updateData.product_type || updateData.category ||
-      updateData.ingredients
-    )) {
+    if (
+      updated &&
+      (updateData.name ||
+        updateData.brand ||
+        updateData.description ||
+        updateData.skin_type ||
+        updateData.product_type ||
+        updateData.category ||
+        updateData.ingredients)
+    ) {
       try {
-        const embedding = await this.aiService.generateProductEmbedding(updated);
+        const embedding =
+          await this.aiService.generateProductEmbedding(updated);
         return await this.productoModel
           .findByIdAndUpdate(id, { $set: { embedding } }, { new: true })
           .exec();
       } catch (error) {
-        this.logger.warn(`Failed to regenerate embedding for updated product ${id}: ${error.message}`);
+        this.logger.warn(
+          `Failed to regenerate embedding for updated product ${id}: ${error.message}`,
+        );
       }
     }
 
@@ -281,8 +359,14 @@ export class ProductosService implements OnModuleInit {
     if (input.primary_category !== undefined) {
       categoriesToValidate.push(input.primary_category);
     }
-    if (input.additional_categories) {
-      categoriesToValidate.push(...input.additional_categories);
+    if (
+      input.additional_categories !== undefined &&
+      input.additional_categories !== null
+    ) {
+      const additional = Array.isArray(input.additional_categories)
+        ? input.additional_categories
+        : [input.additional_categories];
+      categoriesToValidate.push(...additional);
     }
 
     if (categoriesToValidate.length > 0) {

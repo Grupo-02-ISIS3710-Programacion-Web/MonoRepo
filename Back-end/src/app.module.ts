@@ -14,6 +14,7 @@ import { UserSchema } from './modules/user/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ChatsModule } from './modules/chats/chats.module';
     AuthModule,
     AiModule,
     ChatsModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

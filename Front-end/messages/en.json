@@ -512,7 +512,7 @@
         "skinTypesPlaceholder": "Select the product skin types",
         "ingredients": "Ingredients",
         "ingredientsPlaceholder": "Ex: niacinamide, glycerin, ceramides",
-        "imageUrl": "Image URL of the product",
+        "images": "Images of the product",
         "errors": {
             "nameMin": "Product name needs to have at least 3 characters",
             "brandMin": "Brand name needs to have at least 3 characters",
@@ -520,9 +520,9 @@
             "skinTypeRequired": "Product skin types are required",
             "productTypeRequired": "Product type is required",
             "primaryCategoryRequired": "Product category is required",
-            "imageUrlInvalid": "One or more image URLs are invalid",
+            "imagesInvalid": "One or more image files are invalid",
             "ingredientsRequired": "Product ingredients are required",
-            "imageUrlRequired": "Image URL of product is required"
+            "imagesRequired": "Image of product is required"
         }
     },
     "registro": {
