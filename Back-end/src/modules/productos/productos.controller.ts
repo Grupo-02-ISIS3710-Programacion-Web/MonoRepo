@@ -41,7 +41,7 @@ export class ProductosController {
         skin_type: {
           type: 'array',
           items: { type: 'number' },
-          example: [, 3, 5],
+          example: [3, 5],
         },
         product_type: { type: 'number', example: 1 },
         primary_category: { type: 'number', example: 1 },
@@ -75,6 +75,7 @@ export class ProductosController {
       ],
     },
   })
+  @ApiConsumes('multipart/form-data')
   create(
     @Body() createProductoDto: CreateProductoDto,
     @UploadedFiles() images: Express.Multer.File[],
