@@ -1,4 +1,4 @@
-import { normalizeProductForSubmission } from "./product-mapper";
+import { convertProductApiResponse, normalizeProductForSubmission } from "./product-mapper";
 
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -51,11 +51,15 @@ function normalizeRoutines(data: any) {
 
 // Products API
 export async function fetchProducts() {
-  return apiFetch('/productos');
+  const products = await apiFetch('/productos');
+  return Array.isArray(products)
+    ? products.map(convertProductApiResponse)
+    : [convertProductApiResponse(products)];
 }
 
 export async function fetchProductById(id: string) {
-  return apiFetch(`/productos/${id}`);
+  const product = await apiFetch(`/productos/${id}`);
+  return convertProductApiResponse(product);
 }
 
 export async function fetchProductsByCategory(category: string) {
@@ -75,8 +79,8 @@ export async function createProduct(product: any, images: File[]) {
   form.append('name', normalized.name);
   form.append('brand', normalized.brand);
   form.append('description', normalized.description);
-  form.append('product_type', normalized.product_type);
-  form.append('primary_category', normalized.primary_category);
+  form.append('product_type', String(normalized.product_type));
+  form.append('primary_category', String(normalized.primary_category));
   
   if (normalized.skin_type.length > 0) 
     form.append('skin_type', JSON.stringify(normalized.skin_type));

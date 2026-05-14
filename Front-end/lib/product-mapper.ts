@@ -1,4 +1,4 @@
-import { Category, SkinType, ProductType } from '@/types/product';
+import { Category, SkinType, ProductType, Product } from '@/types/product';
 
 // Mapeo de enums strings a IDs numéricos (debe coincidir con el backend)
 const SKIN_TYPE_MAP: Record<SkinType, number> = {
@@ -62,5 +62,34 @@ export function normalizeProductForSubmission(product: any) {
     primary_category: categoryToId(product.primary_category),
     additional_categories: (product.additional_categories || []).map(categoryToId),
     ingredients: product.ingredients,
+  };
+}
+
+const SKIN_TYPE_ID_MAP = Object.fromEntries(
+  Object.entries(SKIN_TYPE_MAP).map(([key, value]) => [value, key])
+) as Record<number, SkinType>;
+
+const PRODUCT_TYPE_ID_MAP = Object.fromEntries(
+  Object.entries(PRODUCT_TYPE_MAP).map(([key, value]) => [value, key])
+) as Record<number, ProductType>;
+
+const CATEGORY_ID_MAP = Object.fromEntries(
+  Object.entries(CATEGORY_MAP).map(([key, value]) => [value, key])
+) as Record<number, Category>;
+
+export function convertProductApiResponse(product: any):  Product {
+  return {
+    id: product._id?.toString() || product.id,
+    name: product.name,
+    brand: product.brand,
+    description: product.description,
+    skin_type: (product.skin_type || []).map((id: number) => SKIN_TYPE_ID_MAP[id]),
+    product_type: PRODUCT_TYPE_ID_MAP[product.product_type],
+    category: (product.category || []).map((id: number) => CATEGORY_ID_MAP[id]),
+    ingredients: product.ingredients || [],
+    rating: product.rating ?? 0,
+    review_count: product.review_count ?? 0,
+    image_url: product.image_url || [],
+    comments: product.comments,
   };
 }
