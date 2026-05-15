@@ -1,12 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Category, ProductType, SkinType } from 'src/enums/enums';
-import { Comentario } from 'src/modules/comentarios/entities/comentario.entity';
 
 @Schema({ timestamps: true })
 export class Producto extends Document {
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({ required: true })

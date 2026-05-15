@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MulterModule }  from '@nestjs/platform-express';
-import { memoryStorage }  from 'multer';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { ProductosService } from './productos.service';
 import { ProductosController } from './productos.controller';
 import {
@@ -11,7 +11,7 @@ import {
 } from 'src/schema/catalog.schema';
 import { ProductoSchema } from './entities/producto.entity';
 import { AiModule } from '../ai/ai.module';
-import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [

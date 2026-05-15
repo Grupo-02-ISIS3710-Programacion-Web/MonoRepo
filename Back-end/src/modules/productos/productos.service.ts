@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   forwardRef,
@@ -13,12 +15,13 @@ import {
   CatalogLanguage,
   PRODUCT_TYPE_CATALOG,
   SKIN_TYPE_CATALOG,
+  getCatalogIdByCode,
 } from '../../enums/enums';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Producto } from './entities/producto.entity';
 import { AiService } from '../ai/ai.service';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 interface CatalogDocument {
   _id: number;
@@ -62,37 +65,20 @@ export class ProductosService implements OnModuleInit {
       throw new BadRequestException('At least one image is required');
     }
 
-    const toNumberArray = (value: any): number[] => {
-      if (Array.isArray(value)) {
-        return value.map(Number).filter(Number.isFinite);
-      }
-
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed) return [];
-
-        try {
-          const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed)) {
-            return parsed.map(Number).filter(Number.isFinite);
-          }
-          const single = Number(parsed);
-          return Number.isFinite(single) ? [single] : [];
-        } catch {
-          return trimmed.split(',').map(Number).filter(Number.isFinite);
-        }
-      }
-
-      const single = Number(value);
-      return Number.isFinite(single) ? [single] : [];
-    };
-
-    const skin_type = toNumberArray(createProductoDto.skin_type);
-    const additional_categories = toNumberArray(
-      createProductoDto.additional_categories,
+    const skin_type = (createProductoDto.skin_type || []).map((code) =>
+      getCatalogIdByCode('skin_type', code),
     );
-    const product_type = Number(createProductoDto.product_type);
-    const primary_category = Number(createProductoDto.primary_category);
+    const additional_categories = (
+      createProductoDto.additional_categories || []
+    ).map((code) => getCatalogIdByCode('category', code));
+    const product_type = getCatalogIdByCode(
+      'product_type',
+      createProductoDto.product_type,
+    );
+    const primary_category = getCatalogIdByCode(
+      'category',
+      createProductoDto.primary_category,
+    );
 
     await this.validateCatalogIds({
       skin_type,
@@ -115,7 +101,7 @@ export class ProductosService implements OnModuleInit {
       product_type,
       category: [primary_category, ...additional_categories],
       ingredients: createProductoDto.ingredients,
-      images: imageUrls,
+      image_url: imageUrls,
       rating: 0,
       review_count: 0,
       deleted: false,
@@ -135,44 +121,18 @@ export class ProductosService implements OnModuleInit {
     }
   }
 
-  async findAll(includeEmbeddings = false): Promise<Producto[]> {
+  async findAll(includeEmbeddings = false): Promise<any[]> {
     const projection = includeEmbeddings ? {} : { embedding: 0 };
-    return await this.productoModel.find({ deleted: false }, projection).exec();
+    const products = await this.productoModel
+      .find({ deleted: false }, projection)
+      .lean()
+      .exec();
+    return this.normalizeProducts(products);
   }
 
-  async findCatalogs(language: CatalogLanguage = 'es') {
-    const lang = language === 'en' ? 'en' : 'es';
-    const [skinTypes, productTypes, categories] = await Promise.all([
-      this.skinTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-      this.productTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-      this.categoryCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-    ]);
-
-    return {
-      skin_type: skinTypes.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-      product_type: productTypes.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-      category: categories.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-    };
-  }
-
-  async findOne(
-    id: string,
-    includeEmbeddings = false,
-  ): Promise<Producto | null> {
+  async findOne(id: string, includeEmbeddings = false): Promise<any | null> {
     const projection = includeEmbeddings ? {} : { embedding: 0 };
-    return await this.productoModel.findById(id, projection).exec();
+    return await this.productoModel.findById(id, projection).lean().exec();
   }
 
   async findByIds(ids: string[]): Promise<any[]> {
@@ -205,23 +165,29 @@ export class ProductosService implements OnModuleInit {
     const productTypeMap = new Map(productTypes.map((p) => [p._id, p.code]));
     const categoryMap = new Map(categories.map((c) => [c._id, c.code]));
 
-    return products.map((p) => ({
-      id: p._id?.toString(),
-      name: p.name,
-      brand: p.brand,
-      description: p.description,
-      skin_type: (p.skin_type || []).map(
-        (id: number) => skinTypeMap.get(id) || id,
-      ),
-      product_type: productTypeMap.get(p.product_type) || p.product_type,
-      category: (p.category || []).map(
-        (id: number) => categoryMap.get(id) || id,
-      ),
-      ingredients: p.ingredients || [],
-      image_url: p.image_url || [],
-      rating: p.rating ?? 0,
-      review_count: p.review_count ?? 0,
-    }));
+    return products.map((p) => {
+      const normalized = {
+        id: p._id?.toString(),
+        name: p.name,
+        brand: p.brand,
+        description: p.description,
+        skin_type: (p.skin_type || []).map(
+          (id: number) => skinTypeMap.get(id) || id,
+        ),
+        product_type: productTypeMap.get(p.product_type) || p.product_type,
+        category: (p.category || []).map(
+          (id: number) => categoryMap.get(id) || id,
+        ),
+        ingredients: p.ingredients || [],
+        image_url: p.image_url || [],
+        rating: p.rating ?? 0,
+        review_count: p.review_count ?? 0,
+      };
+      if ('embedding' in p) {
+        normalized['embedding'] = p.embedding;
+      }
+      return normalized;
+    });
   }
 
   async update(
@@ -235,11 +201,27 @@ export class ProductosService implements OnModuleInit {
       updateProductoDto.product_type ||
       updateProductoDto.primary_category
     ) {
+      const skin_type = updateProductoDto.skin_type
+        ? (updateProductoDto.skin_type || []).map((code) =>
+            getCatalogIdByCode('skin_type', code),
+          )
+        : undefined;
+      const additional_categories = updateProductoDto.additional_categories
+        ? (updateProductoDto.additional_categories || []).map((code) =>
+            getCatalogIdByCode('category', code),
+          )
+        : undefined;
+      const product_type = updateProductoDto.product_type
+        ? getCatalogIdByCode('product_type', updateProductoDto.product_type)
+        : undefined;
+      const primary_category = updateProductoDto.primary_category
+        ? getCatalogIdByCode('category', updateProductoDto.primary_category)
+        : undefined;
       await this.validateCatalogIds({
-        skin_type: updateProductoDto.skin_type,
-        product_type: updateProductoDto.product_type,
-        primary_category: updateProductoDto.primary_category,
-        additional_categories: updateProductoDto.additional_categories,
+        skin_type,
+        product_type,
+        primary_category,
+        additional_categories,
       });
     }
 
@@ -378,5 +360,32 @@ export class ProductosService implements OnModuleInit {
         throw new BadRequestException('Uno o más IDs en category no existen');
       }
     }
+  }
+
+  async findCatalogs(language: CatalogLanguage = 'es') {
+    const lang = language === 'en' ? 'en' : 'es';
+    const [skinTypes, productTypes, categories] = await Promise.all([
+      this.skinTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
+      this.productTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
+      this.categoryCatalogModel.find().sort({ _id: 1 }).lean().exec(),
+    ]);
+
+    return {
+      skin_type: skinTypes.map((item) => ({
+        id: item._id,
+        code: item.code,
+        label: item.labels[lang],
+      })),
+      product_type: productTypes.map((item) => ({
+        id: item._id,
+        code: item.code,
+        label: item.labels[lang],
+      })),
+      category: categories.map((item) => ({
+        id: item._id,
+        code: item.code,
+        label: item.labels[lang],
+      })),
+    };
   }
 }

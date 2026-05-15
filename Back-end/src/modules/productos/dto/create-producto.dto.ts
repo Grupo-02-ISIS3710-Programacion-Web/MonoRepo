@@ -1,14 +1,32 @@
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
+
 export class CreateProductoDto {
   name: string;
   brand: string;
-  
-  skin_type: number[];
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map(String)
+      : typeof value === 'string'
+        ? value
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
+        : [],
+  )
+  skin_type: string[];
   description: string;
-  @Type(() => Number)
-  product_type: number;
-  @Type(() => Number)
-  primary_category: number;
-  additional_categories?: number[];
+  product_type: string;
+  primary_category: string;
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map(String)
+      : typeof value === 'string'
+        ? value
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
+        : [],
+  )
+  additional_categories?: string[];
   ingredients: string[];
 }

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductosController } from './productos.controller';
 import { ProductosService } from './productos.service';
+import { CreateProductoDto } from './dto/create-producto.dto';
 
 describe('ProductosController', () => {
   let controller: ProductosController;
@@ -28,5 +29,11 @@ describe('ProductosController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should create a product', async () => {
+      
+    });
   });
 });

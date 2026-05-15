@@ -9,7 +9,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SeedModule } from './modules/seed/seed.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ChatsModule } from './modules/chats/chats.module';
-import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 
 @Module({
   imports: [

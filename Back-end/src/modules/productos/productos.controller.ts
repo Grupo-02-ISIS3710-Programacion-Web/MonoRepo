@@ -9,7 +9,6 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
@@ -40,15 +39,15 @@ export class ProductosController {
         },
         skin_type: {
           type: 'array',
-          items: { type: 'number' },
-          example: [3, 5],
+          items: { type: 'string' },
+          example: ['normal', 'seca'],
         },
-        product_type: { type: 'number', example: 1 },
-        primary_category: { type: 'number', example: 1 },
+        product_type: { type: 'string', example: 'cream' },
+        primary_category: { type: 'string', example: 'hidratacion' },
         additional_categories: {
           type: 'array',
-          items: { type: 'number' },
-          example: [5, 2],
+          items: { type: 'string' },
+          example: ['reparacion', 'limpieza'],
         },
         ingredients: {
           type: 'array',
@@ -88,7 +87,8 @@ export class ProductosController {
     name: 'includeEmbeddings',
     required: false,
     type: Boolean,
-    description: 'Include the embedding vector in the response (default: false)',
+    description:
+      'Include the embedding vector in the response (default: false)',
   })
   findAll(@Query('includeEmbeddings') includeEmbeddings?: string) {
     return this.productosService.findAll(includeEmbeddings === 'true');
@@ -104,7 +104,8 @@ export class ProductosController {
     name: 'includeEmbeddings',
     required: false,
     type: Boolean,
-    description: 'Include the embedding vector in the response (default: false)',
+    description:
+      'Include the embedding vector in the response (default: false)',
   })
   findOne(
     @Param('id') id: string,

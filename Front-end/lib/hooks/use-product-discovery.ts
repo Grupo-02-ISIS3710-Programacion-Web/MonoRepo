@@ -24,7 +24,7 @@ export function useProductDiscovery(selectedCategory: Category | "ALL", searchQu
 
     useEffect(() => {
         fetchProducts().then(setProducts).catch(() => setProducts([]));
-    }, []);
+    }, [products]);
     const searchQuery = normalizeSearchText(searchQueryParam);
     const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
     const [filters, setFilters] = useState<DiscoveryFilters>(defaultFilters);

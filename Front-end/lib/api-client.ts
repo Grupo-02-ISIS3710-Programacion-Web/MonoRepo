@@ -1,4 +1,4 @@
-import { convertProductApiResponse, normalizeProductForSubmission } from "./product-mapper";
+import { normalizeProductForSubmission } from "./product-mapper";
 
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -51,15 +51,11 @@ function normalizeRoutines(data: any) {
 
 // Products API
 export async function fetchProducts() {
-  const products = await apiFetch('/productos');
-  return Array.isArray(products)
-    ? products.map(convertProductApiResponse)
-    : [convertProductApiResponse(products)];
+  return await apiFetch('/productos');
 }
 
 export async function fetchProductById(id: string) {
-  const product = await apiFetch(`/productos/${id}`);
-  return convertProductApiResponse(product);
+  return await apiFetch(`/productos/${id}`);
 }
 
 export async function fetchProductsByCategory(category: string) {
@@ -73,21 +69,18 @@ export async function fetchProductsBySkinType(skinType: string) {
 }
 
 export async function createProduct(product: any, images: File[]) {
-  const normalized = normalizeProductForSubmission(product);
-  
   const form = new FormData();
-  form.append('name', normalized.name);
-  form.append('brand', normalized.brand);
-  form.append('description', normalized.description);
-  form.append('product_type', String(normalized.product_type));
-  form.append('primary_category', String(normalized.primary_category));
+  form.append('name', product.name);
+  form.append('brand', product.brand);
+  form.append('description', product.description);
+  form.append('product_type', product.product_type);
+  form.append('primary_category', product.primary_category);
   
-  if (normalized.skin_type.length > 0) 
-    form.append('skin_type', JSON.stringify(normalized.skin_type));
-  if (normalized.additional_categories.length > 0) 
-    form.append('additional_categories', JSON.stringify(normalized.additional_categories));
-  if (normalized.ingredients.length > 0) 
-    form.append('ingredients', JSON.stringify(normalized.ingredients));
+  product.skin_type.forEach((st: string) => form.append('skin_type', st));
+  if (product.additional_categories) {
+    product.additional_categories.forEach((cat: string) => form.append('additional_categories', cat));
+  }
+  product.ingredients.forEach((ing: string) => form.append('ingredients', ing));
 
   images.forEach((image) => form.append('images', image));
 
