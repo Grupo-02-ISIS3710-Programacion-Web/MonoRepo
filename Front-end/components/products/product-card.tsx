@@ -36,7 +36,7 @@ export function ProductCard({
 }: ProductCardProps) {
 
     const t = useTranslations("ProductCard");
-    const productHref = `/descubrir/${toLowerCaseAndReplaceSpacesWithHyphens(product.name)}`;
+    const productHref = `/descubrir/${product.id}`;
 
     const { isLoggedIn } = useAuthSession();
     const { isFavorite, toggleFavorite } = useProductFavorite({

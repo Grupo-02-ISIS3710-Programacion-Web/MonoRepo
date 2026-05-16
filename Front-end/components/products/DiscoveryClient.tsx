@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Container } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { BadgePlus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useProductDiscovery } from "@/lib/hooks/use-product-discovery";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
@@ -29,6 +29,7 @@ export default function DiscoveryClient({
         ingredients,
         handleFavoriteSelect,
         handleFavoriteDeselect,
+        isPending,
     } = useProductDiscovery(selectedCategory, searchQuery ?? "");
 
     return (
@@ -57,7 +58,7 @@ export default function DiscoveryClient({
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 auto-rows-max">
+                        <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 auto-rows-max transition-opacity duration-200 ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
                             <AnimatePresence initial={false} mode="popLayout">
                                 {filteredProducts.map((product, index) => (
                                     <motion.div

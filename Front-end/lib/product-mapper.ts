@@ -77,15 +77,30 @@ const CATEGORY_ID_MAP = Object.fromEntries(
   Object.entries(CATEGORY_MAP).map(([key, value]) => [value, key])
 ) as Record<number, Category>;
 
-export function convertProductApiResponse(product: any):  Product {
+export function convertProductApiResponse(product: any): Product {
+  const toSkinType = (val: any): SkinType =>
+    typeof val === 'string'
+      ? (val as SkinType)
+      : SKIN_TYPE_ID_MAP[val as number];
+
+  const toCategory = (val: any): Category =>
+    typeof val === 'string'
+      ? (val as Category)
+      : CATEGORY_ID_MAP[val as number];
+
+  const toProductType = (val: any): ProductType =>
+    typeof val === 'string'
+      ? (val as ProductType)
+      : PRODUCT_TYPE_ID_MAP[val as number];
+
   return {
     id: product._id?.toString() || product.id,
     name: product.name,
     brand: product.brand,
     description: product.description,
-    skin_type: (product.skin_type || []).map((id: number) => SKIN_TYPE_ID_MAP[id]),
-    product_type: PRODUCT_TYPE_ID_MAP[product.product_type],
-    category: (product.category || []).map((id: number) => CATEGORY_ID_MAP[id]),
+    skin_type: (product.skin_type || []).map(toSkinType),
+    product_type: toProductType(product.product_type),
+    category: (product.category || []).map(toCategory),
     ingredients: product.ingredients || [],
     rating: product.rating ?? 0,
     review_count: product.review_count ?? 0,

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { RegisterDtoUser } from './dto/register-auth.dto';
+import { RegisterDto } from './dto/register-auth.dto';
 import { LoginUserDto } from './dto/login-auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -24,10 +24,10 @@ export class AuthService {
   }
 
 
-  async register(createAuthDto: RegisterDtoUser) {
+  async register(RegisterAuthDto: RegisterDto) {
     try {
 
-      const { contrasenia, confirmarContrasenia, ...userData } = createAuthDto;
+      const { contrasenia, confirmarContrasenia, ...userData } = RegisterAuthDto;
 
       const user = new this.userModel({
         ...userData,

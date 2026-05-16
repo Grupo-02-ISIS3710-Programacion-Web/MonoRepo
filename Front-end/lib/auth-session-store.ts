@@ -83,9 +83,10 @@ export async function initializeAuthSession() {
 
       const user = await response.json();
 
-      useAuthSessionStore
-        .getState()
-        .setSession(user);
+      useAuthSessionStore.getState().setSession({
+        ...user,
+        id: user._id || user.id,
+      });
 
     } catch {
 
@@ -139,9 +140,10 @@ export async function initializeAuthSession() {
       data.token,
     );
 
-    useAuthSessionStore
-      .getState()
-      .setSession(data.user);
+    useAuthSessionStore.getState().setSession({
+      ...data.user,
+      id: data.user._id || data.user.id,
+    });
 
     return data.user;
   }

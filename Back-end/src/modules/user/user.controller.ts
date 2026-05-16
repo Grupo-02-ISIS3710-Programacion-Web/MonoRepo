@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { RegisterDtoUser } from './dto/resgister-user.dto';
+import { RegisterDto} from './dto/resgister-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
@@ -10,7 +10,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('user')
-  registerUser(@Body() RegisterUserDto: RegisterDtoUser) {
+  registerUser(@Body() RegisterUserDto: RegisterDto) {
     return this.userService.registerUser(RegisterUserDto);
   }
 

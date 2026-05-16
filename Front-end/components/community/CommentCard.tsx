@@ -25,7 +25,9 @@ export default function CommentCard({
 }: CommentCardProps) {
   const t = useTranslations(translationNamespace);
   const locale = useLocale();
-  const user = getUserById(comment.userId);
+  const user = typeof comment.userId === 'object' && comment.userId !== null
+  ? { name: (comment.userId as any).nombre, avatarUrl: (comment.userId as any).avatarUrl }
+  : { name: null, avatarUrl: null };
   const hasUpvoted = comment.upvotes.includes(currentUserId);
   const hasDownvoted = comment.downvotes.includes(currentUserId);
   const formattedDate = useFormattedCommentDate(comment.createdAt, locale);

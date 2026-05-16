@@ -6,7 +6,7 @@ import {
 
 import { SkinType } from '../../../enums/enums';
 
-export class RegisterDtoUser {
+export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()

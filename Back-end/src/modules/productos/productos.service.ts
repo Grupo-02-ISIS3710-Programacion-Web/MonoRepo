@@ -115,7 +115,7 @@ export class ProductosService implements OnModuleInit {
       product_type,
       category: [primary_category, ...additional_categories],
       ingredients: createProductoDto.ingredients,
-      images: imageUrls,
+      image_url: imageUrls,
       rating: 0,
       review_count: 0,
       deleted: false,
@@ -129,7 +129,7 @@ export class ProductosService implements OnModuleInit {
         .exec();
     } catch (error) {
       this.logger.warn(
-        `Failed to generate embedding for new product ${saved._id}: ${error.message}`,
+        `Failed to generate embedding for new product ${saved._id}: ${error}`,
       );
       return saved;
     }
@@ -284,7 +284,7 @@ export class ProductosService implements OnModuleInit {
           .exec();
       } catch (error) {
         this.logger.warn(
-          `Failed to regenerate embedding for updated product ${id}: ${error.message}`,
+          `Failed to regenerate embedding for updated product ${id}: ${error}`,
         );
       }
     }
@@ -378,5 +378,65 @@ export class ProductosService implements OnModuleInit {
         throw new BadRequestException('Uno o más IDs en category no existen');
       }
     }
+  }
+
+
+  async findAllFiltered(params: {
+    search?: string;
+    category?: string;
+    brands?: string[];
+    skinTypes?: string[];
+    excludeIngredients?: string[];
+  }): Promise<any[]> {
+    const query: Record<string, any> = { deleted: false };
+
+    // Resolver category code → ID numérico
+    if (params.category && params.category !== 'ALL') {
+      const cat = await this.categoryCatalogModel
+        .findOne({ code: params.category })
+        .lean()
+        .exec();
+      if (cat) query.category = cat._id;
+    }
+
+    // Resolver skinType codes → IDs numéricos
+    if (params.skinTypes?.length) {
+      const skinDocs = await this.skinTypeCatalogModel
+        .find({ code: { $in: params.skinTypes } })
+        .lean()
+        .exec();
+      if (skinDocs.length) {
+        query.skin_type = { $in: skinDocs.map((s) => s._id) };
+      }
+    }
+
+    // Filtro por marcas (texto exacto, case-insensitive)
+    if (params.brands?.length) {
+      query.brand = {
+        $in: params.brands.map((b) => new RegExp(`^${b}$`, 'i')),
+      };
+    }
+
+    // Excluir ingredientes
+    if (params.excludeIngredients?.length) {
+      query.ingredients = { $nin: params.excludeIngredients };
+    }
+
+    // Búsqueda de texto libre en name, brand e ingredients
+    if (params.search) {
+      const regex = new RegExp(params.search, 'i');
+      query.$or = [
+        { name: regex },
+        { brand: regex },
+        { ingredients: regex },
+      ];
+    }
+
+    const products = await this.productoModel
+      .find(query, { embedding: 0 })
+      .lean()
+      .exec();
+
+    return this.normalizeProducts(products);
   }
 }

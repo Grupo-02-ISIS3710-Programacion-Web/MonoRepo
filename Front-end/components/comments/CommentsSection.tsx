@@ -9,13 +9,12 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import CommentCard from "@/components/comments/CommentCard";
 import { useCommentsState } from "@/lib/hooks/use-comments-state";
+import { useAuthSession } from "@/lib/hooks/use-auth-session";
 
 type CommentSectionProps = Readonly<{
   targetId: string;
   targetType?: "routine" | "product";
   initialComments: Comment[];
-  currentUserId?: string;
-  isLoggedIn?: boolean;
   loginHref?: string;
   translationNamespace?: string;
 }>;
@@ -24,12 +23,12 @@ export default function CommentSection({
   targetId,
   targetType = "routine",
   initialComments,
-  currentUserId = "u1",
-  isLoggedIn = true,
   loginHref = "/login",
   translationNamespace = "RoutineDetail"
 }: CommentSectionProps) {
   const t = useTranslations(translationNamespace);
+  const { user, isLoggedIn } = useAuthSession();
+
   const {
     newComment,
     setNewComment,
@@ -42,7 +41,9 @@ export default function CommentSection({
     targetId,
     targetType,
     initialComments,
-    currentUserId,
+    currentUserId: user?.id ?? "",
+    currentUserName: user?.nombre ?? "",
+    currentUserAvatar: user?.avatarUrl ?? "",
     onCommentPosted: () => toast.success(t("commentPosted")),
   });
 
@@ -116,7 +117,7 @@ export default function CommentSection({
             <div key={comment.id}>
               <CommentCard
                 comment={comment}
-                currentUserId={currentUserId}
+                currentUserId={user?.id ?? ""}  
                 onVote={voteComment}
                 isInteractionDisabled={!isLoggedIn}
                 translationNamespace={translationNamespace}

@@ -1,42 +1,59 @@
 import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
   IsBoolean,
-  MinLength,
   IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
 
-export class RegisterDtoUser {
+import { SkinType } from 'src/enums/enums';
 
+export class RegisterDto {
+  
   @IsString()
-  @IsNotEmpty()
   @MinLength(3)
   nombre: string;
 
   @IsDateString()
-  fechaNacimiento: string;
-
-  @IsString()
-  @IsNotEmpty()
-  tipoPiel: string;
-
-  @IsBoolean()
-  probadoSkinCare: boolean;
-
-  @IsString()
-  @IsNotEmpty()
-  comoEnteroDeNosotros: string;
+  fechaNacimiento: Date;
 
   @IsEmail()
   email: string;
 
   @IsString()
-  @IsNotEmpty()
   @MinLength(8)
   contrasenia: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(8)
   confirmarContrasenia: string;
+
+  
+
+  @IsEnum(SkinType)
+  tipoPiel: SkinType;
+
+  @IsString()
+  comoEnteroDeNosotros: string;
+
+  @IsBoolean()
+  probadoSkinCare: boolean;
+
+  // NUEVOS
+
+  @IsOptional()
+  @IsString()
+  ciudad?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
 }

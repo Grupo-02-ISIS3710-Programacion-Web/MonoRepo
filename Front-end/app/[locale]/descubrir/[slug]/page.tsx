@@ -11,9 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Link } from "@/i18n/navigation";
-import { getProductByName } from "@/lib/api";
 import { capitalizeFirstLetter, toLowerCaseAndReplaceHyphensWithSpaces } from "@/lib/string-utils";
-import { Category } from "@/types/product";
+import { Category, Product } from "@/types/product";
 import { Chip, Container, Divider, Stack, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -28,17 +27,18 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import CommentSection from "@/components/comments/CommentsSection";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
+import { fetchProductBySlug } from "@/lib/api-client";
 
 export default function ProductDetailPage() {
     const t = useTranslations("ProductCard");
     const tCat = useTranslations("Categories");
     const tProdType = useTranslations("ProductTypes");
-    const { isLoggedIn } = useAuthSession();
+    const { isLoggedIn, user } = useAuthSession();
     const params = useParams();
 
     let slug: string;
@@ -50,8 +50,20 @@ export default function ProductDetailPage() {
     } else {
         slug = '';
     }
-    const productSlug = toLowerCaseAndReplaceHyphensWithSpaces(slug);
-    const product = getProductByName(productSlug);
+
+
+    const [product, setProduct] = useState<Product | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+    fetchProductBySlug(slug)
+        .then(setProduct)
+        .catch(() => setProduct(null))
+        .finally(() => setLoading(false ));
+    }, [slug]);
+    
+
+    
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [toggleFavorite, setToggleFavorite] = useState(false);
@@ -99,12 +111,12 @@ export default function ProductDetailPage() {
         setCurrentImageIndex(index);
     }
 
+    if (loading) {
+       return <div className="flex justify-center py-20">Cargando...</div>;
+    }
+
     if (!product) {
-        return (
-            <div>
-                <h1>Product not found</h1>
-            </div>
-        )
+        return <div><h1>Product not found</h1></div>;
     }
 
     return (
@@ -201,7 +213,7 @@ export default function ProductDetailPage() {
                             <Divider className="w-full" />
 
                             {/* botones para añadir a rutina y favorito */}
-                            <Stack direction={"row"} gap={2} alignItems={"center"}>
+                            {isLoggedIn && (<Stack direction={"row"} gap={2} alignItems={"center"}>
                                 <Button asChild size="lg" className="w-fit">
                                     <Link href={createRoutineHref}>
                                         {t("addToRoutine")}
@@ -216,7 +228,9 @@ export default function ProductDetailPage() {
                                 >
                                     <Heart size={20} />
                                 </Button>
-                            </Stack>
+                            </Stack>)
+
+                            }
                         </Stack>
                     </Stack>
                 </Container>
@@ -244,14 +258,15 @@ export default function ProductDetailPage() {
                 </Container>
 
 
-                <Container maxWidth="md" className="mt-10">
+                { isLoggedIn && (<Container maxWidth="md" className="mt-10">
                     <CommentSection
-                        targetId={product.id}
-                        targetType="product"
-                        initialComments={[]}
-                        translationNamespace="ProductComments"
+                    targetId={product.id}
+                    targetType="product"
+                    initialComments={[]}
+                    translationNamespace="ProductComments"
                     />
-                </Container>
+                </Container>)
+                }
 
 
             </Container>

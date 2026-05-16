@@ -533,6 +533,9 @@
             "subtitle": "Let's get to know your skin."
         },
         "campos": {
+            "fotoPerfil": {
+                "label": "Upload profile photo"
+            },
             "nombre": {
                 "label": "Name",
                 "placeholder": "Eg: John Doe"
