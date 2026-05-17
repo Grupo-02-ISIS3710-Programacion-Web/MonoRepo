@@ -404,7 +404,8 @@ export async function deleteProductComment(commentId: string) {
   return apiFetch(`/comentarios/${commentId}`, {
         method: 'DELETE',
   });
-  
+}
+
 // Subscription API
 export async function createSubscription(data: {
   cardTokenId: string;
@@ -423,5 +424,6 @@ export async function getPremiumStatus(userId: string): Promise<{ isPremium: boo
 
 export async function cancelSubscription(preapprovalId: string): Promise<{ message: string }> {
   return apiFetch(`/suscripciones/${preapprovalId}`, {
-
+    method: 'DELETE',
+  });
 }

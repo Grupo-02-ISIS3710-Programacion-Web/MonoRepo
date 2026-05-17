@@ -80,6 +80,21 @@ export class User {
     min: 0,
   })
   reviewCount: number;
+
+  @Prop({
+    default: false,
+  })
+  isPremium: boolean;
+
+  @Prop({
+    default: null,
+  })
+  preapprovalId: string;
+
+  @Prop({
+    default: null,
+  })
+  subscriptionStatus: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
