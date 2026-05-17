@@ -29,21 +29,31 @@ export function useCommentsState({
 
   // Cargar comentarios del backend al montar
   useEffect(() => {
-    if (targetType === "product") {
-      fetchProductComments(targetId)
-        .then((comments: unknown) => {
-            const list = comments as any[];
-            setLocalComments(list.map((c) => ({
-              id: c._id || c.id,
-              userId: c.userId, 
-              comment: c.comment,
-              upvotes: c.upvotes || [],
-              downvotes: c.downvotes || [],
-              createdAt: c.createdAt,
-            })));
-            })
-        .catch(() => setLocalComments([]));
-    }
+    if (targetType !== "product") return;
+
+    let ignore = false;
+
+    fetchProductComments(targetId)
+      .then((comments: unknown) => {
+        if (ignore) return;
+
+        const list = comments as any[];
+        setLocalComments(list.map((c) => ({
+          id: c._id || c.id,
+          userId: c.userId,
+          comment: c.comment,
+          upvotes: c.upvotes || [],
+          downvotes: c.downvotes || [],
+          createdAt: c.createdAt,
+        })));
+      })
+      .catch((err) => {
+        if (ignore) return;
+        console.error("Error fetching product comments:", err);
+        setLocalComments([]);
+      });
+
+    return () => { ignore = true; };
   }, [targetId, targetType]);
 
   const applyInlineFormat = (wrapper: string) => {
@@ -83,8 +93,8 @@ export function useCommentsState({
         }, ...prev]);
         setNewComment("");
         onCommentPosted?.();
-      } catch {
-        // manejar error si quieres
+      } catch (err) {
+        console.error("Error posting comment:", err);
       }
     } else {
       // rutinas — comportamiento original
@@ -105,7 +115,9 @@ export function useCommentsState({
     if (targetType === "product") {
       try {
         await upvoteProductComment(commentId, currentUserId);
-      } catch {}
+      } catch (err) {
+        console.error("Error voting on comment:", err);
+      }
     }
 
     // Actualizar estado local optimistamente

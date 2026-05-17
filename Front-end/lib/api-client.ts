@@ -76,7 +76,8 @@ export async function fetchProducts(filters: ProductFilters = {}) {
 }
 
 export async function fetchProductById(id: string) {
-  return await apiFetch(`/productos/${id}`);
+  const product = await apiFetch<any>(`/productos/${id}`);
+  return normalizeProduct(product);
 }
 
 export async function fetchProductsByCategory(category: string) {
@@ -363,7 +364,6 @@ export async function updateChatFocusAreas(chatId: string, userId: string, selec
 }
 
 export async function fetchProductBySlug(slug: string) {
- 
   return fetchProductById(slug);
 }
 
@@ -371,8 +371,8 @@ export async function fetchProductBySlug(slug: string) {
 
 // API Comments
 
-export async function fetchProductComments(productId: string) {
-  return apiFetch(`/comentarios/producto/${productId}`);
+export async function fetchProductComments(productId: string, signal?: AbortSignal) {
+  return apiFetch(`/comentarios/producto/${productId}`, { signal });
 }
 
 export async function createProductComment(productId: string, userId: string, comment: string) {

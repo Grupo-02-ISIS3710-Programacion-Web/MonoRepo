@@ -140,7 +140,8 @@ export class ProductosService implements OnModuleInit {
     if (!product || product.deleted) {
       throw new NotFoundException(`Producto with id ${id} not found`);
     }
-    return product;
+    const [normalized] = await this.normalizeProducts([product]);
+    return normalized;
   }
 
   async findByIds(ids: string[]): Promise<any[]> {

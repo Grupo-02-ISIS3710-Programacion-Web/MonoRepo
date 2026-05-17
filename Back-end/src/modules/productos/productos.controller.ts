@@ -9,6 +9,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
+  Logger,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
@@ -21,6 +22,8 @@ import { FindProductosQueryDto } from './dto/find-productos-query.dto';
 
 @Controller('productos')
 export class ProductosController {
+  private readonly logger = new Logger(ProductosController.name);
+
   constructor(private readonly productosService: ProductosService) {}
 
   @Post()
@@ -81,6 +84,7 @@ export class ProductosController {
     @Body() createProductoDto: CreateProductoDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
+    this.logger.log(`Creando producto ${createProductoDto.name} de ${createProductoDto.brand}`);
     return this.productosService.create(createProductoDto, images);
   }
 
@@ -109,6 +113,13 @@ export class ProductosController {
       query.excludeIngredients;
 
     if (hasFilters) {
+      this.logger.log(`Listando productos con filtros: ${JSON.stringify({
+        search: query.search,
+        category: query.category,
+        brands: query.brands,
+        skinTypes: query.skinTypes,
+        excludeIngredients: query.excludeIngredients,
+      })}`);
       return this.productosService.findAllFiltered(
         {
           search: query.search,
@@ -121,11 +132,13 @@ export class ProductosController {
       );
     }
 
+    this.logger.log('Listando todos los productos');
     return this.productosService.findAll(includeEmbeddings === 'true');
   }
 
   @Get('catalogos')
   findCatalogs(@Query('lang') language?: 'es' | 'en') {
+    this.logger.log(`Listando catálogos en idioma ${language ?? 'es'}`);
     return this.productosService.findCatalogs(language);
   }
 
@@ -141,6 +154,7 @@ export class ProductosController {
     @Param('id', ParseObjectIdPipe) id: string,
     @Query('includeEmbeddings') includeEmbeddings?: string,
   ) {
+    this.logger.log(`Buscando producto ${id}`);
     return this.productosService.findOne(id, includeEmbeddings === 'true');
   }
 
@@ -163,11 +177,13 @@ export class ProductosController {
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
   ) {
+    this.logger.log(`Actualizando producto ${id}`);
     return this.productosService.update(id, updateProductoDto);
   }
 
   @Delete(':id')
   remove(@Param('id', ParseObjectIdPipe) id: string) {
+    this.logger.log(`Eliminando producto ${id}`);
     return this.productosService.remove(id);
   }
 
@@ -184,6 +200,7 @@ export class ProductosController {
     },
   })
   async findBatch(@Body() body: BatchProductoDto) {
+    this.logger.log(`Buscando lote de ${body.productIds.length} productos`);
     return this.productosService.findByIds(body.productIds);
   }
 }

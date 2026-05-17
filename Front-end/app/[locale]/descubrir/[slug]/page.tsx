@@ -56,13 +56,6 @@ export default function ProductDetailPage() {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-    fetchProductBySlug(slug)
-        .then((data) => setProduct(data as Product))
-        .catch(() => setProduct(null))
-        .finally(() => setLoading(false ));
-    }, [slug]);
-    
 
     
     const theme = useTheme();
@@ -71,17 +64,26 @@ export default function ProductDetailPage() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     useEffect(() => {
-        fetchProducts().then((products) => {
-            const typedProducts = products as Product[];
-            const slug = Array.isArray(params.slug)
-                ? params.slug.join('-')
-                : params.slug;
-            console.log(slug);
-            const found = typedProducts.find(p => toLowerCaseAndReplaceSpacesWithHyphens(p.name) === slug);
-            setProduct(found || null);
-            setLoading(false);
-        });
-    }, [params.slug]);
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
+        setLoading(true);
+        if (isObjectId) {
+            fetchProductBySlug(slug)
+                .then((data) => setProduct(data as Product))
+                .catch(() => setProduct(null))
+                .finally(() => setLoading(false));
+            return;
+        }
+
+        // fallback: load all products and find by slugified name
+        fetchProducts()
+            .then((products) => {
+                const typedProducts = products as Product[];
+                const found = typedProducts.find((p) => toLowerCaseAndReplaceSpacesWithHyphens(p.name) === slug);
+                setProduct(found || null);
+            })
+            .catch(() => setProduct(null))
+            .finally(() => setLoading(false));
+    }, [slug]);
 
     if (loading) {
         return (
@@ -289,15 +291,14 @@ export default function ProductDetailPage() {
                 </Container>
 
 
-                { isLoggedIn && (<Container maxWidth="md" className="mt-10">
-                    <CommentSection
-                    targetId={product.id}
-                    targetType="product"
-                    initialComments={[]}
-                    translationNamespace="ProductComments"
-                    />
-                </Container>)
-                }
+                <Container maxWidth="md" className="mt-10">
+                        <CommentSection
+                            targetId={product.id}
+                            targetType="product"
+                            initialComments={[]}
+                            translationNamespace="ProductComments"
+                        />
+                </Container>
 
 
             </Container>
