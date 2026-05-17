@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { SkinType } from 'src/enums/enums';
+import { SkinType } from '../../../enums/enums';
 
 @Schema({
   timestamps: true,

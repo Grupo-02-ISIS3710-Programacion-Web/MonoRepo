@@ -9,7 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-import { SkinType } from 'src/enums/enums';
+import { SkinType } from '../../enums/enums';
 
 export class RegisterDto {
   

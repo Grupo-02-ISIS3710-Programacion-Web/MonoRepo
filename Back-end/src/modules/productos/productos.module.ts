@@ -8,10 +8,10 @@ import {
   CategoryCatalogSchema,
   ProductTypeCatalogSchema,
   SkinTypeCatalogSchema,
-} from 'src/schema/catalog.schema';
+} from '../../schema/catalog.schema';
 import { ProductoSchema } from './entities/producto.entity';
 import { AiModule } from '../ai/ai.module';
-import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
