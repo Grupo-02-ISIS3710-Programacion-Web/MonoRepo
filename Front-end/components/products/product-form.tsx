@@ -13,6 +13,7 @@ import { InputGroup, InputGroupTextarea } from "../ui/input-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList, ComboboxTrigger, ComboboxValue, useComboboxAnchor } from "../ui/combobox";
 import { Fragment, useState } from "react";
+import { createProduct } from "@/lib/api-client";
 
 export default function ProductForm() {
     const t = useTranslations("CreateProductPage");
@@ -23,6 +24,7 @@ export default function ProductForm() {
     const skinTypes = Object.values(SkinType);
     const productTypes = Object.values(ProductType);
     const [ingredientsRaw, setIngredientsRaw] = useState("");
+    const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
     const createProductSchema = z.object({
         name: z.string().min(3, { message: t("errors.nameMin") }),
@@ -34,9 +36,6 @@ export default function ProductForm() {
         }),
         additional_categories: z.array(z.enum(Category)).optional().default([]),
         ingredients: z.array(z.string().min(2)).min(1, { message: t("errors.ingredientsRequired") }),
-        image_url: z.array(z.string().url({ message: t("errors.imageUrlInvalid") })).min(1, {
-        message: t("errors.imageUrlRequired"),
-        }),
         })
         .refine(
         (data) => !data.additional_categories.includes(data.primary_category),
@@ -50,11 +49,25 @@ export default function ProductForm() {
     type FormInput = z.input<typeof createProductSchema>;
     type FormValues = z.output<typeof createProductSchema>;
 
-    function onSubmit(data: FormValues) {
-        console.log(data)
-        toast.success("Producto enviado para revisión ✅", {
-            description: "Un administrador revisará la propuesta."
-        })
+    async function onSubmit(data: FormValues) {
+        if (!selectedFiles || selectedFiles.length === 0) {
+            toast.error(`${t("errors.imagesRequired")}`);
+            return;
+        }
+
+        try {
+            const files = Array.from(selectedFiles);
+            await createProduct(data as any, files);
+            toast.success("Producto enviado para revisión ✅", {
+                description: "Un administrador revisará la propuesta."
+            });
+            form.reset();
+            setIngredientsRaw("");
+            setSelectedFiles(null);
+        } catch (err) {
+            console.error(err);
+            toast.error("Error al enviar el producto.");
+        }
     }
 
     const form = useForm<FormInput, unknown, FormValues>({
@@ -68,7 +81,6 @@ export default function ProductForm() {
             primary_category: undefined,
             additional_categories: [],
             ingredients: [],
-            image_url: []
         }
     })
 
@@ -399,33 +411,19 @@ export default function ProductForm() {
 
                     {/* IMAGE URL */}
 
-                    <Controller
-                    name="image_url"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-
-                        <Field data-invalid={fieldState.invalid}>
-
+                    
+                    <Field>
                         <FieldLabel className="text-primary">
-                            {t("imageUrl")}
+                            {t("images")}
                         </FieldLabel>
 
                         <Input
-                            placeholder="https://..."
-                            value={field.value[0] ?? ""}
-                            onChange={(e) =>
-                            field.onChange([e.target.value])
-                            }
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={e => setSelectedFiles(e.target.files)}
                         />
-
-                        {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                        )}
-
-                        </Field>
-
-                    )}
-                    />
+                    </Field>
 
                     </FieldGroup>
                 </CardContent>
@@ -441,6 +439,7 @@ export default function ProductForm() {
                         onClick={() => {
                             form.reset();
                             setIngredientsRaw("");
+                            setSelectedFiles(null);
                         }}
                     >
                         Reset

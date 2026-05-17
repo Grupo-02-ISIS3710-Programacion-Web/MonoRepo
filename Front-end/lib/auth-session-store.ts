@@ -44,7 +44,7 @@ function attachStorageListener() {
   };
 }
 
-export function initializeAuthSession() {
+export async function initializeAuthSession() {
   if (process.env.NODE_ENV === "test") {
     return;
   }
@@ -55,25 +55,106 @@ export function initializeAuthSession() {
 
   isInitialized = true;
   attachStorageListener();
-  refreshAuthSession();
+  await refreshAuthSession();
 }
 
-export function refreshAuthSession() {
-  useAuthSessionStore.getState().setSession(getCurrentUser());
-}
+  export async function refreshAuthSession() {
+    const token = localStorage.getItem("skin4all.auth.token");
 
-export function setTestAuthSession(user: User | null) {
-  useAuthSessionStore.getState().setSession(user);
-}
+    if (!token) {
+      useAuthSessionStore.getState().setSession(null);
+      return;
+    }
 
-export function loginAuthSession(identifier: string, password: string) {
-  const authenticatedUser = loginUser(identifier, password);
-  useAuthSessionStore.getState().setSession(authenticatedUser);
+    try {
 
-  return authenticatedUser;
-}
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-export function logoutAuthSession() {
-  logoutUser();
-  useAuthSessionStore.getState().setSession(null);
-}
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      const user = await response.json();
+
+      useAuthSessionStore.getState().setSession({
+        ...user,
+        id: user._id || user.id,
+      });
+
+    } catch {
+
+      localStorage.removeItem("skin4all.auth.token");
+
+      useAuthSessionStore
+        .getState()
+        .setSession(null);
+    }
+  }
+
+
+  export function setTestAuthSession(user: User | null) {
+    useAuthSessionStore.getState().setSession(user);
+  }
+
+  export async function loginAuthSession(
+    email: string,
+    contrasenia: string,
+  ) {
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          email,
+          contrasenia,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        Array.isArray(data.message)
+          ? data.message[0]
+          : data.message ||
+              "Error al iniciar sesión"
+      );
+    }
+
+    localStorage.setItem(
+      "skin4all.auth.token",
+      data.token,
+    );
+
+    useAuthSessionStore.getState().setSession({
+      ...data.user,
+      id: data.user._id || data.user.id,
+    });
+
+    return data.user;
+  }
+
+  export function logoutAuthSession() {
+
+    localStorage.removeItem(
+      "skin4all.auth.token"
+    );
+
+    useAuthSessionStore
+      .getState()
+      .setSession(null);
+  }

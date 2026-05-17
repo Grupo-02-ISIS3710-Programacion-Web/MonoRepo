@@ -1,3 +1,5 @@
+import { convertProductApiResponse, normalizeProductForSubmission } from "./product-mapper";
+
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -10,13 +12,15 @@ export interface ApiResponse<T> {
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const headers = { ...(options.headers || {}) } as Record<string, string>;
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   try {
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!response.ok) {
@@ -46,22 +50,71 @@ function normalizeRoutines(data: any) {
 }
 
 // Products API
-export async function fetchProducts() {
-  return apiFetch('/products');
+export interface ProductFilters {
+  search?: string;
+  category?: string;
+  brands?: string[];
+  skinTypes?: string[];
+  excludeIngredients?: string[];
+}
+
+export async function fetchProducts(filters: ProductFilters = {}) {
+  const params = new URLSearchParams();
+
+  if (filters.search)               params.set('search', filters.search);
+  if (filters.category && filters.category !== 'ALL')
+                                    params.set('category', filters.category);
+  if (filters.brands?.length)       params.set('brands', filters.brands.join(','));
+  if (filters.skinTypes?.length)    params.set('skinTypes', filters.skinTypes.join(','));
+  if (filters.excludeIngredients?.length)
+    params.set('excludeIngredients', filters.excludeIngredients.join(','));
+
+  const qs = params.toString();
+  const products = await apiFetch(`/productos${qs ? `?${qs}` : ''}`);
+
+  return Array.isArray(products)
+    ? products.map(convertProductApiResponse)
+    : [convertProductApiResponse(products)];
 }
 
 export async function fetchProductById(id: string) {
-  return apiFetch(`/products/${id}`);
+  const product = await apiFetch(`/productos/${id}`);
+  return convertProductApiResponse(product);
 }
 
 export async function fetchProductsByCategory(category: string) {
   const encoded = encodeURIComponent(category);
-  return apiFetch(`/products/category/${encoded}`);
+  return apiFetch(`/productos/category/${encoded}`);
 }
 
 export async function fetchProductsBySkinType(skinType: string) {
   const encoded = encodeURIComponent(skinType);
-  return apiFetch(`/products/skin-type/${encoded}`);
+  return apiFetch(`/productos/skin-type/${encoded}`);
+}
+
+export async function createProduct(product: any, images: File[]) {
+  const normalized = normalizeProductForSubmission(product);
+  
+  const form = new FormData();
+  form.append('name', normalized.name);
+  form.append('brand', normalized.brand);
+  form.append('description', normalized.description);
+  form.append('product_type', String(normalized.product_type));
+  form.append('primary_category', String(normalized.primary_category));
+  
+  if (normalized.skin_type.length > 0) 
+    form.append('skin_type', JSON.stringify(normalized.skin_type));
+  if (normalized.additional_categories.length > 0) 
+    form.append('additional_categories', JSON.stringify(normalized.additional_categories));
+  if (normalized.ingredients.length > 0) 
+    form.append('ingredients', JSON.stringify(normalized.ingredients));
+
+  images.forEach((image) => form.append('images', image));
+
+  return apiFetch('/productos', {
+    method: 'POST',
+    body: form,
+  });
 }
 
 // Users API
@@ -312,5 +365,38 @@ export async function updateChatFocusAreas(chatId: string, userId: string, selec
   return apiFetch(`/ai/chats/${chatId}/focus-areas?userId=${userId}`, {
     method: 'PATCH',
     body: JSON.stringify({ selectedFocusAreaIds }),
+  });
+}
+
+export async function fetchProductBySlug(slug: string) {
+ 
+  return fetchProductById(slug);
+}
+
+
+
+// API Comments
+
+export async function fetchProductComments(productId: string) {
+  return apiFetch(`/comentarios/producto/${productId}`);
+}
+
+export async function createProductComment(productId: string, userId: string, comment: string) {
+  return apiFetch('/comentarios', {
+    method: 'POST',
+    body: JSON.stringify({ productId, userId, comment }),
+  });
+}
+
+export async function upvoteProductComment(commentId: string, userId: string) {
+  return apiFetch(`/comentarios/${commentId}/upvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function deleteProductComment(commentId: string) {
+  return apiFetch(`/comentarios/${commentId}`, {
+    method: 'DELETE',
   });
 }

@@ -1,4 +1,7 @@
 export interface User {
+  tipoPiel: string;
+  ciudad: string;
+  nombre: string;
   id: string;
   name: string;
   avatarUrl: string;

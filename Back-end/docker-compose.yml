@@ -21,6 +21,9 @@ services:
       - .env
     environment:
       - MONGODB_URI=${MONGODB_DOCKER_URI}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     ports:
       - "5001:5001"
     depends_on:

@@ -62,4 +62,9 @@ export class ComentariosController {
   upvote(@Param('id') id: string, @Body('userId') userId: string) {
     return this.comentariosService.upvote(id, userId);
   }
+
+  @Get('producto/:productId')
+  findByProductId(@Param('productId') productId: string) {
+    return this.comentariosService.findByProductId(productId);
+  }
 }

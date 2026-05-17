@@ -1,11 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { Category, ProductType, SkinType } from 'src/enums/enums';
-import { Comentario } from 'src/modules/comentarios/entities/comentario.entity';
+import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Producto extends Document {
-
   @Prop({ required: true })
   name: string;
 
@@ -35,6 +32,9 @@ export class Producto extends Document {
 
   @Prop({ default: 0 })
   review_count: number;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Comentario' }], default: [] })
+  comments: Types.ObjectId[];
 
   @Prop({ type: [Number], default: [] })
   embedding?: number[];
