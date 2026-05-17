@@ -1,129 +1,93 @@
 "use client";
 
-import { getProducts } from "@/lib/api";
+import { fetchProducts } from "@/lib/api-client";
 import { productsFavorites } from "@/lib/favorites";
-import { normalizeSearchText } from "@/lib/string-utils";
 import { Category, Product, SkinType } from "@/types/product";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchProducts } from "../api-client";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 
 type DiscoveryFilters = {
-    skinTypes: SkinType[];
-    brands: string[];
-    ingredients: string[];
+  skinTypes: SkinType[];
+  brands: string[];
+  ingredients: string[];
 };
 
 const defaultFilters: DiscoveryFilters = {
-    skinTypes: [],
-    brands: [],
-    ingredients: [],
+  skinTypes: [],
+  brands: [],
+  ingredients: [],
 };
 
-export function useProductDiscovery(selectedCategory: Category | "ALL", searchQueryParam = "") {
-    const [products, setProducts] = useState<Product[]>([]);
+export function useProductDiscovery(
+  selectedCategory: Category | "ALL",
+  searchQueryParam = ""
+) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [allBrands, setAllBrands] = useState<string[]>([]);
+  const [allIngredients, setAllIngredients] = useState<string[]>([]);
+  const [filters, setFilters] = useState<DiscoveryFilters>(defaultFilters);
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+  const [isPending, startTransition] = useTransition();
 
-    useEffect(() => {
-        fetchProducts().then(setProducts).catch(() => setProducts([]));
-    }, [products]);
-    const searchQuery = normalizeSearchText(searchQueryParam);
-    const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
-    const [filters, setFilters] = useState<DiscoveryFilters>(defaultFilters);
+  // Carga inicial sin filtros para poblar brands e ingredientes del FilterHeader
+  useEffect(() => {
+    fetchProducts().then((all) => {
+      setAllBrands(Array.from(new Set(all.map((p) => p.brand))));
+      setAllIngredients(Array.from(new Set(all.flatMap((p) => p.ingredients))));
+    }).catch(() => {});
+  }, []);
 
-    const filteredProducts = useMemo(() => {
-        return products.filter((product) => {
-            const matchesCategory =
-                selectedCategory === "ALL" ||
-                product.category.includes(selectedCategory as Category);
-
-            const matchesBrand =
-                filters.brands.length === 0 || filters.brands.includes(product.brand);
-
-            const productSkinTypes = product.skin_type || [];
-            const matchesSkinType =
-                filters.skinTypes.length === 0 ||
-                filters.skinTypes.some((skin) => productSkinTypes.includes(skin));
-
-            const productIngredients = product.ingredients || [];
-            const hasExcludedIngredient = filters.ingredients.some((excluded) =>
-                productIngredients.includes(excluded)
-            );
-
-            const searchableFields = [
-                product.name,
-                product.brand,
-                ...productIngredients,
-                ...productSkinTypes,
-                ...product.category,
-            ];
-            const normalizedSearchableText = normalizeSearchText(searchableFields.join(" "));
-            const matchesSearch =
-                searchQuery.length === 0 || normalizedSearchableText.includes(searchQuery);
-
-            return (
-                matchesCategory &&
-                matchesBrand &&
-                matchesSkinType &&
-                !hasExcludedIngredient &&
-                matchesSearch
-            );
+  // Cada vez que cambian filtros, categoría o búsqueda → llama al backend
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const results = await fetchProducts({
+          category: selectedCategory,
+          search: searchQueryParam,
+          brands: filters.brands,
+          skinTypes: filters.skinTypes,
+          excludeIngredients: filters.ingredients,
         });
-    }, [filters, products, searchQuery, selectedCategory]);
+        setProducts(results);
+      } catch {
+        setProducts([]);
+      }
+    });
+  }, [selectedCategory, searchQueryParam, filters]);
 
-    const brands = useMemo(
-        () => Array.from(new Set(products.map((product) => product.brand))),
-        [products]
-    );
+  const handleFavoriteSelect = useCallback(
+    (productIndex: number) => {
+      const selected = products[productIndex];
+      if (!selected) return;
+      setFavoriteProducts((prev) => {
+        if (prev.some((p) => p.id === selected.id)) return prev;
+        if (!productsFavorites.some((p) => p.id === selected.id))
+          productsFavorites.push(selected);
+        return [...prev, selected];
+      });
+    },
+    [products]
+  );
 
-    const ingredients = useMemo(
-        () => Array.from(new Set(products.flatMap((product) => product.ingredients))),
-        [products]
-    );
+  const handleFavoriteDeselect = useCallback(
+    (productIndex: number) => {
+      const deselected = products[productIndex];
+      if (!deselected) return;
+      setFavoriteProducts((prev) =>
+        prev.filter((p) => p.id !== deselected.id)
+      );
+    },
+    [products]
+  );
 
-    const handleFavoriteSelect = useCallback(
-        (productIndex: number) => {
-            const selectedProduct = products[productIndex];
-            if (!selectedProduct) {
-                return;
-            }
-
-            setFavoriteProducts((prev) => {
-                const exists = prev.some((product) => product.id === selectedProduct.id);
-                if (exists) {
-                    return prev;
-                }
-
-                if (!productsFavorites.some((product) => product.id === selectedProduct.id)) {
-                    productsFavorites.push(selectedProduct);
-                }
-
-                return [...prev, selectedProduct];
-            });
-        },
-        [products]
-    );
-
-    const handleFavoriteDeselect = useCallback(
-        (productIndex: number) => {
-            const deselectedProduct = products[productIndex];
-            if (!deselectedProduct) {
-                return;
-            }
-
-            setFavoriteProducts((prev) =>
-                prev.filter((product) => product.id !== deselectedProduct.id)
-            );
-        },
-        [products]
-    );
-
-    return {
-        favoriteProducts,
-        filters,
-        setFilters,
-        filteredProducts,
-        brands,
-        ingredients,
-        handleFavoriteSelect,
-        handleFavoriteDeselect,
-    };
+  return {
+    favoriteProducts,
+    filters,
+    setFilters,
+    filteredProducts: products,
+    brands: allBrands,
+    ingredients: allIngredients,
+    isPending,
+    handleFavoriteSelect,
+    handleFavoriteDeselect,
+  };
 }

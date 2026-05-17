@@ -7,11 +7,11 @@ export class CreateProductoDto {
     Array.isArray(value)
       ? value.map(String)
       : typeof value === 'string'
-        ? value
-            .split(',')
-            .map((v) => v.trim())
-            .filter(Boolean)
-        : [],
+      ? value
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean)
+      : [],
   )
   skin_type: string[];
   description: string;
@@ -21,11 +21,11 @@ export class CreateProductoDto {
     Array.isArray(value)
       ? value.map(String)
       : typeof value === 'string'
-        ? value
-            .split(',')
-            .map((v) => v.trim())
-            .filter(Boolean)
-        : [],
+      ? value
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean)
+      : [],
   )
   additional_categories?: string[];
   ingredients: string[];

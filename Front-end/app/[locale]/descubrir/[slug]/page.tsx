@@ -13,7 +13,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Link } from "@/i18n/navigation";
 import { getProductByName } from "@/lib/api";
 import { capitalizeFirstLetter, toLowerCaseAndReplaceHyphensWithSpaces, toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
-import { Category } from "@/types/product";
+import { Category, Product } from "@/types/product";
 import { Chip, Container, Divider, Stack, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -33,28 +33,51 @@ import { useTranslations } from "next-intl";
 import CommentSection from "@/components/comments/CommentsSection";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
-import { fetchProductById, fetchProducts } from "@/lib/api-client";
+import { fetchProductBySlug, fetchProducts } from "@/lib/api-client";
 
 export default function ProductDetailPage() {
     const t = useTranslations("ProductCard");
     const tCat = useTranslations("Categories");
     const tProdType = useTranslations("ProductTypes");
-    const { isLoggedIn } = useAuthSession();
+    const { isLoggedIn, user } = useAuthSession();
     const params = useParams();
-    const [product, setProduct] = useState(null);
+
+    let slug: string;
+    if (Array.isArray(params.slug)) {
+        slug = params.slug.join('-');
+        console.log("Slug is an array, joined to:", slug);
+    } else if (typeof params.slug === 'string') {
+        slug = params.slug;
+    } else {
+        slug = '';
+    }
+
+
+    const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+    fetchProductBySlug(slug)
+        .then((data) => setProduct(data as Product))
+        .catch(() => setProduct(null))
+        .finally(() => setLoading(false ));
+    }, [slug]);
+    
+
+    
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [toggleFavorite, setToggleFavorite] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     useEffect(() => {
-        fetchProducts().then(products => {
+        fetchProducts().then((products) => {
+            const typedProducts = products as Product[];
             const slug = Array.isArray(params.slug)
                 ? params.slug.join('-')
                 : params.slug;
             console.log(slug);
-            const found = products.find(p => toLowerCaseAndReplaceSpacesWithHyphens(p.name) === slug);
+            const found = typedProducts.find(p => toLowerCaseAndReplaceSpacesWithHyphens(p.name) === slug);
             setProduct(found || null);
             setLoading(false);
         });
@@ -119,12 +142,12 @@ export default function ProductDetailPage() {
         setCurrentImageIndex(index);
     }
 
+    if (loading) {
+       return <div className="flex justify-center py-20">Cargando...</div>;
+    }
+
     if (!product) {
-        return (
-            <div>
-                <h1>Product not found</h1>
-            </div>
-        )
+        return <div><h1>Product not found</h1></div>;
     }
 
     return (
@@ -221,7 +244,7 @@ export default function ProductDetailPage() {
                             <Divider className="w-full" />
 
                             {/* botones para añadir a rutina y favorito */}
-                            <Stack direction={"row"} gap={2} alignItems={"center"}>
+                            {isLoggedIn && (<Stack direction={"row"} gap={2} alignItems={"center"}>
                                 <Button asChild size="lg" className="w-fit">
                                     <Link href={createRoutineHref}>
                                         {t("addToRoutine")}
@@ -236,7 +259,9 @@ export default function ProductDetailPage() {
                                 >
                                     <Heart size={20} />
                                 </Button>
-                            </Stack>
+                            </Stack>)
+
+                            }
                         </Stack>
                     </Stack>
                 </Container>
@@ -264,14 +289,15 @@ export default function ProductDetailPage() {
                 </Container>
 
 
-                <Container maxWidth="md" className="mt-10">
+                { isLoggedIn && (<Container maxWidth="md" className="mt-10">
                     <CommentSection
-                        targetId={product.id}
-                        targetType="product"
-                        initialComments={[]}
-                        translationNamespace="ProductComments"
+                    targetId={product.id}
+                    targetType="product"
+                    initialComments={[]}
+                    translationNamespace="ProductComments"
                     />
-                </Container>
+                </Container>)
+                }
 
 
             </Container>

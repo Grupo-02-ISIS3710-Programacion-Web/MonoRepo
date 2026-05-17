@@ -1,4 +1,5 @@
 export class CreateComentarioDto {
-    userId!: string;
-    comment!: string;
+  userId: string;
+  productId: string; 
+  comment: string;
 }

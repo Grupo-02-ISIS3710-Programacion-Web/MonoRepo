@@ -17,6 +17,7 @@ import { UpdateProductoDto } from './dto/update-producto.dto';
 import { BatchProductoDto } from './dto/batch-producto.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { FindProductosQueryDto } from './dto/find-productos-query.dto';
 
 @Controller('productos')
 export class ProductosController {
@@ -84,6 +85,11 @@ export class ProductosController {
   }
 
   @Get()
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'brands', required: false, type: String })
+  @ApiQuery({ name: 'skinTypes', required: false, type: String })
+  @ApiQuery({ name: 'excludeIngredients', required: false, type: String })
   @ApiQuery({
     name: 'includeEmbeddings',
     required: false,
@@ -91,7 +97,30 @@ export class ProductosController {
     description:
       'Include the embedding vector in the response (default: false)',
   })
-  findAll(@Query('includeEmbeddings') includeEmbeddings?: string) {
+  findAll(
+    @Query() query: FindProductosQueryDto,
+    @Query('includeEmbeddings') includeEmbeddings?: string,
+  ) {
+    const hasFilters =
+      query.search ||
+      query.category ||
+      query.brands ||
+      query.skinTypes ||
+      query.excludeIngredients;
+
+    if (hasFilters) {
+      return this.productosService.findAllFiltered(
+        {
+          search: query.search,
+          category: query.category,
+          brands: query.brands?.split(',').map((b) => b.trim()).filter(Boolean),
+          skinTypes: query.skinTypes?.split(',').map((s) => s.trim()).filter(Boolean),
+          excludeIngredients: query.excludeIngredients?.split(',').map((i) => i.trim()).filter(Boolean),
+        },
+        includeEmbeddings === 'true',
+      );
+    }
+
     return this.productosService.findAll(includeEmbeddings === 'true');
   }
 

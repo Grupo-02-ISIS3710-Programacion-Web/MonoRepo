@@ -1,4 +1,4 @@
-import { Producto } from "src/modules/productos/entities/producto.entity";
+import { Producto } from "../modules/productos/entities/producto.entity";
 
 export const productosMock: any[] = [
     {

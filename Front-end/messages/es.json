@@ -536,6 +536,9 @@
             "subtitle": "Añadele brillo a tu piel"
         },
         "campos": {
+            "fotoPerfil": {
+                "label": "Subir foto de perfil"
+            },
             "nombre": {
                 "label": "Nombre",
                 "placeholder": "Ej: Pepito Pérez"

@@ -299,11 +299,9 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
             </Card>
 
             <CommentSection
-              targetId={routine.id}
+              targetId={routineId}
               targetType="routine"
               initialComments={comments}
-              currentUserId={currentUserId}
-              isLoggedIn={isLoggedIn}
               loginHref={loginHref}
               translationNamespace="RoutineDetail"
             />

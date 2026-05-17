@@ -48,8 +48,31 @@ function normalizeRoutines(data: any) {
 }
 
 // Products API
-export async function fetchProducts() {
-  return await apiFetch('/productos');
+export interface ProductFilters {
+  search?: string;
+  category?: string;
+  brands?: string[];
+  skinTypes?: string[];
+  excludeIngredients?: string[];
+}
+
+export async function fetchProducts(filters: ProductFilters = {}) {
+  const params = new URLSearchParams();
+
+  if (filters.search) params.set('search', filters.search);
+  if (filters.category && filters.category !== 'ALL')
+    params.set('category', filters.category);
+  if (filters.brands?.length) params.set('brands', filters.brands.join(','));
+  if (filters.skinTypes?.length)
+    params.set('skinTypes', filters.skinTypes.join(','));
+  if (filters.excludeIngredients?.length)
+    params.set('excludeIngredients', filters.excludeIngredients.join(','));
+
+  const qs = params.toString();
+  const products = await apiFetch(`/productos${qs ? `?${qs}` : ''}`);
+
+  if (Array.isArray(products)) return products.map(normalizeProduct);
+  return [normalizeProduct(products)];
 }
 
 export async function fetchProductById(id: string) {
@@ -336,5 +359,38 @@ export async function updateChatFocusAreas(chatId: string, userId: string, selec
   return apiFetch(`/ai/chats/${chatId}/focus-areas?userId=${userId}`, {
     method: 'PATCH',
     body: JSON.stringify({ selectedFocusAreaIds }),
+  });
+}
+
+export async function fetchProductBySlug(slug: string) {
+ 
+  return fetchProductById(slug);
+}
+
+
+
+// API Comments
+
+export async function fetchProductComments(productId: string) {
+  return apiFetch(`/comentarios/producto/${productId}`);
+}
+
+export async function createProductComment(productId: string, userId: string, comment: string) {
+  return apiFetch('/comentarios', {
+    method: 'POST',
+    body: JSON.stringify({ productId, userId, comment }),
+  });
+}
+
+export async function upvoteProductComment(commentId: string, userId: string) {
+  return apiFetch(`/comentarios/${commentId}/upvote`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function deleteProductComment(commentId: string) {
+  return apiFetch(`/comentarios/${commentId}`, {
+    method: 'DELETE',
   });
 }

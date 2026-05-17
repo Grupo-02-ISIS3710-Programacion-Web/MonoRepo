@@ -32,7 +32,21 @@ interface SearchBarProps {
 
 export default function NavBar() {
     const router = useRouter();
-    const { isLoggedIn, logout, user } = useAuthSession();
+    const {
+        isLoggedIn,
+        logout,
+        user,
+        isReady,
+        } = useAuthSession();
+
+    if (!isReady) {
+    return null;
+}
+
+  
+   if (!isReady) {
+        return null;
+    }
 
     return (
         <>

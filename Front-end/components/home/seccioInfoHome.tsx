@@ -2,10 +2,12 @@ import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
+import { useAuthSession } from "@/lib/hooks/use-auth-session"
 
 export default function SeccionInfoHome() {
 
   const t = useTranslations("SeccionInfoHome")
+   const { isLoggedIn } = useAuthSession();
 
   return (
     <div className="grid md:grid-cols-2  items-center h-full">
@@ -27,10 +29,12 @@ export default function SeccionInfoHome() {
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
 
-          <Link href="/register" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-8 text-white shadow-md transition hover:bg-secondary">
-            {t("register")}
-            <ArrowRight size={18} />
-          </Link>
+          {!isLoggedIn && (
+            <Link href="/register" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-8 text-white shadow-md transition hover:bg-secondary">
+              {t("register")}
+              <ArrowRight size={18} />
+            </Link>
+          )}
 
           <Link href="/descubrir" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-foreground px-8 text-white shadow-md transition hover:opacity-90">
             {t("explorer")}
