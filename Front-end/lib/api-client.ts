@@ -1,5 +1,3 @@
-import { convertProductApiResponse, normalizeProductForSubmission } from "./product-mapper";
-
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -61,25 +59,25 @@ export interface ProductFilters {
 export async function fetchProducts(filters: ProductFilters = {}) {
   const params = new URLSearchParams();
 
-  if (filters.search)               params.set('search', filters.search);
+  if (filters.search) params.set('search', filters.search);
   if (filters.category && filters.category !== 'ALL')
-                                    params.set('category', filters.category);
-  if (filters.brands?.length)       params.set('brands', filters.brands.join(','));
-  if (filters.skinTypes?.length)    params.set('skinTypes', filters.skinTypes.join(','));
+    params.set('category', filters.category);
+  if (filters.brands?.length) params.set('brands', filters.brands.join(','));
+  if (filters.skinTypes?.length)
+    params.set('skinTypes', filters.skinTypes.join(','));
   if (filters.excludeIngredients?.length)
     params.set('excludeIngredients', filters.excludeIngredients.join(','));
 
   const qs = params.toString();
   const products = await apiFetch(`/productos${qs ? `?${qs}` : ''}`);
 
-  return Array.isArray(products)
-    ? products.map(convertProductApiResponse)
-    : [convertProductApiResponse(products)];
+  if (Array.isArray(products)) return products.map(normalizeProduct);
+  return [normalizeProduct(products)];
 }
 
 export async function fetchProductById(id: string) {
-  const product = await apiFetch(`/productos/${id}`);
-  return convertProductApiResponse(product);
+  const product = await apiFetch<any>(`/productos/${id}`);
+  return normalizeProduct(product);
 }
 
 export async function fetchProductsByCategory(category: string) {
@@ -93,21 +91,18 @@ export async function fetchProductsBySkinType(skinType: string) {
 }
 
 export async function createProduct(product: any, images: File[]) {
-  const normalized = normalizeProductForSubmission(product);
-  
   const form = new FormData();
-  form.append('name', normalized.name);
-  form.append('brand', normalized.brand);
-  form.append('description', normalized.description);
-  form.append('product_type', String(normalized.product_type));
-  form.append('primary_category', String(normalized.primary_category));
+  form.append('name', product.name);
+  form.append('brand', product.brand);
+  form.append('description', product.description);
+  form.append('product_type', product.product_type);
+  form.append('primary_category', product.primary_category);
   
-  if (normalized.skin_type.length > 0) 
-    form.append('skin_type', JSON.stringify(normalized.skin_type));
-  if (normalized.additional_categories.length > 0) 
-    form.append('additional_categories', JSON.stringify(normalized.additional_categories));
-  if (normalized.ingredients.length > 0) 
-    form.append('ingredients', JSON.stringify(normalized.ingredients));
+  product.skin_type.forEach((st: string) => form.append('skin_type', st));
+  if (product.additional_categories) {
+    product.additional_categories.forEach((cat: string) => form.append('additional_categories', cat));
+  }
+  product.ingredients.forEach((ing: string) => form.append('ingredients', ing));
 
   images.forEach((image) => form.append('images', image));
 
@@ -369,7 +364,6 @@ export async function updateChatFocusAreas(chatId: string, userId: string, selec
 }
 
 export async function fetchProductBySlug(slug: string) {
- 
   return fetchProductById(slug);
 }
 
@@ -377,8 +371,8 @@ export async function fetchProductBySlug(slug: string) {
 
 // API Comments
 
-export async function fetchProductComments(productId: string) {
-  return apiFetch(`/comentarios/producto/${productId}`);
+export async function fetchProductComments(productId: string, signal?: AbortSignal) {
+  return apiFetch(`/comentarios/producto/${productId}`, { signal });
 }
 
 export async function createProductComment(productId: string, userId: string, comment: string) {

@@ -1,6 +1,5 @@
 "use client";
 
-import { getUserById } from "@/lib/api";
 import { Comment } from "@/types/Comment";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";

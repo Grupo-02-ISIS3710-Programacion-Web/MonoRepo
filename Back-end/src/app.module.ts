@@ -14,7 +14,7 @@ import { UserSchema } from './modules/user/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ChatsModule } from './modules/chats/chats.module';
-import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
