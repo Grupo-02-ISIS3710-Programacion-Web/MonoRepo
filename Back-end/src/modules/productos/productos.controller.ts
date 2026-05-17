@@ -9,7 +9,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
-  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
@@ -17,10 +17,13 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { BatchProductoDto } from './dto/batch-producto.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { FindProductosQueryDto } from './dto/find-productos-query.dto';
 
 @Controller('productos')
 export class ProductosController {
+  private readonly logger = new Logger(ProductosController.name);
+
   constructor(private readonly productosService: ProductosService) {}
 
   @Post()
@@ -41,15 +44,15 @@ export class ProductosController {
         },
         skin_type: {
           type: 'array',
-          items: { type: 'number' },
-          example: [, 3, 5],
+          items: { type: 'string' },
+          example: ['normal', 'seca'],
         },
-        product_type: { type: 'number', example: 1 },
-        primary_category: { type: 'number', example: 1 },
+        product_type: { type: 'string', example: 'cream' },
+        primary_category: { type: 'string', example: 'hidratacion' },
         additional_categories: {
           type: 'array',
-          items: { type: 'number' },
-          example: [5, 2],
+          items: { type: 'string' },
+          example: ['reparacion', 'limpieza'],
         },
         ingredients: {
           type: 'array',
@@ -76,10 +79,12 @@ export class ProductosController {
       ],
     },
   })
+  @ApiConsumes('multipart/form-data')
   create(
     @Body() createProductoDto: CreateProductoDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
+    this.logger.log(`Creando producto ${createProductoDto.name} de ${createProductoDto.brand}`);
     return this.productosService.create(createProductoDto, images);
   }
 
@@ -89,7 +94,13 @@ export class ProductosController {
   @ApiQuery({ name: 'brands', required: false, type: String })
   @ApiQuery({ name: 'skinTypes', required: false, type: String })
   @ApiQuery({ name: 'excludeIngredients', required: false, type: String })
-  @ApiQuery({ name: 'includeEmbeddings', required: false, type: Boolean })
+  @ApiQuery({
+    name: 'includeEmbeddings',
+    required: false,
+    type: Boolean,
+    description:
+      'Include the embedding vector in the response (default: false)',
+  })
   findAll(
     @Query() query: FindProductosQueryDto,
     @Query('includeEmbeddings') includeEmbeddings?: string,
@@ -102,18 +113,32 @@ export class ProductosController {
       query.excludeIngredients;
 
     if (hasFilters) {
-      return this.productosService.findAllFiltered({
+      this.logger.log(`Listando productos con filtros: ${JSON.stringify({
         search: query.search,
         category: query.category,
-        brands: query.brands?.split(',').map((b) => b.trim()).filter(Boolean),
-        skinTypes: query.skinTypes?.split(',').map((s) => s.trim()).filter(Boolean),
-        excludeIngredients: query.excludeIngredients?.split(',').map((i) => i.trim()).filter(Boolean),
-      });
+        brands: query.brands,
+        skinTypes: query.skinTypes,
+        excludeIngredients: query.excludeIngredients,
+      })}`);
+      return this.productosService.findAllFiltered(
+        {
+          search: query.search,
+          category: query.category,
+          brands: query.brands?.split(',').map((b) => b.trim()).filter(Boolean),
+          skinTypes: query.skinTypes?.split(',').map((s) => s.trim()).filter(Boolean),
+          excludeIngredients: query.excludeIngredients?.split(',').map((i) => i.trim()).filter(Boolean),
+        },
+        includeEmbeddings === 'true',
+      );
     }
+
+    this.logger.log('Listando todos los productos');
+    return this.productosService.findAll(includeEmbeddings === 'true');
   }
 
   @Get('catalogos')
   findCatalogs(@Query('lang') language?: 'es' | 'en') {
+    this.logger.log(`Listando catálogos en idioma ${language ?? 'es'}`);
     return this.productosService.findCatalogs(language);
   }
 
@@ -126,9 +151,10 @@ export class ProductosController {
       'Include the embedding vector in the response (default: false)',
   })
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Query('includeEmbeddings') includeEmbeddings?: string,
   ) {
+    this.logger.log(`Buscando producto ${id}`);
     return this.productosService.findOne(id, includeEmbeddings === 'true');
   }
 
@@ -148,14 +174,16 @@ export class ProductosController {
     },
   })
   update(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
   ) {
+    this.logger.log(`Actualizando producto ${id}`);
     return this.productosService.update(id, updateProductoDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseObjectIdPipe) id: string) {
+    this.logger.log(`Eliminando producto ${id}`);
     return this.productosService.remove(id);
   }
 
@@ -172,6 +200,7 @@ export class ProductosController {
     },
   })
   async findBatch(@Body() body: BatchProductoDto) {
+    this.logger.log(`Buscando lote de ${body.productIds.length} productos`);
     return this.productosService.findByIds(body.productIds);
   }
 }

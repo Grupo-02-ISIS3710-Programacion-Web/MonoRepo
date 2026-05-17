@@ -690,7 +690,6 @@
         "copyright": "© 2026 Skin4All. All rights reserved."
     },
     "ProductComments": {
-        
         "commentsTitle": "Comments",
         "thoughtsTitle": "What are your thoughts?",
         "commentPlaceholder": "Share your experience with this product...",
@@ -710,7 +709,9 @@
         "italic": "Italic",
         "insertLink": "Insert link",
         "insertImage": "Insert image",
-        "commentPosted": "Your comment has been posted"
+        "commentPosted": "Your comment has been posted",
+        "loginRequiredForComments": "You must be logged in to comment or vote.",
+        "goToLogin": "Sign in"
     },
     "ToS": {
         "title": "Terms and Conditions",

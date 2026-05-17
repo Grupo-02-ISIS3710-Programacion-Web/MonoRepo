@@ -1,3 +1,6 @@
+import { BadRequestException } from '@nestjs/common';
+import { SkinTypeCatalog } from 'src/schema/catalog.schema';
+
 export enum Category {
   HIDRATACION = 'hidratacion',
   LIMPIEZA = 'limpieza',
@@ -155,3 +158,21 @@ export const CATEGORY_CATALOG: CatalogValueDefinition[] = [
     labels: { es: 'antioxidante', en: 'antioxidant' },
   },
 ];
+
+const CATALOGS: Record<CatalogType, CatalogValueDefinition[]> = {
+  skin_type: SKIN_TYPE_CATALOG,
+  product_type: PRODUCT_TYPE_CATALOG,
+  category: CATEGORY_CATALOG,
+};
+
+export type CatalogType = 'skin_type' | 'product_type' | 'category';
+
+export function getCatalogIdByCode(
+  catalogType: CatalogType,
+  code: string,
+): number {
+  const catalog = CATALOGS[catalogType];
+  const found = catalog.find((item) => item.code === code);
+  if (!found) throw new BadRequestException(`Invalid code: ${code}`);
+  return found.id;
+}

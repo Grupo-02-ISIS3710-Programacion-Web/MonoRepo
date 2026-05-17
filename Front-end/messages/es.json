@@ -712,7 +712,9 @@
         "bold": "Negrita",
         "italic": "Cursiva",
         "insertLink": "Insertar enlace",
-        "insertImage": "Insertar imagen"
+        "insertImage": "Insertar imagen",
+        "loginRequiredForComments": "Debes iniciar sesión para comentar o votar.",
+        "goToLogin": "Iniciar sesión"
     },
     "ToS": {
         "title": "Terminos y Condiciones",

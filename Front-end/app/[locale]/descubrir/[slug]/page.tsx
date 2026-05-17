@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Link } from "@/i18n/navigation";
-import { capitalizeFirstLetter, toLowerCaseAndReplaceHyphensWithSpaces } from "@/lib/string-utils";
+import { getProductByName } from "@/lib/api";
+import { capitalizeFirstLetter, toLowerCaseAndReplaceHyphensWithSpaces, toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
 import { Category, Product } from "@/types/product";
 import { Chip, Container, Divider, Stack, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -32,7 +33,7 @@ import { useTranslations } from "next-intl";
 import CommentSection from "@/components/comments/CommentsSection";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
-import { fetchProductBySlug } from "@/lib/api-client";
+import { fetchProductBySlug, fetchProducts } from "@/lib/api-client";
 
 export default function ProductDetailPage() {
     const t = useTranslations("ProductCard");
@@ -55,19 +56,51 @@ export default function ProductDetailPage() {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-    fetchProductBySlug(slug)
-        .then(setProduct)
-        .catch(() => setProduct(null))
-        .finally(() => setLoading(false ));
-    }, [slug]);
-    
 
     
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [toggleFavorite, setToggleFavorite] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    useEffect(() => {
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
+        setLoading(true);
+        if (isObjectId) {
+            fetchProductBySlug(slug)
+                .then((data) => setProduct(data as Product))
+                .catch(() => setProduct(null))
+                .finally(() => setLoading(false));
+            return;
+        }
+
+        // fallback: load all products and find by slugified name
+        fetchProducts()
+            .then((products) => {
+                const typedProducts = products as Product[];
+                const found = typedProducts.find((p) => toLowerCaseAndReplaceSpacesWithHyphens(p.name) === slug);
+                setProduct(found || null);
+            })
+            .catch(() => setProduct(null))
+            .finally(() => setLoading(false));
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center p-2 py-40">
+                <h1>Loading...</h1>
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="flex justify-center p-2 py-40">
+                <h1>Product not found</h1>
+            </div>
+        );
+    }
+
     const createRoutineHref = getProtectedRoute(`/routine/crear?product=${encodeURIComponent(product?.id ?? "")}`, isLoggedIn);
 
     const handleFavoriteClick = () => {
@@ -258,15 +291,14 @@ export default function ProductDetailPage() {
                 </Container>
 
 
-                { isLoggedIn && (<Container maxWidth="md" className="mt-10">
-                    <CommentSection
-                    targetId={product.id}
-                    targetType="product"
-                    initialComments={[]}
-                    translationNamespace="ProductComments"
-                    />
-                </Container>)
-                }
+                <Container maxWidth="md" className="mt-10">
+                        <CommentSection
+                            targetId={product.id}
+                            targetType="product"
+                            initialComments={[]}
+                            translationNamespace="ProductComments"
+                        />
+                </Container>
 
 
             </Container>

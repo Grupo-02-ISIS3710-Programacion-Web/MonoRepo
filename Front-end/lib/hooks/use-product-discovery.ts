@@ -3,7 +3,7 @@
 import { fetchProducts } from "@/lib/api-client";
 import { productsFavorites } from "@/lib/favorites";
 import { Category, Product, SkinType } from "@/types/product";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 
 type DiscoveryFilters = {
   skinTypes: SkinType[];
@@ -28,16 +28,10 @@ export function useProductDiscovery(
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [isPending, startTransition] = useTransition();
 
-  // Carga inicial sin filtros para poblar brands e ingredientes del FilterHeader
-  useEffect(() => {
-    fetchProducts().then((all) => {
-      setAllBrands(Array.from(new Set(all.map((p) => p.brand))));
-      setAllIngredients(Array.from(new Set(all.flatMap((p) => p.ingredients))));
-    }).catch(() => {});
-  }, []);
-
   // Cada vez que cambian filtros, categoría o búsqueda → llama al backend
   useEffect(() => {
+    let ignore = false;
+
     startTransition(async () => {
       try {
         const results = await fetchProducts({
@@ -47,11 +41,18 @@ export function useProductDiscovery(
           skinTypes: filters.skinTypes,
           excludeIngredients: filters.ingredients,
         });
+
+        if (ignore) return;
+
         setProducts(results);
+        setAllBrands(Array.from(new Set(results.map((p) => p.brand))));
+        setAllIngredients(Array.from(new Set(results.flatMap((p) => p.ingredients))));
       } catch {
-        setProducts([]);
+        if (!ignore) setProducts([]);
       }
     });
+
+    return () => { ignore = true; };
   }, [selectedCategory, searchQueryParam, filters]);
 
   const handleFavoriteSelect = useCallback(
