@@ -135,9 +135,9 @@ export class ProductosService implements OnModuleInit {
     }
   }
 
-  async findAll(includeEmbeddings = false): Promise<Producto[]> {
-    const projection = includeEmbeddings ? {} : { embedding: 0 };
-    return await this.productoModel.find({ deleted: false }, projection).exec();
+  async findAll(): Promise<Producto[]> {
+    
+    return await this.productoModel.find({ deleted: false }).exec();
   }
 
   async findCatalogs(language: CatalogLanguage = 'es') {

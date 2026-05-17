@@ -428,4 +428,43 @@ export class RutinasController {
       throw error;
     }
   }
+
+  @Get(':id/comments')
+  @ApiOperation({ summary: 'Obtener comentarios de una rutina' })
+  @ApiParam({ name: 'id', description: 'ID de la rutina' })
+  @ApiResponse({ status: 200, description: 'Comentarios obtenidos exitosamente' })
+  getComments(@Param('id') id: string) {
+    this.logger.log(`Solicitud recibida: GET /rutinas/${id}/comments`);
+    try {
+      return this.rutinasService.getComments(id);
+    } catch (error) {
+      this.logger.error(`Error en GET /rutinas/${id}/comments: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @Post(':id/comments')
+  @ApiOperation({ summary: 'Agregar comentario a una rutina' })
+  @ApiParam({ name: 'id', description: 'ID de la rutina' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: 'u1' },
+        comment: { type: 'string', example: 'Excelente rutina!' },
+      },
+      required: ['userId', 'comment'],
+    },
+  })
+
+  @ApiResponse({ status: 201, description: 'Comentario agregado exitosamente' })
+  addComment(@Param('id') id: string, @Body() body: { userId: string; comment: string }) {
+    this.logger.log(`Solicitud recibida: POST /rutinas/${id}/comments - Usuario ${body.userId}`);
+    try {
+      return this.rutinasService.addComment(id, body.userId, body.comment);
+    } catch (error) {
+      this.logger.error(`Error en POST /rutinas/${id}/comments: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
 }
