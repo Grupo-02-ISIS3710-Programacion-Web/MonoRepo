@@ -157,7 +157,9 @@ describe('RutinasService (with in-memory MongoDB)', () => {
       steps: [],
     };
     const created = await service.create(dto);
-    const updated = await service.update(created._id.toString(), { name: 'Nombre actualizado' } as UpdateRutinaDto);
+    const updated = await service.update(created._id.toString(), {
+      name: 'Nombre actualizado',
+    });
     expect(updated.name).toBe('Nombre actualizado');
   });
 

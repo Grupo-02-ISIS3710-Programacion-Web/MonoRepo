@@ -23,13 +23,17 @@ export class AiService implements OnModuleInit {
     private readonly productTypeCatalogModel: Model<any>,
     @InjectModel('CategoryCatalog')
     private readonly categoryCatalogModel: Model<any>,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     const apiKey = this.configService.get<string>('COHERE_API_KEY');
     if (!apiKey) {
-      this.logger.error('COHERE_API_KEY no está configurada en las variables de entorno');
-      throw new Error('COHERE_API_KEY no está configurada en las variables de entorno');
+      this.logger.error(
+        'COHERE_API_KEY no está configurada en las variables de entorno',
+      );
+      throw new Error(
+        'COHERE_API_KEY no está configurada en las variables de entorno',
+      );
     }
 
     this.chatModel = new ChatCohere({
@@ -46,9 +50,14 @@ export class AiService implements OnModuleInit {
     this.logger.log('Sincronizando embeddings de productos...');
     try {
       const result = await this.syncProductEmbeddings();
-      this.logger.log(`Embeddings sincronizados: ${result.synced} nuevos, ${result.skipped} con error`);
+      this.logger.log(
+        `Embeddings sincronizados: ${result.synced} nuevos, ${result.skipped} con error`,
+      );
     } catch (error) {
-      this.logger.error('Error sincronizando embeddings en init:', error.message);
+      this.logger.error(
+        'Error sincronizando embeddings en init:',
+        error.message,
+      );
     }
   }
 
@@ -57,8 +66,10 @@ export class AiService implements OnModuleInit {
    */
   private async loadAvailableProducts(): Promise<void> {
     try {
-      const products = await this.productoModel.find({ deleted: { $ne: true } }).exec();
-      this.availableProducts = products.map(p => ({
+      const products = await this.productoModel
+        .find({ deleted: { $ne: true } })
+        .exec();
+      this.availableProducts = products.map((p) => ({
         id: p._id?.toString(),
         name: p.name,
         brand: p.brand,
@@ -68,9 +79,14 @@ export class AiService implements OnModuleInit {
         category: p.category,
         ingredients: p.ingredients?.slice(0, 5) || [],
       }));
-      this.logger.debug(`Productos cargados: ${this.availableProducts.length} disponibles`);
+      this.logger.debug(
+        `Productos cargados: ${this.availableProducts.length} disponibles`,
+      );
     } catch (error) {
-      this.logger.error(`Error cargando productos: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error cargando productos: ${error.message}`,
+        error.stack,
+      );
       this.availableProducts = [];
     }
   }
@@ -86,7 +102,7 @@ export class AiService implements OnModuleInit {
     return products
       .map(
         (p, i) =>
-          `${i + 1}. ID: ${p.id} | ${p.name} (${p.brand}) | Tipo: ${p.product_type} | Categoría: ${p.category} | Piel: ${p.skin_type?.join(', ')} | Ingredientes: ${p.ingredients?.join(', ')}`
+          `${i + 1}. ID: ${p.id} | ${p.name} (${p.brand}) | Tipo: ${p.product_type} | Categoría: ${p.category} | Piel: ${p.skin_type?.join(', ')} | Ingredientes: ${p.ingredients?.join(', ')}`,
       )
       .join('\n');
   }
@@ -125,10 +141,18 @@ export class AiService implements OnModuleInit {
     };
   }): Promise<{
     response: string;
-    recommendedProducts?: { productId: string; reason: string; otherAlternatives?: { id: string; reason: string }[] }[];
-    draftUpdate?: { steps?: { productId: string; name: string; notes: string }[] };
+    recommendedProducts?: {
+      productId: string;
+      reason: string;
+      otherAlternatives?: { id: string; reason: string }[];
+    }[];
+    draftUpdate?: {
+      steps?: { productId: string; name: string; notes: string }[];
+    };
   }> {
-    this.logger.log(`Chat IA - usuario ${params.userId}: ${params.messages.length} mensajes en historial, ${params.routineContext?.currentSteps?.length || 0} pasos en rutina actual`);
+    this.logger.log(
+      `Chat IA - usuario ${params.userId}: ${params.messages.length} mensajes en historial, ${params.routineContext?.currentSteps?.length || 0} pasos en rutina actual`,
+    );
     await this.loadAvailableProducts();
 
     const langchainMessages: (SystemMessage | HumanMessage)[] = [
@@ -165,7 +189,9 @@ export class AiService implements OnModuleInit {
         const parsed = this.parseJsonResponse(content);
 
         // Validate product IDs and return simplified response (IDs only, no product details)
-        const validProductIds = new Set(this.availableProducts.map(p => p.id));
+        const validProductIds = new Set(
+          this.availableProducts.map((p) => p.id),
+        );
 
         const recommendedProducts = (parsed.recommendedProducts || [])
           .filter((p: any) => validProductIds.has(p.productId))
@@ -185,18 +211,25 @@ export class AiService implements OnModuleInit {
 
         const draftUpdate = parsed.draftUpdate || undefined;
         if (draftUpdate?.steps) {
-          draftUpdate.steps = draftUpdate.steps.filter((step: any) => validProductIds.has(step.productId));
+          draftUpdate.steps = draftUpdate.steps.filter((step: any) =>
+            validProductIds.has(step.productId),
+          );
         }
 
-        this.logger.log(`Chat IA - respuesta enviada: ${recommendedProducts.length} productos recomendados${draftUpdate?.steps?.length ? `, ${draftUpdate.steps.length} pasos actualizados en borrador` : ''}`);
+        this.logger.log(
+          `Chat IA - respuesta enviada: ${recommendedProducts.length} productos recomendados${draftUpdate?.steps?.length ? `, ${draftUpdate.steps.length} pasos actualizados en borrador` : ''}`,
+        );
         return {
           response: parsed.message || content,
-          recommendedProducts: recommendedProducts.length > 0 ? recommendedProducts : undefined,
-          draftUpdate
+          recommendedProducts:
+            recommendedProducts.length > 0 ? recommendedProducts : undefined,
+          draftUpdate,
         };
       } catch (parseError) {
         // If JSON parsing fails, return the raw text as message
-        this.logger.warn('No se pudo parsear JSON de respuesta IA, devolviendo como texto plano');
+        this.logger.warn(
+          'No se pudo parsear JSON de respuesta IA, devolviendo como texto plano',
+        );
         return { response: content };
       }
     } catch (error) {
@@ -206,12 +239,15 @@ export class AiService implements OnModuleInit {
   }
 
   // Helper methods for embeddings
-  private async loadCatalogCodes(model: Model<any>, ids: number[]): Promise<string[]> {
+  private async loadCatalogCodes(
+    model: Model<any>,
+    ids: number[],
+  ): Promise<string[]> {
     if (!ids || ids.length === 0) {
       return [];
     }
     const docs = await model.find({ _id: { $in: ids } }).exec();
-    return docs.map(doc => doc.code);
+    return docs.map((doc) => doc.code);
   }
 
   private async generateEmbeddingText(product: any): Promise<string> {
@@ -256,31 +292,42 @@ Key Ingredients: ${ingredients}`;
     let synced = 0;
     let skipped = 0;
 
-    const products = await this.productoModel.find({
-      $or: [
-        { embedding: { $exists: false } },
-        { embedding: { $size: 0 } },
-        { embedding: null },
-      ],
-      deleted: { $ne: true },
-    }).exec();
+    const products = await this.productoModel
+      .find({
+        $or: [
+          { embedding: { $exists: false } },
+          { embedding: { $size: 0 } },
+          { embedding: null },
+        ],
+        deleted: { $ne: true },
+      })
+      .exec();
 
-    this.logger.log(`Generando embeddings para ${products.length} productos sin embedding`);
+    this.logger.log(
+      `Generando embeddings para ${products.length} productos sin embedding`,
+    );
 
     for (const product of products) {
       try {
         const embedding = await this.generateProductEmbedding(product);
-        await this.productoModel.findByIdAndUpdate(product._id, {
-          $set: { embedding: embedding },
-        }).exec();
+        await this.productoModel
+          .findByIdAndUpdate(product._id, {
+            $set: { embedding: embedding },
+          })
+          .exec();
         synced++;
       } catch (error) {
-        this.logger.error(`Error generando embedding para producto ${product._id}: ${error.message}`, error.stack);
+        this.logger.error(
+          `Error generando embedding para producto ${product._id}: ${error.message}`,
+          error.stack,
+        );
         skipped++;
       }
     }
 
-    this.logger.log(`Embeddings finalizados: ${synced} sincronizados, ${skipped} con error`);
+    this.logger.log(
+      `Embeddings finalizados: ${synced} sincronizados, ${skipped} con error`,
+    );
     return { synced, skipped };
   }
 }

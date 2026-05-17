@@ -10,4 +10,4 @@ import { ProductoSchema } from '../productos/entities/producto.entity';
   controllers: [ComentariosController],
   providers: [ComentariosService],
 })
-export class ComentariosModule { }
+export class ComentariosModule {}

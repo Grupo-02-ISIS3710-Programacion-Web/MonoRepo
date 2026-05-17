@@ -14,4 +14,5 @@ export interface User {
   reviewCount: number;
   favoriteProductIds: string[];
   createdRoutineIds: string[];
+  isPremium?: boolean;
 }

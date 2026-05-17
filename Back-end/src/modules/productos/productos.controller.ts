@@ -110,9 +110,6 @@ export class ProductosController {
         excludeIngredients: query.excludeIngredients?.split(',').map((i) => i.trim()).filter(Boolean),
       });
     }
-
-    // Sin filtros → comportamiento original
-    return this.productosService.findAll(includeEmbeddings === 'true');
   }
 
   @Get('catalogos')
@@ -125,7 +122,8 @@ export class ProductosController {
     name: 'includeEmbeddings',
     required: false,
     type: Boolean,
-    description: 'Include the embedding vector in the response (default: false)',
+    description:
+      'Include the embedding vector in the response (default: false)',
   })
   findOne(
     @Param('id') id: string,

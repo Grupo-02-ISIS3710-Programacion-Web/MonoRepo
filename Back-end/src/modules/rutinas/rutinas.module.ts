@@ -5,7 +5,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RutinaSchema } from './entities/rutina.entity';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: 'Rutina', schema: RutinaSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: 'Rutina', schema: RutinaSchema }]),
+  ],
   controllers: [RutinasController],
   providers: [RutinasService],
   exports: [MongooseModule, RutinasService],

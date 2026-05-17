@@ -38,27 +38,33 @@ describe('AiService (pruebas completas)', () => {
     }).compile();
 
     service = module.get<AiService>(AiService);
-    
+
     // Inyectar mocks
     (service as any).chatModel = mockChatModel;
     (service as any).embeddings = mockEmbeddings;
-    
+
     // Configurar availableProducts
     (service as any).availableProducts = [
       { id: 'prod1', name: 'Limpiador', skin_type: ['mixta'] },
       { id: 'prod2', name: 'Hidratante', skin_type: ['seca'] },
     ];
-    
+
     // Mockear loadAvailableProducts para evitar consulta a BD
-    jest.spyOn(service as any, 'loadAvailableProducts').mockImplementation(async () => {
-      // Ya configurado arriba en availableProducts
-    });
-    
+    jest
+      .spyOn(service as any, 'loadAvailableProducts')
+      .mockImplementation(async () => {
+        // Ya configurado arriba en availableProducts
+      });
+
     // Mockear loadCatalogCodes
-    jest.spyOn(service as any, 'loadCatalogCodes').mockResolvedValue(['code1', 'code2']);
-    
+    jest
+      .spyOn(service as any, 'loadCatalogCodes')
+      .mockResolvedValue(['code1', 'code2']);
+
     // Mockear generateEmbeddingText
-    jest.spyOn(service as any, 'generateEmbeddingText').mockResolvedValue('texto de prueba');
+    jest
+      .spyOn(service as any, 'generateEmbeddingText')
+      .mockResolvedValue('texto de prueba');
   });
 
   it('should be defined', () => {
@@ -70,8 +76,8 @@ describe('AiService (pruebas completas)', () => {
       content: JSON.stringify({
         name: 'Rutina Test',
         description: 'Descripción',
-        steps: [{ name: 'Paso 1', productId: 'prod1', notes: '' }]
-      })
+        steps: [{ name: 'Paso 1', productId: 'prod1', notes: '' }],
+      }),
     };
     mockChatModel.invoke.mockResolvedValue(mockResponse);
 
@@ -101,8 +107,8 @@ describe('AiService (pruebas completas)', () => {
   it('should suggest products', async () => {
     const mockResponse = {
       content: JSON.stringify({
-        suggestions: [{ productId: 'prod1', reason: 'Bueno' }]
-      })
+        suggestions: [{ productId: 'prod1', reason: 'Bueno' }],
+      }),
     };
     mockChatModel.invoke.mockResolvedValue(mockResponse);
 
@@ -130,8 +136,8 @@ describe('AiService (pruebas completas)', () => {
     const mockResponse = {
       content: JSON.stringify({
         message: 'Hola',
-        recommendedProducts: [{ productId: 'prod1', reason: 'Bueno' }]
-      })
+        recommendedProducts: [{ productId: 'prod1', reason: 'Bueno' }],
+      }),
     };
     mockChatModel.invoke.mockResolvedValue(mockResponse);
 
@@ -177,9 +183,13 @@ describe('AiService (pruebas completas)', () => {
     // Solo productos sin embedding o con embedding vacío
     const productsWithoutEmbeddings = [
       { _id: 'prod1', embedding: [], save: jest.fn().mockResolvedValue(true) },
-      { _id: 'prod3', embedding: undefined, save: jest.fn().mockResolvedValue(true) },
+      {
+        _id: 'prod3',
+        embedding: undefined,
+        save: jest.fn().mockResolvedValue(true),
+      },
     ];
-    
+
     // Mockear productoModel.find() para que devuelva solo los productos sin embedding
     (service as any).productoModel = {
       find: jest.fn().mockImplementation((query) => {
@@ -213,6 +223,8 @@ describe('AiService (pruebas completas)', () => {
       ingredients: ['agua'],
     };
 
-    await expect(service.generateProductEmbedding(product as any)).rejects.toThrow('Embedding Error');
+    await expect(
+      service.generateProductEmbedding(product as any),
+    ).rejects.toThrow('Embedding Error');
   });
 });

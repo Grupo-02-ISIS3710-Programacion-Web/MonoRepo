@@ -76,7 +76,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     await controller.create({
       userId: 'u2',
       name: 'Rutina 2',
@@ -84,7 +84,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'pm',
       skinType: 'seca',
       steps: [],
-    } as any);
+    });
 
     const result = await controller.findAll();
     expect(result.routines.length).toBe(2);
@@ -100,10 +100,10 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     // Pequeña pausa para asegurar diferencia en timestamps
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const r2 = await controller.create({
       userId: 'u1',
@@ -112,7 +112,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'pm',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const result = await controller.findAll('1', 'newest');
     expect(result.routines[0].name).toBe('Rutina nueva');
@@ -127,7 +127,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     await controller.create({
       userId: 'u1',
       name: 'Otra rutina u1',
@@ -135,7 +135,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'pm',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     await controller.create({
       userId: 'u2',
       name: 'Rutina u2',
@@ -143,7 +143,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'seca',
       steps: [],
-    } as any);
+    });
 
     const result = await controller.findByUserId('u1');
     expect(result.routines.length).toBe(2);
@@ -158,7 +158,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const found = await controller.findOne(created._id.toString());
     expect(found.name).toBe('Buscar por ID');
@@ -173,9 +173,11 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
-    const updated = await controller.update(created._id.toString(), { name: 'Nombre después' } as UpdateRutinaDto);
+    const updated = await controller.update(created._id.toString(), {
+      name: 'Nombre después',
+    });
     expect(updated.name).toBe('Nombre después');
   });
 
@@ -188,7 +190,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const deleted = await controller.softDelete(created._id.toString());
     expect(deleted.deleted).toBe(true);
@@ -203,7 +205,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     await controller.hardDelete(created._id.toString());
     const found = await controller.findOne(created._id.toString());
@@ -219,7 +221,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const updated = await controller.upvote(created._id.toString(), 'u2');
     expect(updated.upvotes).toContain('u2');
@@ -234,7 +236,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const updated = await controller.downvote(created._id.toString(), 'u3');
     expect(updated.downvotes).toContain('u3');
@@ -249,7 +251,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     const id = created._id.toString();
 
     // Primero votamos
@@ -268,7 +270,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     const id = created._id.toString();
 
     // Primero votamos negativo
@@ -287,7 +289,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
 
     const updated = await controller.incrementView(created._id.toString());
     expect(updated.views).toBe(1);
@@ -302,7 +304,7 @@ describe('RutinasController (with in-memory MongoDB)', () => {
       type: 'am',
       skinType: 'mixta',
       steps: [],
-    } as any);
+    });
     const id = created._id.toString();
 
     await controller.upvote(id, 'u2');

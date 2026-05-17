@@ -74,12 +74,16 @@ describe('ChatsService (with in-memory MongoDB)', () => {
     });
 
     it('should throw NotFoundException for wrong user', async () => {
-      await expect(service.findById(chatId, 'u2')).rejects.toThrow(NotFoundException);
+      await expect(service.findById(chatId, 'u2')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw NotFoundException for deleted chat', async () => {
       await chatModel.findByIdAndUpdate(chatId, { deleted: true });
-      await expect(service.findById(chatId, 'u1')).rejects.toThrow(NotFoundException);
+      await expect(service.findById(chatId, 'u1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -129,7 +133,9 @@ describe('ChatsService (with in-memory MongoDB)', () => {
     });
 
     it('should create draft if not exists', async () => {
-      const result = await service.updateDraft(chatId, 'u1', { name: 'Mi Rutina' });
+      const result = await service.updateDraft(chatId, 'u1', {
+        name: 'Mi Rutina',
+      });
       expect(result.routineDraft).toBeDefined();
       expect(result.routineDraft.name).toBe('Mi Rutina');
     });
@@ -150,7 +156,10 @@ describe('ChatsService (with in-memory MongoDB)', () => {
     });
 
     it('should update focus areas', async () => {
-      const result = await service.updateFocusAreas(chatId, 'u1', ['fa2', 'fa3']);
+      const result = await service.updateFocusAreas(chatId, 'u1', [
+        'fa2',
+        'fa3',
+      ]);
       expect(result.selectedFocusAreaIds).toEqual(['fa2', 'fa3']);
     });
 

@@ -123,7 +123,8 @@
         "openMenu": "Open menu",
         "openSearch": "Open search",
         "searchPlaceholder": "Search products...",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+    "premium": "Premium"
     },
     "CommentHome": {
         "title": "Explore real community routines",
@@ -732,5 +733,32 @@
                 "body": "We may update these terms at any time. If important changes are made, we will notify you within the platform."
             }
         }
+    },
+    "Suscripcion": {
+        "title": "Go Premium",
+        "subtitle": "Unlock all features with a Skin4All Premium subscription",
+        "loginRequired": "Sign in required",
+        "loginRequiredDescription": "Please sign in to access the subscription page.",
+        "signIn": "Sign in",
+        "planBadge": "Monthly",
+        "planName": "Skin4All Premium",
+        "planDescription": "Everything you need for your skincare journey",
+        "month": "month",
+        "feature1": "Advanced AI skincare routine recommendations",
+        "feature2": "Unlimited routine creation and saving",
+        "feature3": "Priority community support and exclusive features",
+        "benefits": ["Advanced AI skincare routine recommendations", "Unlimited routine creation and saving", "Priority community support and exclusive features"],
+        "paymentTitle": "Payment method",
+        "paymentDescription": "Enter your card details to subscribe",
+        "securePayment": "Secured by Mercado Pago. Your data is encrypted and safe.",
+        "alreadyPremiumTitle": "You're already Premium!",
+        "alreadyPremiumDescription": "Enjoy all the exclusive benefits of your Skin4All Premium subscription.",
+        "premiumBadge": "Premium Member",
+        "premiumActivated": "Premium Activated",
+        "premiumActivatedDescription": "Your Skin4All Premium subscription is now active. Thank you for subscribing!",
+        "thankYouTitle": "Welcome to Premium!",
+        "thankYouDescription": "Your subscription has been successfully activated.",
+        "goToProfile": "Go to profile",
+        "goHome": "Go home"
     }
 }

@@ -1,7 +1,11 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
-@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
+@Schema({
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+})
 export class ChatMessage {
   @Prop({ required: true, enum: ['user', 'assistant'] })
   role: string;
@@ -25,7 +29,11 @@ export class ChatMessage {
   timestamp: Date;
 }
 
-@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
+@Schema({
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+})
 export class Chat extends Document {
   @Prop({ required: true })
   userId: string;
@@ -39,7 +47,13 @@ export class Chat extends Document {
     description: string;
     type: string;
     skinType: string;
-    steps: { id: string; name: string; order: number; productId: string; notes: string }[];
+    steps: {
+      id: string;
+      name: string;
+      order: number;
+      productId: string;
+      notes: string;
+    }[];
   };
 
   @Prop({ type: [String], default: [] })
@@ -53,6 +67,6 @@ export class Chat extends Document {
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
 
-ChatSchema.virtual('id').get(function() {
+ChatSchema.virtual('id').get(function () {
   return this._id?.toString();
 });

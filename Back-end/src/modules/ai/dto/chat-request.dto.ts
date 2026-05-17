@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ChatRequestDto {
   @ApiProperty({
     description: 'ID del usuario',
-    example: 'u1'
+    example: 'u1',
   })
   userId: string;
 
@@ -12,8 +12,8 @@ export class ChatRequestDto {
     type: [Object],
     example: [
       { role: 'user', content: 'Quiero una rutina para piel grasa' },
-      { role: 'assistant', content: 'Te ayudo a crear una rutina...' }
-    ]
+      { role: 'assistant', content: 'Te ayudo a crear una rutina...' },
+    ],
   })
   messages: { role: 'user' | 'assistant' | 'system'; content: string }[];
 
@@ -23,8 +23,8 @@ export class ChatRequestDto {
     example: {
       skinType: 'grasa',
       type: 'pm',
-      currentSteps: []
-    }
+      currentSteps: [],
+    },
   })
   routineContext?: {
     skinType?: string;

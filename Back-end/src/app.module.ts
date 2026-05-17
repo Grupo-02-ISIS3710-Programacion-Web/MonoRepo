@@ -16,6 +16,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { UploadModule } from './modules/upload/upload.module';
+import {SuscripcionesModule} from "./modules/suscripciones/suscripciones.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UploadModule } from './modules/upload/upload.module';
     ChatsModule,
     CloudinaryModule,
     UploadModule,
+    SuscripcionesModule
   ],
   controllers: [AppController],
   providers: [AppService],

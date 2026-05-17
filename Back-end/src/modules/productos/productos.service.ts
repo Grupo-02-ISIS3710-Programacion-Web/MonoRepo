@@ -129,7 +129,7 @@ export class ProductosService implements OnModuleInit {
         .exec();
     } catch (error) {
       this.logger.warn(
-        `Failed to generate embedding for new product ${saved._id}: ${error}`,
+        `Failed to generate embedding for new product ${saved._id}: ${error.message}`,
       );
       return saved;
     }
@@ -284,7 +284,7 @@ export class ProductosService implements OnModuleInit {
           .exec();
       } catch (error) {
         this.logger.warn(
-          `Failed to regenerate embedding for updated product ${id}: ${error}`,
+          `Failed to regenerate embedding for updated product ${id}: ${error.message}`,
         );
       }
     }

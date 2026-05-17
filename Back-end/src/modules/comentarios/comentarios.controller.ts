@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
 import { CreateComentarioDto } from './dto/create-comentario.dto';
@@ -7,7 +15,7 @@ import { ComentariosService } from './comentarios.service';
 
 @Controller('comentarios')
 export class ComentariosController {
-  constructor(private readonly comentariosService: ComentariosService) { }
+  constructor(private readonly comentariosService: ComentariosService) {}
 
   @Post()
   @ApiBody({
@@ -49,7 +57,10 @@ export class ComentariosController {
       },
     },
   })
-  update(@Param('id') id: string, @Body() updateComentarioDto: UpdateComentarioDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateComentarioDto: UpdateComentarioDto,
+  ) {
     return this.comentariosService.update(id, updateComentarioDto);
   }
 

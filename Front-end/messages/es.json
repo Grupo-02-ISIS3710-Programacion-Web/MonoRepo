@@ -123,7 +123,8 @@
         "openMenu": "Abrir menú",
         "openSearch": "Abrir búsqueda",
         "searchPlaceholder": "Buscar productos...",
-        "notifications": "Notificaciones"
+        "notifications": "Notificaciones",
+    "premium": "Premium"
     },
     "CommentHome": {
         "title": "Explora rutinas reales de la comunidad",
@@ -734,5 +735,32 @@
                 "body": "Podemos actualizar estos terminos en cualquier momento. Si realizamos cambios importantes, te lo notificaremos dentro de la plataforma."
             }
         }
+    },
+    "Suscripcion": {
+        "title": "Hazte Premium",
+        "subtitle": "Desbloquea todas las funciones con una suscripción Skin4All Premium",
+        "loginRequired": "Inicia sesión",
+        "loginRequiredDescription": "Por favor, inicia sesión para acceder a la página de suscripción.",
+        "signIn": "Iniciar sesión",
+        "planBadge": "Mensual",
+        "planName": "Skin4All Premium",
+        "planDescription": "Todo lo que necesitas para tu rutina de cuidado de la piel",
+        "month": "mes",
+        "feature1": "Recomendaciones avanzadas de rutinas con IA",
+        "feature2": "Creación y guardado ilimitado de rutinas",
+        "feature3": "Soporte comunitario prioritario y funciones exclusivas",
+        "benefits": ["Recomendaciones avanzadas de rutinas con IA", "Creación y guardado ilimitado de rutinas", "Soporte comunitario prioritario y funciones exclusivas"],
+        "paymentTitle": "Método de pago",
+        "paymentDescription": "Introduce los datos de tu tarjeta para suscribirte",
+        "securePayment": "Protegido por Mercado Pago. Tus datos están cifrados y seguros.",
+        "alreadyPremiumTitle": "Ya eres Premium",
+        "alreadyPremiumDescription": "Disfruta de todos los beneficios exclusivos de tu suscripción Skin4All Premium.",
+        "premiumBadge": "Miembro Premium",
+        "premiumActivated": "Premium Activado",
+        "premiumActivatedDescription": "Tu suscripción Skin4All Premium ya está activa. ¡Gracias por suscribirte!",
+        "thankYouTitle": "¡Bienvenido a Premium!",
+        "thankYouDescription": "Tu suscripción se ha activado correctamente.",
+        "goToProfile": "Ir al perfil",
+        "goHome": "Ir al inicio"
     }
 }

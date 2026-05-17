@@ -16,4 +16,4 @@ import { MongooseModule } from '@nestjs/mongoose';
   controllers: [SeedController],
   providers: [SeedService],
 })
-export class SeedModule { }
+export class SeedModule {}

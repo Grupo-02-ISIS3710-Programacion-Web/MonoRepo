@@ -24,7 +24,12 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      let detail = `${response.status} ${response.statusText}`
+      try {
+        const errBody = await response.json()
+        if (errBody.message) detail += ` — ${Array.isArray(errBody.message) ? errBody.message.join(", ") : errBody.message}`
+      } catch {}
+      throw new Error(`API Error: ${detail}`)
     }
 
     const result = await response.json();
@@ -397,6 +402,26 @@ export async function upvoteProductComment(commentId: string, userId: string) {
 
 export async function deleteProductComment(commentId: string) {
   return apiFetch(`/comentarios/${commentId}`, {
-    method: 'DELETE',
+        method: 'DELETE',
   });
+  
+// Subscription API
+export async function createSubscription(data: {
+  cardTokenId: string;
+  payerEmail: string;
+  userId: string;
+}): Promise<{ preapprovalId: string; status: string }> {
+  return apiFetch('/suscripciones', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getPremiumStatus(userId: string): Promise<{ isPremium: boolean }> {
+  return apiFetch(`/suscripciones/status/${userId}`);
+}
+
+export async function cancelSubscription(preapprovalId: string): Promise<{ message: string }> {
+  return apiFetch(`/suscripciones/${preapprovalId}`, {
+
 }

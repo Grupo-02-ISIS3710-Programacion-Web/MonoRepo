@@ -14,7 +14,9 @@ export class RutinasService {
   ) {}
 
   async create(createRutinaDto: CreateRutinaDto) {
-    this.logger.log(`Creando rutina para usuario ${createRutinaDto.userId}: "${createRutinaDto.name}" (tipo: ${createRutinaDto.type}, piel: ${createRutinaDto.skinType})`);
+    this.logger.log(
+      `Creando rutina para usuario ${createRutinaDto.userId}: "${createRutinaDto.name}" (tipo: ${createRutinaDto.type}, piel: ${createRutinaDto.skinType})`,
+    );
     try {
       const newRutina = new this.rutinaModel({
         ...createRutinaDto,
@@ -25,26 +27,40 @@ export class RutinasService {
         downvotes: [],
       });
       const saved = await newRutina.save();
-      this.logger.log(`Rutina creada exitosamente con ID: ${saved._id} para usuario ${createRutinaDto.userId} (${saved.steps?.length || 0} pasos)`);
+      this.logger.log(
+        `Rutina creada exitosamente con ID: ${saved._id} para usuario ${createRutinaDto.userId} (${saved.steps?.length || 0} pasos)`,
+      );
       return saved;
     } catch (error) {
-      this.logger.error(`Error al crear rutina para usuario ${createRutinaDto.userId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al crear rutina para usuario ${createRutinaDto.userId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  async findAll(page?: number, sort?: 'newest' | 'mostCommented' | 'mostVoted') {
+  async findAll(
+    page?: number,
+    sort?: 'newest' | 'mostCommented' | 'mostVoted',
+  ) {
     const pageSize = 20;
     const pageNum = page ? Math.max(1, page) : 1;
     const skip = (pageNum - 1) * pageSize;
 
-    this.logger.log(`Listando rutinas: página ${pageNum}, orden: ${sort || 'newest'}`);
+    this.logger.log(
+      `Listando rutinas: página ${pageNum}, orden: ${sort || 'newest'}`,
+    );
 
     try {
       if (sort === 'mostCommented') {
         const commentedResults = await this.rutinaModel.aggregate([
           { $match: { deleted: false } },
-          { $addFields: { commentCount: { $size: { $ifNull: ['$comments', []] } } } },
+          {
+            $addFields: {
+              commentCount: { $size: { $ifNull: ['$comments', []] } },
+            },
+          },
           { $sort: { commentCount: -1, publishedAt: -1 } },
           { $skip: skip },
           { $limit: pageSize },
@@ -52,7 +68,9 @@ export class RutinasService {
 
         const total = await this.rutinaModel.countDocuments({ deleted: false });
 
-        this.logger.log(`Rutinas listadas (más comentadas): ${commentedResults.length} de ${total} totales`);
+        this.logger.log(
+          `Rutinas listadas (más comentadas): ${commentedResults.length} de ${total} totales`,
+        );
         return {
           routines: commentedResults,
           total,
@@ -65,14 +83,17 @@ export class RutinasService {
       if (sort === 'mostVoted') {
         const votedResults = await this.rutinaModel.aggregate([
           { $match: { deleted: false } },
-          { $addFields: {
+          {
+            $addFields: {
               upvoteCount: { $size: { $ifNull: ['$upvotes', []] } },
               downvoteCount: { $size: { $ifNull: ['$downvotes', []] } },
-              netVotes: { $subtract: [
-                { $size: { $ifNull: ['$upvotes', []] } },
-                { $size: { $ifNull: ['$downvotes', []] } }
-              ]}
-            }
+              netVotes: {
+                $subtract: [
+                  { $size: { $ifNull: ['$upvotes', []] } },
+                  { $size: { $ifNull: ['$downvotes', []] } },
+                ],
+              },
+            },
           },
           { $sort: { netVotes: -1, publishedAt: -1 } },
           { $skip: skip },
@@ -81,7 +102,9 @@ export class RutinasService {
 
         const total = await this.rutinaModel.countDocuments({ deleted: false });
 
-        this.logger.log(`Rutinas listadas (más votadas): ${votedResults.length} de ${total} totales`);
+        this.logger.log(
+          `Rutinas listadas (más votadas): ${votedResults.length} de ${total} totales`,
+        );
         return {
           routines: votedResults,
           total,
@@ -100,7 +123,9 @@ export class RutinasService {
 
       const total = await this.rutinaModel.countDocuments({ deleted: false });
 
-      this.logger.log(`Rutinas listadas (más recientes): ${routines.length} de ${total} totales`);
+      this.logger.log(
+        `Rutinas listadas (más recientes): ${routines.length} de ${total} totales`,
+      );
       return {
         routines,
         total,
@@ -109,7 +134,10 @@ export class RutinasService {
         totalPages: Math.ceil(total / pageSize),
       };
     } catch (error) {
-      this.logger.error(`Error al listar rutinas: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al listar rutinas: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -128,9 +156,14 @@ export class RutinasService {
         .limit(pageSize)
         .exec();
 
-      const total = await this.rutinaModel.countDocuments({ userId, deleted: false });
+      const total = await this.rutinaModel.countDocuments({
+        userId,
+        deleted: false,
+      });
 
-      this.logger.log(`Rutinas encontradas para usuario ${userId}: ${routines.length} de ${total} totales`);
+      this.logger.log(
+        `Rutinas encontradas para usuario ${userId}: ${routines.length} de ${total} totales`,
+      );
       return {
         routines,
         total,
@@ -139,7 +172,10 @@ export class RutinasService {
         totalPages: Math.ceil(total / pageSize),
       };
     } catch (error) {
-      this.logger.error(`Error al buscar rutinas del usuario ${userId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al buscar rutinas del usuario ${userId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -147,19 +183,26 @@ export class RutinasService {
   async findOne(id: string) {
     this.logger.log(`Consultando rutina con ID: ${id}`);
     try {
-      const rutina = await this.rutinaModel.findOne({ _id: id, deleted: false }).exec();
+      const rutina = await this.rutinaModel
+        .findOne({ _id: id, deleted: false })
+        .exec();
       if (!rutina) {
         this.logger.warn(`Rutina no encontrada con ID: ${id}`);
       }
       return rutina;
     } catch (error) {
-      this.logger.error(`Error al consultar rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al consultar rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
   async update(id: string, updateRutinaDto: UpdateRutinaDto) {
-    this.logger.log(`Actualizando rutina ${id}: ${JSON.stringify(updateRutinaDto)}`);
+    this.logger.log(
+      `Actualizando rutina ${id}: ${JSON.stringify(updateRutinaDto)}`,
+    );
     try {
       const updated = await this.rutinaModel
         .findByIdAndUpdate(id, updateRutinaDto, { returnDocument: 'after' })
@@ -171,7 +214,10 @@ export class RutinasService {
       }
       return updated;
     } catch (error) {
-      this.logger.error(`Error al actualizar rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al actualizar rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -189,7 +235,10 @@ export class RutinasService {
       }
       return deleted;
     } catch (error) {
-      this.logger.error(`Error al eliminar rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al eliminar rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -201,11 +250,16 @@ export class RutinasService {
       if (deleted) {
         this.logger.log(`Rutina ${id} eliminada permanentemente`);
       } else {
-        this.logger.warn(`Rutina no encontrada para eliminar permanentemente: ${id}`);
+        this.logger.warn(
+          `Rutina no encontrada para eliminar permanentemente: ${id}`,
+        );
       }
       return deleted;
     } catch (error) {
-      this.logger.error(`Error al eliminar permanentemente rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al eliminar permanentemente rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -227,12 +281,16 @@ export class RutinasService {
 
       if (upvoteIndex > -1) {
         rutina.upvotes.splice(upvoteIndex, 1);
-        this.logger.log(`Usuario ${userId} retiró voto positivo de rutina ${id}`);
+        this.logger.log(
+          `Usuario ${userId} retiró voto positivo de rutina ${id}`,
+        );
       } else {
         rutina.upvotes.push(userId);
         if (downvoteIndex > -1) {
           rutina.downvotes.splice(downvoteIndex, 1);
-          this.logger.log(`Usuario ${userId} cambió voto negativo a positivo en rutina ${id}`);
+          this.logger.log(
+            `Usuario ${userId} cambió voto negativo a positivo en rutina ${id}`,
+          );
         } else {
           this.logger.log(`Usuario ${userId} votó positivamente rutina ${id}`);
         }
@@ -240,7 +298,10 @@ export class RutinasService {
 
       return await rutina.save();
     } catch (error) {
-      this.logger.error(`Error al registrar voto positivo en rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al registrar voto positivo en rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -262,12 +323,16 @@ export class RutinasService {
 
       if (downvoteIndex > -1) {
         rutina.downvotes.splice(downvoteIndex, 1);
-        this.logger.log(`Usuario ${userId} retiró voto negativo de rutina ${id}`);
+        this.logger.log(
+          `Usuario ${userId} retiró voto negativo de rutina ${id}`,
+        );
       } else {
         rutina.downvotes.push(userId);
         if (upvoteIndex > -1) {
           rutina.upvotes.splice(upvoteIndex, 1);
-          this.logger.log(`Usuario ${userId} cambió voto positivo a negativo en rutina ${id}`);
+          this.logger.log(
+            `Usuario ${userId} cambió voto positivo a negativo en rutina ${id}`,
+          );
         } else {
           this.logger.log(`Usuario ${userId} votó negativamente rutina ${id}`);
         }
@@ -275,17 +340,24 @@ export class RutinasService {
 
       return await rutina.save();
     } catch (error) {
-      this.logger.error(`Error al registrar voto negativo en rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al registrar voto negativo en rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
   async removeUpvote(id: string, userId: string) {
-    this.logger.log(`Removiendo voto positivo de usuario ${userId} en rutina ${id}`);
+    this.logger.log(
+      `Removiendo voto positivo de usuario ${userId} en rutina ${id}`,
+    );
     try {
       const rutina = await this.rutinaModel.findById(id).exec();
       if (!rutina) {
-        this.logger.warn(`Rutina no encontrada para remover voto positivo: ${id}`);
+        this.logger.warn(
+          `Rutina no encontrada para remover voto positivo: ${id}`,
+        );
         return null;
       }
 
@@ -294,24 +366,35 @@ export class RutinasService {
       const upvoteIndex = rutina.upvotes.indexOf(userId);
       if (upvoteIndex > -1) {
         rutina.upvotes.splice(upvoteIndex, 1);
-        this.logger.log(`Voto positivo de usuario ${userId} removido de rutina ${id}`);
+        this.logger.log(
+          `Voto positivo de usuario ${userId} removido de rutina ${id}`,
+        );
       } else {
-        this.logger.log(`Usuario ${userId} no tenía voto positivo en rutina ${id}`);
+        this.logger.log(
+          `Usuario ${userId} no tenía voto positivo en rutina ${id}`,
+        );
       }
 
       return await rutina.save();
     } catch (error) {
-      this.logger.error(`Error al remover voto positivo de rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al remover voto positivo de rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
   async removeDownvote(id: string, userId: string) {
-    this.logger.log(`Removiendo voto negativo de usuario ${userId} en rutina ${id}`);
+    this.logger.log(
+      `Removiendo voto negativo de usuario ${userId} en rutina ${id}`,
+    );
     try {
       const rutina = await this.rutinaModel.findById(id).exec();
       if (!rutina) {
-        this.logger.warn(`Rutina no encontrada para remover voto negativo: ${id}`);
+        this.logger.warn(
+          `Rutina no encontrada para remover voto negativo: ${id}`,
+        );
         return null;
       }
 
@@ -320,14 +403,21 @@ export class RutinasService {
       const downvoteIndex = rutina.downvotes.indexOf(userId);
       if (downvoteIndex > -1) {
         rutina.downvotes.splice(downvoteIndex, 1);
-        this.logger.log(`Voto negativo de usuario ${userId} removido de rutina ${id}`);
+        this.logger.log(
+          `Voto negativo de usuario ${userId} removido de rutina ${id}`,
+        );
       } else {
-        this.logger.log(`Usuario ${userId} no tenía voto negativo en rutina ${id}`);
+        this.logger.log(
+          `Usuario ${userId} no tenía voto negativo en rutina ${id}`,
+        );
       }
 
       return await rutina.save();
     } catch (error) {
-      this.logger.error(`Error al remover voto negativo de rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al remover voto negativo de rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -336,14 +426,23 @@ export class RutinasService {
     this.logger.debug(`Registrando visualización para rutina ${id}`);
     try {
       const updated = await this.rutinaModel
-        .findByIdAndUpdate(id, { $inc: { views: 1 } }, { returnDocument: 'after' })
+        .findByIdAndUpdate(
+          id,
+          { $inc: { views: 1 } },
+          { returnDocument: 'after' },
+        )
         .exec();
       if (updated) {
-        this.logger.debug(`Visualización registrada: rutina ${id} tiene ahora ${updated.views} visualizaciones`);
+        this.logger.debug(
+          `Visualización registrada: rutina ${id} tiene ahora ${updated.views} visualizaciones`,
+        );
       }
       return updated;
     } catch (error) {
-      this.logger.error(`Error al registrar visualización de rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al registrar visualización de rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -362,10 +461,15 @@ export class RutinasService {
         downvotes: rutina.downvotes?.length || 0,
         views: rutina.views || 0,
       };
-      this.logger.debug(`Conteo de votos para rutina ${id}: ${JSON.stringify(counts)}`);
+      this.logger.debug(
+        `Conteo de votos para rutina ${id}: ${JSON.stringify(counts)}`,
+      );
       return counts;
     } catch (error) {
-      this.logger.error(`Error al obtener conteo de votos de rutina ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error al obtener conteo de votos de rutina ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

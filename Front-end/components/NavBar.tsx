@@ -16,6 +16,7 @@ const linksStatic = [
     { key: "discover", href: "/descubrir" },
     { key: "community", href: "/community" },
     { key: "aiRoutines", href: "/ai-routine" },
+    { key: "premium", href: "/suscripcion" },
 ];
 
 function buildDiscoverySearchUrl(searchTerm: string) {

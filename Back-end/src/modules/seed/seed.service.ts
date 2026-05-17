@@ -8,18 +8,16 @@ import { Rutina } from '../rutinas/entities/rutina.entity';
 
 @Injectable()
 export class SeedService {
+  constructor(
+    @InjectModel('Producto') private readonly productoModel: Model<Producto>,
+    @InjectModel('Rutina') private readonly rutinaModel: Model<Rutina>,
+  ) {}
 
-    constructor(
-        @InjectModel('Producto') private readonly productoModel: Model<Producto>,
-        @InjectModel('Rutina') private readonly rutinaModel: Model<Rutina>,
-    ) { }
+  async seed() {
+    await this.productoModel.deleteMany({});
+    await this.productoModel.insertMany(productosMock);
 
-    async seed() {
-        await this.productoModel.deleteMany({});
-        await this.productoModel.insertMany(productosMock);
-
-        await this.rutinaModel.deleteMany({});
-        await this.rutinaModel.insertMany(rutinasMock);
-    }
-
+    await this.rutinaModel.deleteMany({});
+    await this.rutinaModel.insertMany(rutinasMock);
+  }
 }

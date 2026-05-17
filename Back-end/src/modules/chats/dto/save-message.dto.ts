@@ -8,7 +8,10 @@ export class SaveMessageDto {
   })
   role: string;
 
-  @ApiProperty({ description: 'Message content', example: 'What routine should I use for oily skin?' })
+  @ApiProperty({
+    description: 'Message content',
+    example: 'What routine should I use for oily skin?',
+  })
   content: string;
 
   @ApiProperty({
