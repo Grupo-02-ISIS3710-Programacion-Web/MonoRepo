@@ -22,10 +22,11 @@ function PremiumCardForm({
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    initMercadoPago(
-      process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY_TEST || "",
-      { locale: "es-CO" },
-    )
+    const useLive = process.env.NEXT_PUBLIC_IS_PRODUCTION === "true"
+    const publicKey = useLive
+      ? process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY_LIVE || ""
+      : process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY_TEST || ""
+    initMercadoPago(publicKey, { locale: "es-CO" })
   }, [])
 
   const initialization = useMemo(

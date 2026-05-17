@@ -24,15 +24,14 @@ export class SuscripcionesService {
   ) {}
 
   private getHeaders() {
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
-    const headers: Record<string, string> = {
+    const useLive = process.env.IS_PRODUCTION === 'true';
+    const token = useLive
+      ? process.env.MERCADOPAGO_ACCESS_TOKEN_LIVE || ''
+      : process.env.MERCADOPAGO_ACCESS_TOKEN_TEST || '';
+    return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     };
-    if (token.startsWith('TEST-')) {
-      headers['X-scope'] = 'stage';
-    }
-    return headers;
   }
 
   async create(createDto: CreateSuscripcionDto) {
@@ -58,7 +57,7 @@ export class SuscripcionesService {
         currency_id: currency,
       },
       payer_email: createDto.payerEmail,
-      token: createDto.cardTokenId,
+      card_token_id: createDto.cardTokenId,
       status: 'authorized',
       back_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/suscripcion`,
       notification_url: `${process.env.API_URL || 'http://localhost:5001'}/suscripciones/webhook`,
