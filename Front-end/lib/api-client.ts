@@ -1,5 +1,3 @@
-import { normalizeProductForSubmission } from "./product-mapper";
-
 // API client for communicating with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 

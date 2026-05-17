@@ -6,6 +6,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -132,7 +133,14 @@ export class ProductosService implements OnModuleInit {
 
   async findOne(id: string, includeEmbeddings = false): Promise<any | null> {
     const projection = includeEmbeddings ? {} : { embedding: 0 };
-    return await this.productoModel.findById(id, projection).lean().exec();
+    const product = await this.productoModel
+      .findById(id, projection)
+      .lean()
+      .exec();
+    if (!product || product.deleted) {
+      throw new NotFoundException(`Producto with id ${id} not found`);
+    }
+    return product;
   }
 
   async findByIds(ids: string[]): Promise<any[]> {

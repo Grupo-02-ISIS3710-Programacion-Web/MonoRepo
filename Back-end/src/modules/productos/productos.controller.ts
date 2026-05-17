@@ -16,6 +16,7 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { BatchProductoDto } from './dto/batch-producto.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
 @Controller('productos')
 export class ProductosController {
@@ -108,7 +109,7 @@ export class ProductosController {
       'Include the embedding vector in the response (default: false)',
   })
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Query('includeEmbeddings') includeEmbeddings?: string,
   ) {
     return this.productosService.findOne(id, includeEmbeddings === 'true');
@@ -130,14 +131,14 @@ export class ProductosController {
     },
   })
   update(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
   ) {
     return this.productosService.update(id, updateProductoDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseObjectIdPipe) id: string) {
     return this.productosService.remove(id);
   }
 
