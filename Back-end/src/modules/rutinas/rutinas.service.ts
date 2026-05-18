@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import { CreateRutinaDto } from './dto/create-rutina.dto';
 import { UpdateRutinaDto } from './dto/update-rutina.dto';
 import { Rutina } from './entities/rutina.entity';
+import { User } from '../user/entities/user.entity';
+import { Comentario } from '../comentarios/entities/comentario.entity';
 
 @Injectable()
 export class RutinasService {
@@ -11,6 +13,9 @@ export class RutinasService {
 
   constructor(
     @InjectModel('Rutina') private readonly rutinaModel: Model<Rutina>,
+    @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Comentario')
+    private readonly comentarioModel: Model<Comentario>,
   ) {}
 
   async create(createRutinaDto: CreateRutinaDto) {
@@ -27,6 +32,13 @@ export class RutinasService {
         downvotes: [],
       });
       const saved = await newRutina.save();
+
+      await this.userModel
+        .findByIdAndUpdate(createRutinaDto.userId, {
+          $push: { createdRoutineIds: saved._id.toString() },
+        })
+        .exec();
+
       this.logger.log(
         `Rutina creada exitosamente con ID: ${saved._id} para usuario ${createRutinaDto.userId} (${saved.steps?.length || 0} pasos)`,
       );
@@ -228,7 +240,13 @@ export class RutinasService {
       const deleted = await this.rutinaModel
         .findByIdAndUpdate(id, { deleted: true }, { returnDocument: 'after' })
         .exec();
+
       if (deleted) {
+        await this.userModel
+          .findByIdAndUpdate(deleted.userId, {
+            $pull: { createdRoutineIds: id },
+          })
+          .exec();
         this.logger.log(`Rutina ${id} marcada como eliminada`);
       } else {
         this.logger.warn(`Rutina no encontrada para eliminar: ${id}`);
@@ -468,6 +486,42 @@ export class RutinasService {
     } catch (error) {
       this.logger.error(
         `Error al obtener conteo de votos de rutina ${id}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async getComments(rutinaId: string) {
+    this.logger.log(`Obteniendo comentarios de rutina ${rutinaId}`);
+    try {
+      return await this.comentarioModel
+        .find({ rutinaId })
+        .populate('userId', 'nombre avatarUrl')
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Error al obtener comentarios de rutina ${rutinaId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async addComment(rutinaId: string, userId: string, comment: string) {
+    this.logger.log(
+      `Agregando comentario de usuario ${userId} en rutina ${rutinaId}`,
+    );
+    try {
+      const newComment = new this.comentarioModel({
+        rutinaId,
+        userId,
+        comment,
+      });
+      return await newComment.save();
+    } catch (error) {
+      this.logger.error(
+        `Error al agregar comentario en rutina ${rutinaId}: ${error.message}`,
         error.stack,
       );
       throw error;

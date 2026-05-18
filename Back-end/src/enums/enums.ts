@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { SkinTypeCatalog } from 'src/schema/catalog.schema';
+import { SkinTypeCatalog } from '../schema/catalog.schema';
 
 export enum Category {
   HIDRATACION = 'hidratacion',

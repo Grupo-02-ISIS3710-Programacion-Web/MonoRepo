@@ -80,17 +80,25 @@ export class SuscripcionesService {
       const wompiError = error.response?.data;
       console.error('Wompi payment source error:', JSON.stringify(wompiError));
       if (wompiError) {
-        const msg = wompiError.error?.reason || wompiError.message || JSON.stringify(wompiError);
+        const msg =
+          wompiError.error?.reason ||
+          wompiError.message ||
+          JSON.stringify(wompiError);
         throw new BadRequestException(`Wompi: ${msg}`);
       }
-      throw new InternalServerErrorException('Error al crear la fuente de pago');
+      throw new InternalServerErrorException(
+        'Error al crear la fuente de pago',
+      );
     }
 
     const paymentSourceId = paymentSourceData.id;
     const reference = `SUB-${Date.now()}-${createDto.userId.slice(-8)}`;
 
     const integrityStr = `${reference}${amountInCents}COP${process.env.WOMPI_INTEGRITY_SECRET || ''}`;
-    const signature = crypto.createHash('sha256').update(integrityStr).digest('hex');
+    const signature = crypto
+      .createHash('sha256')
+      .update(integrityStr)
+      .digest('hex');
 
     let transactionData: any;
     try {
@@ -113,7 +121,8 @@ export class SuscripcionesService {
     } catch (error) {
       if (error.response?.data) {
         throw new BadRequestException(
-          error.response.data.message || 'Error al crear la transacción en Wompi',
+          error.response.data.message ||
+            'Error al crear la transacción en Wompi',
         );
       }
       throw new InternalServerErrorException('Error al crear la transacción');
@@ -135,7 +144,8 @@ export class SuscripcionesService {
             ),
           );
           finalStatus = statusRes.data.data.status;
-          if (['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(finalStatus)) break;
+          if (['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(finalStatus))
+            break;
         } catch {
           break;
         }
@@ -200,7 +210,9 @@ export class SuscripcionesService {
   }
 
   async chargeAll() {
-    const activeSubscriptions = await this.suscripcionModel.find({ active: true });
+    const activeSubscriptions = await this.suscripcionModel.find({
+      active: true,
+    });
     const results: any[] = [];
 
     for (const sub of activeSubscriptions) {
@@ -209,7 +221,10 @@ export class SuscripcionesService {
       const currency = sub.currencyId || 'COP';
 
       const integrityStr = `${reference}${amountInCents}${currency}${process.env.WOMPI_INTEGRITY_SECRET || ''}`;
-      const signature = crypto.createHash('sha256').update(integrityStr).digest('hex');
+      const signature = crypto
+        .createHash('sha256')
+        .update(integrityStr)
+        .digest('hex');
 
       try {
         const response = await firstValueFrom(
@@ -246,7 +261,12 @@ export class SuscripcionesService {
                 ),
               );
               finalStatus = statusRes.data.data.status;
-              if (['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(finalStatus)) break;
+              if (
+                ['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(
+                  finalStatus,
+                )
+              )
+                break;
             } catch {
               break;
             }
@@ -321,7 +341,9 @@ export class SuscripcionesService {
           error.response.data.message || 'Error al cancelar la suscripción',
         );
       }
-      throw new InternalServerErrorException('Error al cancelar la suscripción');
+      throw new InternalServerErrorException(
+        'Error al cancelar la suscripción',
+      );
     }
   }
 

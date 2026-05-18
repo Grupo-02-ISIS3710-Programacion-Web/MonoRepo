@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export class RoutineStep {
   @ApiProperty({
@@ -60,8 +60,8 @@ export class Rutina extends Document {
     description: 'ID del usuario que creó la rutina',
     example: 'u1',
   })
-  @Prop({ required: true })
-  userId: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
 
   @ApiProperty({
     description: 'Nombre de la rutina',

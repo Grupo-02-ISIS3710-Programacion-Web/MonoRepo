@@ -65,7 +65,9 @@ describe('ProductosService', () => {
   };
 
   const mockCloudinaryService = {
-    uploadBuffer: jest.fn().mockResolvedValue('https://cdn.example.com/img.jpg'),
+    uploadBuffer: jest
+      .fn()
+      .mockResolvedValue('https://cdn.example.com/img.jpg'),
   };
 
   beforeEach(async () => {
@@ -76,9 +78,18 @@ describe('ProductosService', () => {
       providers: [
         ProductosService,
         { provide: getModelToken('Producto'), useValue: productoModelMock },
-        { provide: getModelToken('SkinTypeCatalog'), useValue: skinTypeModelMock },
-        { provide: getModelToken('ProductTypeCatalog'), useValue: productTypeModelMock },
-        { provide: getModelToken('CategoryCatalog'), useValue: categoryModelMock },
+        {
+          provide: getModelToken('SkinTypeCatalog'),
+          useValue: skinTypeModelMock,
+        },
+        {
+          provide: getModelToken('ProductTypeCatalog'),
+          useValue: productTypeModelMock,
+        },
+        {
+          provide: getModelToken('CategoryCatalog'),
+          useValue: categoryModelMock,
+        },
         { provide: AiService, useValue: mockAiService },
         { provide: CloudinaryService, useValue: mockCloudinaryService },
       ],
@@ -102,24 +113,37 @@ describe('ProductosService', () => {
     };
 
     const fakeImages: Express.Multer.File[] = [
-      { buffer: Buffer.from('img'), originalname: 'foto.jpg' } as Express.Multer.File,
+      {
+        buffer: Buffer.from('img'),
+        originalname: 'foto.jpg',
+      } as Express.Multer.File,
     ];
 
     it('lanza BadRequestException si no se envían imágenes', async () => {
-      await expect(service.create(dto, [])).rejects.toThrow(BadRequestException);
+      await expect(service.create(dto, [])).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('sube imágenes a Cloudinary y guarda el producto', async () => {
       // Mocks de validación de catálogos
-      skinTypeModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(2) });
-      productTypeModelMock.exists.mockReturnValue({ exec: jest.fn().mockResolvedValue(true) });
-      categoryModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(2) });
+      skinTypeModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(2),
+      });
+      productTypeModelMock.exists.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(true),
+      });
+      categoryModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(2),
+      });
 
       const savedProduct = { _id: 'abc123', ...dto };
       mockDocInstance.save.mockResolvedValue(savedProduct);
 
       productoModelMock.findByIdAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...savedProduct, embedding: [0.1] }),
+        exec: jest
+          .fn()
+          .mockResolvedValue({ ...savedProduct, embedding: [0.1] }),
       });
 
       const result = await service.create(dto, fakeImages);
@@ -131,13 +155,21 @@ describe('ProductosService', () => {
     });
 
     it('retorna el producto sin embedding si falla el servicio de IA', async () => {
-      skinTypeModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(2) });
-      productTypeModelMock.exists.mockReturnValue({ exec: jest.fn().mockResolvedValue(true) });
-      categoryModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(2) });
+      skinTypeModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(2),
+      });
+      productTypeModelMock.exists.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(true),
+      });
+      categoryModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(2),
+      });
 
       const savedProduct = { _id: 'abc123', ...dto };
       mockDocInstance.save.mockResolvedValue(savedProduct);
-      mockAiService.generateProductEmbedding.mockRejectedValue(new Error('AI down'));
+      mockAiService.generateProductEmbedding.mockRejectedValue(
+        new Error('AI down'),
+      );
 
       const result = await service.create(dto, fakeImages);
 
@@ -168,13 +200,19 @@ describe('ProductosService', () => {
       });
 
       skinTypeModelMock.find.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue([{ _id: 1, code: 'normal' }]) }),
+        lean: () => ({
+          exec: jest.fn().mockResolvedValue([{ _id: 1, code: 'normal' }]),
+        }),
       });
       productTypeModelMock.find.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue([{ _id: 10, code: 'cream' }]) }),
+        lean: () => ({
+          exec: jest.fn().mockResolvedValue([{ _id: 10, code: 'cream' }]),
+        }),
       });
       categoryModelMock.find.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue([{ _id: 20, code: 'hidratacion' }]) }),
+        lean: () => ({
+          exec: jest.fn().mockResolvedValue([{ _id: 20, code: 'hidratacion' }]),
+        }),
       });
 
       const result = await service.findAll();
@@ -213,12 +251,16 @@ describe('ProductosService', () => {
         lean: () => ({ exec: jest.fn().mockResolvedValue(null) }),
       });
 
-      await expect(service.findOne('id-inexistente')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('id-inexistente')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lanza NotFoundException si el producto está eliminado (soft delete)', async () => {
       productoModelMock.findById.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue({ _id: 'abc', deleted: true }) }),
+        lean: () => ({
+          exec: jest.fn().mockResolvedValue({ _id: 'abc', deleted: true }),
+        }),
       });
 
       await expect(service.findOne('abc')).rejects.toThrow(NotFoundException);
@@ -256,7 +298,9 @@ describe('ProductosService', () => {
         lean: () => ({ exec: jest.fn().mockResolvedValue([]) }),
       });
       productTypeModelMock.find.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue([{ _id: 10, code: 'cream' }]) }),
+        lean: () => ({
+          exec: jest.fn().mockResolvedValue([{ _id: 10, code: 'cream' }]),
+        }),
       });
       categoryModelMock.find.mockReturnValue({
         lean: () => ({ exec: jest.fn().mockResolvedValue([]) }),
@@ -270,11 +314,21 @@ describe('ProductosService', () => {
 
   describe('update()', () => {
     it('actualiza campos básicos y regenera embedding', async () => {
-      const updatedProduct = { _id: 'abc', name: 'Nuevo Nombre', embedding: [0.5] };
+      const updatedProduct = {
+        _id: 'abc',
+        name: 'Nuevo Nombre',
+        embedding: [0.5],
+      };
 
       productoModelMock.findByIdAndUpdate
-        .mockReturnValueOnce({ exec: jest.fn().mockResolvedValue(updatedProduct) })
-        .mockReturnValueOnce({ exec: jest.fn().mockResolvedValue({ ...updatedProduct, embedding: [0.1] }) });
+        .mockReturnValueOnce({
+          exec: jest.fn().mockResolvedValue(updatedProduct),
+        })
+        .mockReturnValueOnce({
+          exec: jest
+            .fn()
+            .mockResolvedValue({ ...updatedProduct, embedding: [0.1] }),
+        });
 
       const result = await service.update('abc', { name: 'Nuevo Nombre' });
 
@@ -284,9 +338,15 @@ describe('ProductosService', () => {
     });
 
     it('valida catálogos si se actualizan campos de catálogo', async () => {
-      skinTypeModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
-      productTypeModelMock.exists.mockReturnValue({ exec: jest.fn().mockResolvedValue(true) });
-      categoryModelMock.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
+      skinTypeModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(1),
+      });
+      productTypeModelMock.exists.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(true),
+      });
+      categoryModelMock.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(1),
+      });
 
       productoModelMock.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue({ _id: 'abc', skin_type: [1] }),
@@ -328,17 +388,25 @@ describe('ProductosService', () => {
   });
 
   describe('findCatalogs()', () => {
-    const mockCatalogData = [{ _id: 1, code: 'normal', labels: { es: 'Normal', en: 'Normal' } }];
+    const mockCatalogData = [
+      { _id: 1, code: 'normal', labels: { es: 'Normal', en: 'Normal' } },
+    ];
 
     beforeEach(() => {
       skinTypeModelMock.find.mockReturnValue({
-        sort: () => ({ lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }) }),
+        sort: () => ({
+          lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }),
+        }),
       });
       productTypeModelMock.find.mockReturnValue({
-        sort: () => ({ lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }) }),
+        sort: () => ({
+          lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }),
+        }),
       });
       categoryModelMock.find.mockReturnValue({
-        sort: () => ({ lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }) }),
+        sort: () => ({
+          lean: () => ({ exec: jest.fn().mockResolvedValue(mockCatalogData) }),
+        }),
       });
     });
 

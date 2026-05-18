@@ -116,7 +116,7 @@ export class ProductosService implements OnModuleInit {
         .exec();
     } catch (error) {
       this.logger.warn(
-        `Failed to generate embedding for new product ${saved._id}: ${error.message}`,
+        `Failed to generate embedding for new product ${saved._id}: ${error}`,
       );
       return saved;
     }
@@ -129,6 +129,75 @@ export class ProductosService implements OnModuleInit {
       .lean()
       .exec();
     return this.normalizeProducts(products);
+  }
+
+  async findAllFiltered(
+    filters: {
+      search?: string;
+      category?: string;
+      brands?: string[];
+      skinTypes?: string[];
+      excludeIngredients?: string[];
+    },
+    includeEmbeddings = false,
+  ): Promise<any[]> {
+    const query: Record<string, unknown> = { deleted: false };
+
+    if (filters.search) {
+      query.name = { $regex: filters.search, $options: 'i' };
+    }
+
+    if (filters.category) {
+      const categoryId = getCatalogIdByCode('category', filters.category);
+      query.category = categoryId;
+    }
+
+    if (filters.brands && filters.brands.length > 0) {
+      query.brand = { $in: filters.brands };
+    }
+
+    if (filters.skinTypes && filters.skinTypes.length > 0) {
+      const skinTypeIds = filters.skinTypes.map((s) =>
+        getCatalogIdByCode('skin_type', s),
+      );
+      query.skin_type = { $in: skinTypeIds };
+    }
+
+    if (filters.excludeIngredients && filters.excludeIngredients.length > 0) {
+      const patterns = filters.excludeIngredients.map(
+        (i) => new RegExp(i, 'i'),
+      );
+      query.ingredients = { $not: { $elemMatch: { $in: patterns } } };
+    }
+
+    const projection = includeEmbeddings ? {} : { embedding: 0 };
+    const products = await this.productoModel
+      .find(query, projection)
+      .lean()
+      .exec();
+    return this.normalizeProducts(products);
+  }
+
+  async findCatalogs(language?: 'es' | 'en'): Promise<Record<string, unknown>> {
+    const lang = language ?? 'es';
+    const [skinTypes, productTypes, categories] = await Promise.all([
+      this.skinTypeCatalogModel.find().lean().exec(),
+      this.productTypeCatalogModel.find().lean().exec(),
+      this.categoryCatalogModel.find().lean().exec(),
+    ]);
+
+    const formatCatalog = (items: any[]) =>
+      items.map((item) => ({
+        id: item._id,
+        code: item.code,
+        label: item.labels?.[lang] ?? item.code,
+      }));
+
+    return {
+      skinTypes: formatCatalog(skinTypes),
+      productTypes: formatCatalog(productTypes),
+      categories: formatCatalog(categories),
+    };
   }
 
   async findOne(id: string, includeEmbeddings = false): Promise<any | null> {
@@ -146,9 +215,8 @@ export class ProductosService implements OnModuleInit {
 
   async findByIds(ids: string[], includeEmbeddings = false): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    const projection = includeEmbeddings ? {} : { embedding: 0 };
     const products = await this.productoModel
-      .find({ _id: { $in: ids }, deleted: false }, projection)
+      .find({ _id: { $in: ids }, deleted: false })
       .lean()
       .exec();
     return this.normalizeProducts(products);
@@ -276,7 +344,7 @@ export class ProductosService implements OnModuleInit {
           .exec();
       } catch (error) {
         this.logger.warn(
-          `Failed to regenerate embedding for updated product ${id}: ${error.message}`,
+          `Failed to regenerate embedding for updated product ${id}: ${error}`,
         );
       }
     }
@@ -370,95 +438,5 @@ export class ProductosService implements OnModuleInit {
         throw new BadRequestException('Uno o más IDs en category no existen');
       }
     }
-  }
-
-  async findCatalogs(language: CatalogLanguage = 'es') {
-    const lang = language === 'en' ? 'en' : 'es';
-    const [skinTypes, productTypes, categories] = await Promise.all([
-      this.skinTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-      this.productTypeCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-      this.categoryCatalogModel.find().sort({ _id: 1 }).lean().exec(),
-    ]);
-
-    return {
-      skin_type: skinTypes.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-      product_type: productTypes.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-      category: categories.map((item) => ({
-        id: item._id,
-        code: item.code,
-        label: item.labels[lang],
-      })),
-    };
-  }
-
-  async findAllFiltered(
-    params: {
-    search?: string;
-    category?: string;
-    brands?: string[];
-    skinTypes?: string[];
-    excludeIngredients?: string[];
-    },
-    includeEmbeddings = false,
-  ): Promise<any[]> {
-    const query: Record<string, any> = { deleted: false };
-
-    // Resolver category code → ID numérico
-    if (params.category && params.category !== 'ALL') {
-      const cat = await this.categoryCatalogModel
-        .findOne({ code: params.category })
-        .lean()
-        .exec();
-      if (cat) query.category = cat._id;
-    }
-
-    // Resolver skinType codes → IDs numéricos
-    if (params.skinTypes?.length) {
-      const skinDocs = await this.skinTypeCatalogModel
-        .find({ code: { $in: params.skinTypes } })
-        .lean()
-        .exec();
-      if (skinDocs.length) {
-        query.skin_type = { $in: skinDocs.map((s) => s._id) };
-      }
-    }
-
-    // Filtro por marcas (texto exacto, case-insensitive)
-    if (params.brands?.length) {
-      query.brand = {
-        $in: params.brands.map((b) => new RegExp(`^${b}$`, 'i')),
-      };
-    }
-
-    // Excluir ingredientes
-    if (params.excludeIngredients?.length) {
-      query.ingredients = { $nin: params.excludeIngredients };
-    }
-
-    // Búsqueda de texto libre en name, brand e ingredients
-    if (params.search) {
-      const regex = new RegExp(params.search, 'i');
-      query.$or = [
-        { name: regex },
-        { brand: regex },
-        { ingredients: regex },
-      ];
-    }
-
-    const projection = includeEmbeddings ? {} : { embedding: 0 };
-    const products = await this.productoModel
-      .find(query, projection)
-      .lean()
-      .exec();
-
-    return this.normalizeProducts(products);
   }
 }

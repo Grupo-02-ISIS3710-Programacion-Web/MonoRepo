@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
-
 import { fetchProducts, fetchRoutineById } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,7 +117,6 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
 
             try {
                 const routine = await fetchRoutineById(routineId);
-
                 if (!routine) {
                     setIsRoutineMissing(true);
                     setIsInitialDataLoaded(true);
@@ -128,11 +126,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                 const routineSteps = routine.steps
                     .map((step: any) => {
                         const product = products.find((item) => item.id === step.productId);
-
-                        if (!product) {
-                            return null;
-                        }
-
+                        if (!product) return null;
                         return {
                             id: step.id,
                             name: step.name,

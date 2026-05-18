@@ -84,7 +84,9 @@ export class ProductosController {
     @Body() createProductoDto: CreateProductoDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
-    this.logger.log(`Creando producto ${createProductoDto.name} de ${createProductoDto.brand}`);
+    this.logger.log(
+      `Creando producto ${createProductoDto.name} de ${createProductoDto.brand}`,
+    );
     return this.productosService.create(createProductoDto, images);
   }
 
@@ -113,20 +115,31 @@ export class ProductosController {
       query.excludeIngredients;
 
     if (hasFilters) {
-      this.logger.log(`Listando productos con filtros: ${JSON.stringify({
-        search: query.search,
-        category: query.category,
-        brands: query.brands,
-        skinTypes: query.skinTypes,
-        excludeIngredients: query.excludeIngredients,
-      })}`);
+      this.logger.log(
+        `Listando productos con filtros: ${JSON.stringify({
+          search: query.search,
+          category: query.category,
+          brands: query.brands,
+          skinTypes: query.skinTypes,
+          excludeIngredients: query.excludeIngredients,
+        })}`,
+      );
       return this.productosService.findAllFiltered(
         {
           search: query.search,
           category: query.category,
-          brands: query.brands?.split(',').map((b) => b.trim()).filter(Boolean),
-          skinTypes: query.skinTypes?.split(',').map((s) => s.trim()).filter(Boolean),
-          excludeIngredients: query.excludeIngredients?.split(',').map((i) => i.trim()).filter(Boolean),
+          brands: query.brands
+            ?.split(',')
+            .map((b) => b.trim())
+            .filter(Boolean),
+          skinTypes: query.skinTypes
+            ?.split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          excludeIngredients: query.excludeIngredients
+            ?.split(',')
+            .map((i) => i.trim())
+            .filter(Boolean),
         },
         includeEmbeddings === 'true',
       );
@@ -201,6 +214,9 @@ export class ProductosController {
   })
   async findBatch(@Body() body: BatchProductoDto) {
     this.logger.log(`Buscando lote de ${body.productIds.length} productos`);
-    return this.productosService.findByIds(body.productIds, body.includeEmbeddings);
+    return this.productosService.findByIds(
+      body.productIds,
+      body.includeEmbeddings,
+    );
   }
 }

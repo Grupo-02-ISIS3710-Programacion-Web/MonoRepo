@@ -17,7 +17,10 @@ export class UserService {
   }
 
   async findOne(id: string) {
-    const user = await this.userModel.findById(id).select('-contrasenia').exec();
+    const user = await this.userModel
+      .findById(id)
+      .select('-contrasenia')
+      .exec();
     if (!user) {
       throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     }
@@ -25,7 +28,10 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const user = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-contrasenia').exec();
+    const user = await this.userModel
+      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .select('-contrasenia')
+      .exec();
     if (!user) {
       throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     }

@@ -16,40 +16,43 @@ export class ComentariosService {
     private readonly productoModel: Model<any>,
   ) {}
 
-async create(createComentarioDto: CreateComentarioDto) {
-  const { userId, productId, comment } = createComentarioDto;
+  async create(createComentarioDto: CreateComentarioDto) {
+    const { userId, productId, comment } = createComentarioDto;
 
-  this.logger.log(`Creando comentario para producto ${productId} del usuario ${userId}`);
+    this.logger.log(
+      `Creando comentario para producto ${productId} del usuario ${userId}`,
+    );
 
-  const created = await this.comentarioModel.create({
-    userId: new Types.ObjectId(userId), 
-    productId: new Types.ObjectId(productId),
-    comment,
-    upvotes: [],
-    downvotes: [],
-  });
+    const created = await this.comentarioModel.create({
+      userId: new Types.ObjectId(userId),
+      productId: new Types.ObjectId(productId),
+      comment,
+      upvotes: [],
+      downvotes: [],
+    });
 
-  await this.productoModel.findByIdAndUpdate(
-    productId,
-    { $push: { comments: created._id } },
-  );
+    await this.productoModel.findByIdAndUpdate(productId, {
+      $push: { comments: created._id },
+    });
 
-  this.logger.log(`Comentario ${created._id} creado exitosamente`);
-  return created;
-}
+    this.logger.log(`Comentario ${created._id} creado exitosamente`);
+    return created;
+  }
 
-async findByProductId(productId: string) {
-  this.logger.log(`Buscando comentarios para producto ${productId}`);
+  async findByProductId(productId: string) {
+    this.logger.log(`Buscando comentarios para producto ${productId}`);
 
-  const comentarios = await this.comentarioModel
-    .find({ productId: new Types.ObjectId(productId) })
-    .populate('userId', 'nombre avatarUrl')
-    .sort({ createdAt: -1 })
-    .exec();
+    const comentarios = await this.comentarioModel
+      .find({ productId: new Types.ObjectId(productId) })
+      .populate('userId', 'nombre avatarUrl')
+      .sort({ createdAt: -1 })
+      .exec();
 
-  this.logger.log(`${comentarios.length} comentarios encontrados para producto ${productId}`);
-  return comentarios;
-}
+    this.logger.log(
+      `${comentarios.length} comentarios encontrados para producto ${productId}`,
+    );
+    return comentarios;
+  }
 
   async findAll() {
     this.logger.log('Listando todos los comentarios');
@@ -109,7 +112,9 @@ async findByProductId(productId: string) {
       this.logger.log(`Usuario ${userId} ya había votado el comentario ${id}`);
       return comentario;
     }
-    comentario.downvotes = comentario.downvotes.filter((u: string) => u !== userId);
+    comentario.downvotes = comentario.downvotes.filter(
+      (u: string) => u !== userId,
+    );
     comentario.upvotes.push(userId);
     await comentario.save();
     this.logger.log(`Voto registrado: comentario ${id}, usuario ${userId}`);

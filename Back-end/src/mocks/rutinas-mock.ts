@@ -1,4 +1,4 @@
-import { Rutina } from "../modules/rutinas/entities/rutina.entity";
+import { Rutina } from '../modules/rutinas/entities/rutina.entity';
 
 export const rutinasMock: any[] = [
   {

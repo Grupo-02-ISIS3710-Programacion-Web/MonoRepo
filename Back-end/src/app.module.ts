@@ -16,7 +16,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { UploadModule } from './modules/upload/upload.module';
-import {SuscripcionesModule} from "./modules/suscripciones/suscripciones.module";
+import { SuscripcionesModule } from './modules/suscripciones/suscripciones.module';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import {SuscripcionesModule} from "./modules/suscripciones/suscripciones.module"
       isGlobal: true,
       envFilePath: '.env',
     }),
-   
+
     MongooseModule.forFeature([
       { name: 'Producto', schema: ProductoSchema },
       { name: 'Rutina', schema: RutinaSchema },
@@ -45,7 +45,7 @@ import {SuscripcionesModule} from "./modules/suscripciones/suscripciones.module"
     ChatsModule,
     CloudinaryModule,
     UploadModule,
-    SuscripcionesModule
+    SuscripcionesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

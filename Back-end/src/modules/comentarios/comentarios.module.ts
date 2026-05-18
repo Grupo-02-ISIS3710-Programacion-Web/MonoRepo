@@ -6,7 +6,12 @@ import { ComentariosService } from './comentarios.service';
 import { ProductoSchema } from '../productos/entities/producto.entity';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: 'Comentario', schema: ComentarioSchema },{ name: 'Producto', schema: ProductoSchema },])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: 'Comentario', schema: ComentarioSchema },
+      { name: 'Producto', schema: ProductoSchema },
+    ]),
+  ],
   controllers: [ComentariosController],
   providers: [ComentariosService],
 })

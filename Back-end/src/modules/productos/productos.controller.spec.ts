@@ -69,7 +69,7 @@ describe('ProductosController', () => {
     it('llama a productosService.create con el DTO y las imágenes', async () => {
       service.create.mockResolvedValue(mockProduct);
 
-      const result = await controller.create(mockCreateDto as any, fakeImages);
+      const result = await controller.create(mockCreateDto, fakeImages);
 
       expect(service.create).toHaveBeenCalledWith(mockCreateDto, fakeImages);
       expect(result).toEqual(mockProduct);
@@ -172,7 +172,7 @@ describe('ProductosController', () => {
       const updated = { ...mockProduct, name: 'Nuevo Nombre' };
       service.update.mockResolvedValue(updated);
 
-      const result = await controller.update(PRODUCT_ID, updateDto as any);
+      const result = await controller.update(PRODUCT_ID, updateDto);
 
       expect(service.update).toHaveBeenCalledWith(PRODUCT_ID, updateDto);
       expect(result).toEqual(updated);

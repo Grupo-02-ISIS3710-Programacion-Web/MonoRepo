@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { PassportStrategy } from '@nestjs/passport';
 
@@ -22,23 +19,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       secretOrKey: process.env.JWT_SECRET,
 
-      jwtFromRequest:
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }
 
   async validate(payload: any): Promise<User> {
     const { email } = payload;
-    
 
     const user = await this.userModel.findOne({
       email,
     });
 
     if (!user) {
-      throw new UnauthorizedException(
-        'Token no válido',
-      );
+      throw new UnauthorizedException('Token no válido');
     }
 
     return user;

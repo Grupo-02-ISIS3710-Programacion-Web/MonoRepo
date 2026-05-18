@@ -251,7 +251,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
           </Card>
 
           <div className="space-y-6">
-            <Card className="border-border bg-card">
+            <Card className="border-[#e8ebf1] bg-card">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-foreground">{t("stepsTitle")}</CardTitle>
               </CardHeader>
@@ -273,10 +273,10 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                             <img
                               src={productImage}
                               alt={product?.name ?? t("unknownProduct")}
-                              className="h-32 w-full rounded-lg object-cover sm:h-48 md:h-32 md:w-32 md:min-w-32"
+                              className="h-48 w-full rounded-lg object-cover md:h-32 md:w-32 md:min-w-32"
                             />
                           ) : (
-                            <div className="flex h-32 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground sm:h-48 md:h-32 md:w-32 md:min-w-32">
+                            <div className="flex h-48 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground md:h-32 md:w-32 md:min-w-32">
                               {t("noImage")}
                             </div>
                           )}

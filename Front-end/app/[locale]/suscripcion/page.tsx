@@ -26,6 +26,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { useAuthSession } from "@/lib/hooks/use-auth-session"
+import { useAuthSessionStore, refreshAuthSession } from "@/lib/auth-session-store"
 
 type PageState = "loading" | "form" | "already-premium" | "success"
 
@@ -64,6 +65,10 @@ export default function SuscripcionPage() {
     if (!isReady) return
     if (!user) {
       setPageState("form")
+      return
+    }
+    if (user.isPremium) {
+      setPageState("already-premium")
       return
     }
     getPremiumStatus(user.id)
@@ -106,8 +111,12 @@ export default function SuscripcionPage() {
   }, [])
 
   const handleSuccess = useCallback(() => {
+    if (user) {
+      useAuthSessionStore.getState().setSession({ ...user, isPremium: true })
+    }
+    refreshAuthSession()
     setPageState("success")
-  }, [])
+  }, [user])
 
   const handleError = useCallback((msg: string) => {
     setError(userFriendlyError(msg))

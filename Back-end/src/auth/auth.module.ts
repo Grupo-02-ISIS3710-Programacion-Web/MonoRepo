@@ -36,14 +36,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 
   controllers: [AuthController],
 
-  providers: [
-    AuthService,
-    JwtStrategy,
-  ],
+  providers: [AuthService, JwtStrategy],
 
-  exports: [
-    PassportModule,
-    JwtModule,
-  ],
+  exports: [PassportModule, JwtModule],
 })
 export class AuthModule {}

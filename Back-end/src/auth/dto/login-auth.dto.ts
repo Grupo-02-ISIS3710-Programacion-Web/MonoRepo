@@ -1,13 +1,10 @@
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class LoginUserDto {
+  @IsEmail()
+  email: string;
 
-    @IsEmail()
-    email: string;
-
-    @IsString()
-    @MinLength(8)
-    contrasenia: string;
-
-
+  @IsString()
+  @MinLength(8)
+  contrasenia: string;
 }

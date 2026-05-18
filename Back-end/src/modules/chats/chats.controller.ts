@@ -213,7 +213,9 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: error.message || 'Error al actualizar las áreas de enfoque' },
+        {
+          message: error.message || 'Error al actualizar las áreas de enfoque',
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

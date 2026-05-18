@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SkinType } from '../../../enums/enums';
+import { Types } from 'mongoose';
 
 @Schema({
   timestamps: true,
 })
 export class User {
-
   @Prop({
     required: true,
     minlength: 3,
@@ -49,8 +49,6 @@ export class User {
   })
   probadoSkinCare: boolean;
 
- 
-
   @Prop({
     trim: true,
     default: '',
@@ -69,11 +67,8 @@ export class User {
   })
   avatarUrl: string;
 
-  @Prop({
-    type: [String],
-    default: [],
-  })
-  createdRoutineIds: string[];
+  @Prop({ type: [Types.ObjectId], ref: 'Rutina', default: [] })
+  createdRoutineIds: Types.ObjectId[];
 
   @Prop({
     default: 0,

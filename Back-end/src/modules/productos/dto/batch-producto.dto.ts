@@ -8,7 +8,8 @@ export class BatchProductoDto {
   productIds: string[];
 
   @ApiProperty({
-    description: 'Incluir el vector de embedding en la respuesta (por defecto: false)',
+    description:
+      'Incluir el vector de embedding en la respuesta (por defecto: false)',
     required: false,
     default: false,
   })

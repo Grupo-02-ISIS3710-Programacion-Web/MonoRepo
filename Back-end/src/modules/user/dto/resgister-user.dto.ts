@@ -1,13 +1,16 @@
 import {
-  IsString,IsNotEmpty,IsEmail,
-  IsBoolean,MinLength,IsEnum,
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsBoolean,
+  MinLength,
+  IsEnum,
   IsDateString,
 } from 'class-validator';
 
 import { SkinType } from '../../../enums/enums';
 
 export class RegisterDto {
-
   @IsString()
   @IsNotEmpty()
   @MinLength(3)

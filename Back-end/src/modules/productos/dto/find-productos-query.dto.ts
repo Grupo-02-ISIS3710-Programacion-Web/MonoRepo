@@ -3,7 +3,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 export class FindProductosQueryDto {
-  @ApiPropertyOptional({ description: 'Texto libre (nombre, marca, ingrediente)' })
+  @ApiPropertyOptional({
+    description: 'Texto libre (nombre, marca, ingrediente)',
+  })
   @IsOptional()
   @IsString()
   search?: string;
@@ -13,17 +15,23 @@ export class FindProductosQueryDto {
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ description: 'Marcas separadas por coma, ej: CeraVe,Vichy' })
+  @ApiPropertyOptional({
+    description: 'Marcas separadas por coma, ej: CeraVe,Vichy',
+  })
   @IsOptional()
   @IsString()
   brands?: string;
 
-  @ApiPropertyOptional({ description: 'Tipos de piel separados por coma, ej: SECA,SENSIBLE' })
+  @ApiPropertyOptional({
+    description: 'Tipos de piel separados por coma, ej: SECA,SENSIBLE',
+  })
   @IsOptional()
   @IsString()
   skinTypes?: string;
 
-  @ApiPropertyOptional({ description: 'Ingredientes a excluir, separados por coma' })
+  @ApiPropertyOptional({
+    description: 'Ingredientes a excluir, separados por coma',
+  })
   @IsOptional()
   @IsString()
   excludeIngredients?: string;

@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Readable } from 'stream';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const { v2: cloudinary } = require('cloudinary');
 
 @Injectable()

@@ -12,7 +12,6 @@ import {
 import { SkinType } from '../../enums/enums';
 
 export class RegisterDto {
-  
   @IsString()
   @MinLength(3)
   nombre: string;
@@ -30,8 +29,6 @@ export class RegisterDto {
   @IsString()
   @MinLength(8)
   confirmarContrasenia: string;
-
-  
 
   @IsEnum(SkinType)
   tipoPiel: SkinType;
