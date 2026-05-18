@@ -19,8 +19,7 @@
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
         "@hookform/resolvers": "^5.2.2",
-        "@mercadopago/sdk-js": "^0.0.3",
-        "@mercadopago/sdk-react": "^1.0.7",
+
         "@mui/material": "^7.3.8",
         "@mui/material-nextjs": "^9.0.1",
         "@testing-library/user-event": "^14.6.1",

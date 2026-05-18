@@ -144,10 +144,11 @@ export class ProductosService implements OnModuleInit {
     return normalized;
   }
 
-  async findByIds(ids: string[]): Promise<any[]> {
+  async findByIds(ids: string[], includeEmbeddings = false): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
+    const projection = includeEmbeddings ? {} : { embedding: 0 };
     const products = await this.productoModel
-      .find({ _id: { $in: ids }, deleted: false })
+      .find({ _id: { $in: ids }, deleted: false }, projection)
       .lean()
       .exec();
     return this.normalizeProducts(products);

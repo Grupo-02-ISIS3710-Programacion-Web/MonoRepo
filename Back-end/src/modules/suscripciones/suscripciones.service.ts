@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import {
   BadRequestException,
   Injectable,
@@ -13,7 +14,7 @@ import { CreateSuscripcionDto } from './dto/create-suscripcion.dto';
 
 @Injectable()
 export class SuscripcionesService {
-  private readonly mpApiUrl = 'https://api.mercadopago.com';
+  private readonly wompiApiUrl: string;
 
   constructor(
     @InjectModel(Suscripcion.name)
@@ -21,17 +22,28 @@ export class SuscripcionesService {
     @InjectModel('User')
     private readonly userModel: Model<any>,
     private readonly httpService: HttpService,
-  ) {}
-
-  private getHeaders() {
+  ) {
     const useLive = process.env.IS_PRODUCTION === 'true';
-    const token = useLive
-      ? process.env.MERCADOPAGO_ACCESS_TOKEN_LIVE || ''
-      : process.env.MERCADOPAGO_ACCESS_TOKEN_TEST || '';
+    this.wompiApiUrl = useLive
+      ? 'https://production.wompi.co/v1'
+      : 'https://sandbox.wompi.co/v1';
+  }
+
+  private getPrivateHeaders() {
     return {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${process.env.WOMPI_PRIVATE_KEY || ''}`,
     };
+  }
+
+  async getMerchantInfo() {
+    const publicKey = process.env.WOMPI_PUBLIC_KEY || '';
+    const response = await firstValueFrom(
+      this.httpService.get<any>(`${this.wompiApiUrl}/merchants/${publicKey}`, {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    return response.data;
   }
 
   async create(createDto: CreateSuscripcionDto) {
@@ -45,69 +57,133 @@ export class SuscripcionesService {
     }
 
     const amount = createDto.transactionAmount || 20000;
+    const amountInCents = amount * 100;
     const currency = createDto.currencyId || 'COP';
 
-    const body = {
-      reason: 'Skin4All Premium - Suscripción Mensual',
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        start_date: new Date(Date.now() + 3600000).toISOString(),
-        transaction_amount: amount,
-        currency_id: currency,
-      },
-      payer_email: createDto.payerEmail,
-      card_token_id: createDto.cardTokenId,
-      status: 'authorized',
-      back_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/suscripcion`,
-      notification_url: `${process.env.API_URL || 'http://localhost:5001'}/suscripciones/webhook`,
-    };
-
+    let paymentSourceData: any;
     try {
       const response = await firstValueFrom(
-        this.httpService.post<any>(`${this.mpApiUrl}/preapproval`, body, {
-          headers: this.getHeaders(),
-        }),
+        this.httpService.post<any>(
+          `${this.wompiApiUrl}/payment_sources`,
+          {
+            type: 'CARD',
+            token: createDto.token,
+            customer_email: createDto.payerEmail,
+            acceptance_token: createDto.acceptanceToken,
+            accept_personal_auth: createDto.acceptPersonalAuth,
+          },
+          { headers: this.getPrivateHeaders() },
+        ),
       );
+      paymentSourceData = response.data.data;
+    } catch (error) {
+      const wompiError = error.response?.data;
+      console.error('Wompi payment source error:', JSON.stringify(wompiError));
+      if (wompiError) {
+        const msg = wompiError.error?.reason || wompiError.message || JSON.stringify(wompiError);
+        throw new BadRequestException(`Wompi: ${msg}`);
+      }
+      throw new InternalServerErrorException('Error al crear la fuente de pago');
+    }
 
-      const preapproval = response.data;
+    const paymentSourceId = paymentSourceData.id;
+    const reference = `SUB-${Date.now()}-${createDto.userId.slice(-8)}`;
 
-      const suscripcion = new this.suscripcionModel({
-        userId: createDto.userId,
-        preapprovalId: preapproval.id,
-        status: preapproval.status,
-        payerEmail: createDto.payerEmail,
-        transactionAmount: amount,
-        currencyId: currency,
-        frequency: 1,
-        frequencyType: 'months',
-        nextPaymentDate: preapproval.next_payment_date
-          ? new Date(preapproval.next_payment_date)
-          : undefined,
-        externalReference: preapproval.external_reference,
-        active: preapproval.status === 'authorized',
-      });
+    const integrityStr = `${reference}${amountInCents}COP${process.env.WOMPI_INTEGRITY_SECRET || ''}`;
+    const signature = crypto.createHash('sha256').update(integrityStr).digest('hex');
 
-      await suscripcion.save();
-
-      await this.userModel.findByIdAndUpdate(createDto.userId, {
-        isPremium: preapproval.status === 'authorized',
-        preapprovalId: preapproval.id,
-        subscriptionStatus: preapproval.status,
-      });
-
-      return {
-        preapprovalId: preapproval.id,
-        status: preapproval.status,
-      };
+    let transactionData: any;
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<any>(
+          `${this.wompiApiUrl}/transactions`,
+          {
+            amount_in_cents: amountInCents,
+            currency,
+            customer_email: createDto.payerEmail,
+            payment_method: { installments: 1 },
+            reference,
+            signature,
+            payment_source_id: paymentSourceId,
+          },
+          { headers: this.getPrivateHeaders() },
+        ),
+      );
+      transactionData = response.data.data;
     } catch (error) {
       if (error.response?.data) {
         throw new BadRequestException(
-          error.response.data.message || 'Error al crear la suscripción en Mercado Pago',
+          error.response.data.message || 'Error al crear la transacción en Wompi',
         );
       }
-      throw new InternalServerErrorException('Error al crear la suscripción');
+      throw new InternalServerErrorException('Error al crear la transacción');
     }
+
+    let finalStatus = transactionData.status;
+    if (finalStatus === 'PENDING') {
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 500));
+        try {
+          const statusRes = await firstValueFrom(
+            this.httpService.get<any>(
+              `${this.wompiApiUrl}/transactions/${transactionData.id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.WOMPI_PUBLIC_KEY || ''}`,
+                },
+              },
+            ),
+          );
+          finalStatus = statusRes.data.data.status;
+          if (['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(finalStatus)) break;
+        } catch {
+          break;
+        }
+      }
+    }
+
+    if (finalStatus === 'DECLINED') {
+      await firstValueFrom(
+        this.httpService.put<any>(
+          `${this.wompiApiUrl}/payment_sources/${paymentSourceId}/void`,
+          {},
+          { headers: this.getPrivateHeaders() },
+        ),
+      ).catch(() => {});
+      throw new BadRequestException(
+        'La transacción fue declinada. Verifica los datos de la tarjeta.',
+      );
+    }
+
+    const isApproved = finalStatus === 'APPROVED';
+
+    const suscripcion = new this.suscripcionModel({
+      userId: createDto.userId,
+      paymentSourceId,
+      wompiTransactionId: transactionData.id,
+      status: finalStatus,
+      payerEmail: createDto.payerEmail,
+      transactionAmount: amount,
+      currencyId: currency,
+      reference,
+      active: isApproved,
+    });
+
+    await suscripcion.save();
+
+    if (isApproved) {
+      await this.userModel.findByIdAndUpdate(createDto.userId, {
+        isPremium: true,
+        paymentSourceId,
+        subscriptionStatus: finalStatus,
+      });
+    }
+
+    return {
+      transactionId: transactionData.id,
+      status: finalStatus,
+      paymentSourceId,
+    };
   }
 
   async getStatus(userId: string) {
@@ -120,26 +196,26 @@ export class SuscripcionesService {
       return { isPremium: user?.isPremium || false };
     }
 
-    return { isPremium: suscripcion.status === 'authorized' };
+    return { isPremium: suscripcion.active };
   }
 
-  async cancel(preapprovalId: string) {
+  async cancel(paymentSourceId: number) {
     try {
-      const response = await firstValueFrom(
+      await firstValueFrom(
         this.httpService.put<any>(
-          `${this.mpApiUrl}/preapproval/${preapprovalId}`,
-          { status: 'cancelled' },
-          { headers: this.getHeaders() },
+          `${this.wompiApiUrl}/payment_sources/${paymentSourceId}/void`,
+          {},
+          { headers: this.getPrivateHeaders() },
         ),
       );
 
       await this.suscripcionModel.findOneAndUpdate(
-        { preapprovalId },
-        { status: 'cancelled', active: false },
+        { paymentSourceId },
+        { status: 'VOIDED', active: false },
       );
 
       await this.userModel.findOneAndUpdate(
-        { preapprovalId },
+        { paymentSourceId },
         { isPremium: false, subscriptionStatus: 'cancelled' },
       );
 
@@ -154,87 +230,64 @@ export class SuscripcionesService {
     }
   }
 
-  async handleWebhook(body: any, query: any) {
-    const topic = query.topic || query.type;
-    const id = query['data.id'] || body?.data?.id;
+  async handleWebhook(body: any) {
+    if (body.event !== 'transaction.updated') {
+      return { received: true };
+    }
 
-    if (!id) return { received: true };
+    const eventSignature = body.signature;
+    const timestamp = body.timestamp;
+    const eventSecret = process.env.WOMPI_EVENT_SECRET || '';
+
+    let concatStr = '';
+    for (const prop of eventSignature.properties) {
+      const parts = prop.split('.');
+      let value: any = body.data;
+      for (const part of parts) {
+        if (value && typeof value === 'object') {
+          value = value[part];
+        } else {
+          value = undefined;
+          break;
+        }
+      }
+      concatStr += value ?? '';
+    }
+    concatStr += timestamp + eventSecret;
+
+    const calculatedChecksum = crypto
+      .createHash('sha256')
+      .update(concatStr)
+      .digest('hex')
+      .toUpperCase();
+
+    if (calculatedChecksum !== eventSignature.checksum) {
+      return { received: true };
+    }
+
+    const transaction = body.data?.transaction;
+    if (!transaction) return { received: true };
 
     try {
-      if (topic === 'preapproval' || topic === 'subscription_preapproval') {
-        const response = await firstValueFrom(
-          this.httpService.get<any>(`${this.mpApiUrl}/preapproval/${id}`, {
-            headers: this.getHeaders(),
-          }),
-        );
+      const isActive = transaction.status === 'APPROVED';
 
-        const preapproval = response.data;
+      await this.suscripcionModel.findOneAndUpdate(
+        { wompiTransactionId: transaction.id },
+        { status: transaction.status, active: isActive },
+      );
 
-        const isActive = preapproval.status === 'authorized';
+      const suscripcion = await this.suscripcionModel.findOne({
+        wompiTransactionId: transaction.id,
+      });
 
-        await this.suscripcionModel.findOneAndUpdate(
-          { preapprovalId: id },
-          {
-            status: preapproval.status,
-            active: isActive,
-            nextPaymentDate: preapproval.next_payment_date
-              ? new Date(preapproval.next_payment_date)
-              : undefined,
-          },
-        );
-
-        if (preapproval.payer_email) {
-          await this.userModel.findOneAndUpdate(
-            { preapprovalId: id },
-            {
-              isPremium: isActive,
-              subscriptionStatus: preapproval.status,
-            },
-          );
-        }
-      }
-
-      if (topic === 'subscription_authorized_payment' || topic === 'authorized_payment') {
-        const response = await firstValueFrom(
-          this.httpService.get<any>(
-            `${this.mpApiUrl}/authorized_payments/${id}`,
-            { headers: this.getHeaders() },
-          ),
-        );
-
-        const payment = response.data;
-        if (payment.status === 'rejected' || payment.status === 'cancelled') {
-          const suscripcion = await this.suscripcionModel.findOne({
-            preapprovalId: payment.preapproval_id,
-          });
-
-          if (suscripcion) {
-            const count = await this.suscripcionModel.countDocuments({
-              preapprovalId: payment.preapproval_id,
-              status: 'authorized',
-            });
-
-            if (count > 0) {
-              const recentPayments = await firstValueFrom(
-                this.httpService.get<any>(
-                  `${this.mpApiUrl}/preapproval/${payment.preapproval_id}/payments`,
-                  { headers: this.getHeaders() },
-                ),
-              );
-
-              const rejectedCount = recentPayments.data?.results?.filter(
-                (p: any) => p.status === 'rejected' || p.status === 'cancelled',
-              ).length || 0;
-
-              if (rejectedCount >= 3) {
-                await this.cancel(payment.preapproval_id);
-              }
-            }
-          }
-        }
+      if (suscripcion) {
+        await this.userModel.findByIdAndUpdate(suscripcion.userId, {
+          isPremium: isActive,
+          subscriptionStatus: transaction.status,
+        });
       }
     } catch (error) {
-      console.error('Webhook processing error:', error?.response?.data || error.message);
+      console.error('Webhook processing error:', error.message);
     }
 
     return { received: true };

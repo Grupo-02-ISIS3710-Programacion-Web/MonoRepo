@@ -136,7 +136,7 @@ export default function SuscripcionPage() {
 
   return (
     <main className="min-h-[70vh] bg-background px-4 py-10 md:px-8">
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="mx-auto max-w-5xl space-y-8">
         <Link
           href="/"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -152,7 +152,7 @@ export default function SuscripcionPage() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

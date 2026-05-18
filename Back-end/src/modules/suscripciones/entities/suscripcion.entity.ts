@@ -16,11 +16,14 @@ export class Suscripcion {
     required: true,
     unique: true,
   })
-  preapprovalId: string;
+  paymentSourceId: number;
+
+  @Prop()
+  wompiTransactionId: string;
 
   @Prop({
     required: true,
-    default: 'authorized',
+    default: 'PENDING',
   })
   status: string;
 
@@ -39,21 +42,8 @@ export class Suscripcion {
   })
   currencyId: string;
 
-  @Prop({
-    default: 1,
-  })
-  frequency: number;
-
-  @Prop({
-    default: 'months',
-  })
-  frequencyType: string;
-
   @Prop()
-  nextPaymentDate: Date;
-
-  @Prop()
-  externalReference: string;
+  reference: string;
 
   @Prop({
     default: true,

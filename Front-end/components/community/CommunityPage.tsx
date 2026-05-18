@@ -1,7 +1,6 @@
 "use client";
 
-import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from "@/lib/api-client";
-import { getUserById } from "@/lib/api";
+import { fetchRoutines, fetchUsers, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from "@/lib/api-client";
 import { MessageSquare, Plus, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -64,6 +63,7 @@ export default function CommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [usersMap, setUsersMap] = useState<Record<string, any>>({});
 
   const currentUserId = user?.id ?? "";
   const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn);
@@ -75,9 +75,24 @@ export default function CommunityPage() {
         setIsLoading(true);
         setCurrentPage(1);
         const data = await fetchRoutines(1, locale, activeTab);
-        setRoutines(data.routines || []);
+        const fetchedRoutines = data.routines || [];
+        setRoutines(fetchedRoutines);
         setTotalPages(data.totalPages || 1);
         setError(null);
+
+        const userIds = [...new Set(fetchedRoutines.map((r: any) => r.userId).filter(Boolean))];
+        if (userIds.length > 0) {
+          fetchUsers()
+            .then((allUsers) => {
+              const map: Record<string, any> = {};
+              for (const u of allUsers) {
+                const uid = u._id || u.id;
+                if (uid) map[uid] = u;
+              }
+              setUsersMap(map);
+            })
+            .catch(() => {});
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load routines");
         setRoutines([]);
@@ -170,7 +185,7 @@ export default function CommunityPage() {
     routines.map((routine) => {
       const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null;
       const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0;
-      const user = getUserById(routine.userId);
+      const user = usersMap[routine.userId];
       return {
         id: routine.id,
         title: routine.name,
@@ -189,7 +204,7 @@ export default function CommunityPage() {
         publishedAtTs,
       };
     }),
-    [routines, currentUserId, publishedDateFormatter]
+    [routines, currentUserId, publishedDateFormatter, usersMap]
   );
 
   const postsBySkin = useMemo(() => activeSkinFilter === "all" ? posts : posts.filter(p => p.skinType === activeSkinFilter), [activeSkinFilter, posts]);

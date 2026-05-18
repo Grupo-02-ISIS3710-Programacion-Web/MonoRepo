@@ -6,8 +6,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
-import { getProducts } from "@/lib/api";
-import { fetchRoutineById } from "@/lib/api-client";
+import { fetchProducts, fetchRoutineById } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -89,34 +88,34 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
     });
 
     useEffect(() => {
-        const products = getProducts();
-        setAllProducts(products);
+        const init = async () => {
+            const products = await fetchProducts({});
+            setAllProducts(products);
 
-        if (mode === "create") {
-            const aiRoutineDraft = readAiRoutineDraft();
-            if (aiRoutineDraft) {
-                reset(aiRoutineDraft);
-                setSelectedProductIds(new Set(aiRoutineDraft.steps.map((step) => step.product.id)));
-                previousProductsSignatureRef.current = aiRoutineDraft.steps.map((step) => step.product.id).join(",");
-                clearAiRoutineDraft();
+            if (mode === "create") {
+                const aiRoutineDraft = readAiRoutineDraft();
+                if (aiRoutineDraft) {
+                    reset(aiRoutineDraft);
+                    setSelectedProductIds(new Set(aiRoutineDraft.steps.map((step) => step.product.id)));
+                    previousProductsSignatureRef.current = aiRoutineDraft.steps.map((step) => step.product.id).join(",");
+                    clearAiRoutineDraft();
+                    return;
+                }
+
+                const preselectedId = searchParams.get("product");
+                if (preselectedId && products.some((product) => product.id === preselectedId)) {
+                    setSelectedProductIds(new Set([preselectedId]));
+                }
                 return;
             }
 
-            const preselectedId = searchParams.get("product");
-            if (preselectedId && products.some((product) => product.id === preselectedId)) {
-                setSelectedProductIds(new Set([preselectedId]));
+            const routineId = searchParams.get("id");
+            if (!routineId) {
+                setIsRoutineMissing(true);
+                setIsInitialDataLoaded(true);
+                return;
             }
-            return;
-        }
 
-        const routineId = searchParams.get("id");
-        if (!routineId) {
-            setIsRoutineMissing(true);
-            setIsInitialDataLoaded(true);
-            return;
-        }
-
-        const loadRoutine = async () => {
             try {
                 const routine = await fetchRoutineById(routineId);
 
@@ -163,7 +162,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
             }
         };
 
-        loadRoutine();
+        init();
     }, [mode, reset, searchParams]);
 
     useEffect(() => {

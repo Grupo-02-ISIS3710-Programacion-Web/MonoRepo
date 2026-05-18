@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getProducts } from "@/lib/api";
+import { fetchProducts } from "@/lib/api-client";
 import { Category, Product } from "@/types/product";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
@@ -31,8 +31,7 @@ export default function SearchBar({
 }: SearchBarProps) {
     const [products, setProducts] = useState<Product[]>([]);
     useEffect(() => {
-        const products = getProducts();
-        setProducts(products);
+        fetchProducts({}).then(setProducts).catch(() => setProducts([]));
     }, []);
     const t = useTranslations("SearchBar");
     const availableCategories = useMemo(() => {

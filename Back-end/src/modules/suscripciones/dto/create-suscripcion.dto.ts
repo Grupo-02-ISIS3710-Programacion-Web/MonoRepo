@@ -3,7 +3,15 @@ import { IsString, IsEmail, IsNotEmpty, IsOptional, IsNumber } from 'class-valid
 export class CreateSuscripcionDto {
   @IsString()
   @IsNotEmpty()
-  cardTokenId: string;
+  token: string;
+
+  @IsString()
+  @IsNotEmpty()
+  acceptanceToken: string;
+
+  @IsString()
+  @IsNotEmpty()
+  acceptPersonalAuth: string;
 
   @IsEmail()
   @IsNotEmpty()

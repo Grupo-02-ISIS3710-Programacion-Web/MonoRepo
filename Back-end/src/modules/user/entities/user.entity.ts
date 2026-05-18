@@ -89,7 +89,7 @@ export class User {
   @Prop({
     default: null,
   })
-  preapprovalId: string;
+  paymentSourceId: number;
 
   @Prop({
     default: null,
@@ -97,4 +97,15 @@ export class User {
   subscriptionStatus: string;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+const UserSchemaRaw = SchemaFactory.createForClass(User);
+
+UserSchemaRaw.set('toJSON', {
+  virtuals: true,
+  transform: (_doc: any, ret: any) => {
+    ret.name = ret.nombre;
+    delete ret.contrasenia;
+    return ret;
+  },
+});
+
+export const UserSchema = UserSchemaRaw;

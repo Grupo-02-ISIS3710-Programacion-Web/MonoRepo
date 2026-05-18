@@ -4,6 +4,7 @@ import { SeedController } from './seed.controller';
 import { Mongoose } from 'mongoose';
 import { ProductoSchema } from '../productos/entities/producto.entity';
 import { RutinaSchema } from '../rutinas/entities/rutina.entity';
+import { User, UserSchema } from '../user/entities/user.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
@@ -11,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forFeature([
       { name: 'Producto', schema: ProductoSchema },
       { name: 'Rutina', schema: RutinaSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [SeedController],

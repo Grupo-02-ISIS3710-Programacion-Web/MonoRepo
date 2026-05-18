@@ -4,9 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CommentSection from "@/components/comments/CommentsSection";
-import { getProductById, getUserById } from "@/lib/api";
-import { fetchRoutineById, fetchUserById, incrementRoutineView } from "@/lib/api-client";
-import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
+import { fetchRoutineById, fetchUserById, fetchProductsBatch, incrementRoutineView } from "@/lib/api-client";
 import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, MessageSquare, Moon, Sun, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -28,6 +26,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
 
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [productsMap, setProductsMap] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,14 +50,23 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
         setRoutine(routineData);
 
         if (routineData?.userId) {
-          try {
-            const userData = await fetchUserById(routineData.userId);
-            setUser(userData);
-          } catch (err) {
-            console.error("Failed to fetch user data from API:", err);
-            const mockUser = getUserById(routineData.userId);
-            if (mockUser) {
-              setUser(mockUser);
+          fetchUserById(routineData.userId).then(setUser).catch(() => {});
+        }
+
+        if (routineData?.steps?.length) {
+          const productIds = routineData.steps.map((s: any) => s.productId).filter(Boolean);
+          if (productIds.length > 0) {
+            try {
+              const products = await fetchProductsBatch(productIds);
+              const map: Record<string, any> = {};
+              for (const p of products) {
+                if (p.id) map[p.id] = p;
+              }
+              if (Object.keys(map).length > 0) {
+                setProductsMap(map);
+              }
+            } catch {
+              // Fall back to mock data when API unavailable
             }
           }
         }
@@ -252,10 +260,10 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                   .slice()
                   .sort((a, b) => a.order - b.order)
                   .map((step, index) => {
-                    const product = getProductById(step.productId);
+                    const product = productsMap[step.productId];
                     const productImage = product?.image_url?.[0];
-                    const productHref = product
-                      ? `/descubrir/${toLowerCaseAndReplaceSpacesWithHyphens(product.name)}`
+                    const productHref = product?.id
+                      ? `/descubrir/${product.id}`
                       : null;
 
                     const stepContent = (

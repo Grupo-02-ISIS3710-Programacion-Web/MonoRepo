@@ -201,6 +201,6 @@ export class ProductosController {
   })
   async findBatch(@Body() body: BatchProductoDto) {
     this.logger.log(`Buscando lote de ${body.productIds.length} productos`);
-    return this.productosService.findByIds(body.productIds);
+    return this.productosService.findByIds(body.productIds, body.includeEmbeddings);
   }
 }

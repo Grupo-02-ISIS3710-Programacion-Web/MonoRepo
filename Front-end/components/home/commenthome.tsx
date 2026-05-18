@@ -3,11 +3,10 @@
 import { Check } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
-import { getRoutines } from "@/lib/routine"
-import { getUsers } from "@/lib/api"
 import { useLocaleDateFormatter } from "@/lib/hooks/use-locale-date-formatter"
-import { useMemo } from "react"
+import { useState, useEffect } from "react"
 import RoutineCard, { RoutineCardPost } from "@/components/community/RoutineCard"
+import { fetchRoutines, fetchUsers } from "@/lib/api-client"
 
 export default function CommentHome() {
 
@@ -22,37 +21,58 @@ export default function CommentHome() {
         year: "numeric",
     })
 
-    const routineCards = useMemo<RoutineCardPost[]>(() => {
-        const routines = getRoutines()
-        const users = getUsers()
+    const [routineCards, setRoutineCards] = useState<RoutineCardPost[]>([])
 
-        return routines
-            .map((routine) => {
-                const user = users.find((candidate) => candidate.id === routine.userId) ?? users[0]
-                const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null
-                const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0
+    useEffect(() => {
+        let ignore = false
 
-                return {
-                    id: routine.id,
-                    title: routine.name,
-                    excerpt: routine.description,
-                    userName: user?.name ?? "",
-                    avatarUrl: user?.avatarUrl ?? "",
-                    tag: tSkin(routine.skinType),
-                    upvotes: routine.upvotes?.length ?? 0,
-                    downvotes: routine.downvotes?.length ?? 0,
-                    hasUpvoted: false,
-                    hasDownvoted: false,
-                    comments: routine.comments?.length ?? 0,
-                    views: routine.views ?? 0,
-                    publishedAt: publishedAtDate ? publishedDateFormatter.format(publishedAtDate) : "-",
-                    publishedAtTs,
+        const loadData = async () => {
+            try {
+                const data = await fetchRoutines(1, locale, "newest")
+                const routines = data.routines || []
+                const users = await fetchUsers()
+                const usersMap: Record<string, any> = {}
+                for (const u of users) {
+                    const uid = u._id || u.id
+                    if (uid) usersMap[uid] = u
                 }
-            })
-            .sort((left, right) => right.publishedAtTs - left.publishedAtTs)
-            .slice(0, 3)
-            .map(({ publishedAtTs, ...card }) => card)
-    }, [publishedDateFormatter, tSkin])
+
+                const cards = routines
+                    .map((routine: any) => {
+                        const user = usersMap[routine.userId]
+                        const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null
+                        const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0
+
+                        return {
+                            id: routine.id,
+                            title: routine.name,
+                            excerpt: routine.description,
+                            userName: user?.name ?? "",
+                            avatarUrl: user?.avatarUrl ?? "",
+                            tag: tSkin(routine.skinType),
+                            upvotes: routine.upvotes?.length ?? 0,
+                            downvotes: routine.downvotes?.length ?? 0,
+                            hasUpvoted: false,
+                            hasDownvoted: false,
+                            comments: routine.comments?.length ?? 0,
+                            views: routine.views ?? 0,
+                            publishedAt: publishedAtDate ? publishedDateFormatter.format(publishedAtDate) : "-",
+                            publishedAtTs,
+                        }
+                    })
+                    .sort((left: any, right: any) => right.publishedAtTs - left.publishedAtTs)
+                    .slice(0, 3)
+                    .map(({ publishedAtTs, ...card }: any) => card)
+
+                if (!ignore) setRoutineCards(cards)
+            } catch {
+                if (ignore) return
+            }
+        }
+
+        loadData()
+        return () => { ignore = true }
+    }, [locale, publishedDateFormatter, tSkin])
 
     return (
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { getAuthStorageKey, getCurrentUser, loginUser, logoutUser } from "@/lib/auth-session";
+import { getAuthStorageKey } from "@/lib/auth-session";
 import { User } from "@/types/user";
 
 type AuthSessionState = Readonly<{

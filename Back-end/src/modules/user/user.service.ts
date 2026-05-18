@@ -1,7 +1,5 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { RegisterDto } from './dto/resgister-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
@@ -13,36 +11,32 @@ export class UserService {
     private readonly userModel: Model<User>,
   ) {}
 
-  async registerUser(registerDto: RegisterDto) {
+  async findAll() {
+    const users = await this.userModel.find().select('-contrasenia').exec();
+    return users;
+  }
 
-    const existingUser = await this.userModel.findOne({
-      email: registerDto.email,
-    });
-
-    if (existingUser) {
-      throw new ConflictException(
-        'El correo ya está registrado',
-      );
+  async findOne(id: string) {
+    const user = await this.userModel.findById(id).select('-contrasenia').exec();
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     }
-
-    const newUser = new this.userModel(registerDto);
-
-    return await newUser.save();
+    return user;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-contrasenia').exec();
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
+    return user;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    const user = await this.userModel.findByIdAndDelete(id).exec();
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
+    return { message: 'Usuario eliminado correctamente' };
   }
 }

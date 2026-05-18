@@ -119,11 +119,11 @@ export async function createProduct(product: any, images: File[]) {
 
 // Users API
 export async function fetchUsers() {
-  return apiFetch('/users');
+  return apiFetch<any[]>('/users');
 }
 
 export async function fetchUserById(id: string) {
-  return apiFetch(`/users/${id}`);
+  return apiFetch<any>(`/users/${id}`);
 }
 
 export async function loginUser(identifier: string, password: string) {
@@ -296,10 +296,10 @@ export async function chatWithAI(params: ChatWithAIParams): Promise<ChatWithAIRe
   });
 }
 
-export async function fetchProductsBatch(productIds: string[]): Promise<any[]> {
+export async function fetchProductsBatch(productIds: string[], includeEmbeddings = false): Promise<any[]> {
   const results = await apiFetch<any[]>('/productos/batch', {
     method: 'POST',
-    body: JSON.stringify({ productIds }),
+    body: JSON.stringify({ productIds, includeEmbeddings }),
   });
   return (results || []).map(normalizeProduct);
 }
@@ -402,10 +402,12 @@ export async function deleteProductComment(commentId: string) {
 
 // Subscription API
 export async function createSubscription(data: {
-  cardTokenId: string;
+  token: string;
+  acceptanceToken: string;
+  acceptPersonalAuth: string;
   payerEmail: string;
   userId: string;
-}): Promise<{ preapprovalId: string; status: string }> {
+}): Promise<{ transactionId: string; status: string; paymentSourceId: number }> {
   return apiFetch('/suscripciones', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -416,8 +418,15 @@ export async function getPremiumStatus(userId: string): Promise<{ isPremium: boo
   return apiFetch(`/suscripciones/status/${userId}`);
 }
 
-export async function cancelSubscription(preapprovalId: string): Promise<{ message: string }> {
-  return apiFetch(`/suscripciones/${preapprovalId}`, {
+export async function cancelSubscription(paymentSourceId: number): Promise<{ message: string }> {
+  return apiFetch(`/suscripciones/${paymentSourceId}`, {
     method: 'DELETE',
   });
+}
+
+export async function getMerchantInfo(): Promise<{
+  presigned_acceptance: { acceptance_token: string; permalink: string };
+  presigned_personal_data_auth: { acceptance_token: string; permalink: string };
+}> {
+  return apiFetch('/suscripciones/merchant-info');
 }

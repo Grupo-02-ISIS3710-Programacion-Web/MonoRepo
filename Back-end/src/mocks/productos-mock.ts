@@ -1,7 +1,6 @@
-import { Producto } from "../modules/productos/entities/producto.entity";
-
 export const productosMock: any[] = [
   {
+    _id: '000000000000000000000001',
     name: 'Toleriane Double Repair Face Moisturizer',
     brand: 'La Roche-Posay',
     skin_type: [1, 2, 5],
@@ -18,6 +17,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000002',
     name: 'SA Smoothing Cleanser',
     brand: 'CeraVe',
     description:
@@ -39,6 +39,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000003',
     name: 'Glycolic Acid 7% Toning Solution',
     brand: 'The Ordinary',
     skin_type: [1, 4, 3],
@@ -60,6 +61,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000004',
     name: 'Advanced Génifique Serum',
     brand: 'Lancôme',
     skin_type: [1, 2, 3, 4],
@@ -81,6 +83,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000005',
     name: 'Hydro Boost Water Gel',
     brand: 'Neutrogena',
     skin_type: [1, 4, 3],
@@ -102,6 +105,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000006',
     name: 'Cicaplast Baume B5',
     brand: 'La Roche-Posay',
     skin_type: [5, 7, 2],
@@ -118,6 +122,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000007',
     name: 'Green Tea Seed Serum',
     brand: 'Innisfree',
     skin_type: [1, 2, 4],
@@ -144,6 +149,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000008',
     name: 'Vitamin C Suspension 23% + HA Spheres 2%',
     brand: 'The Ordinary',
     skin_type: [1, 4, 8],
@@ -165,6 +171,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '000000000000000000000009',
     name: 'Retinol 0.3% in Squalane',
     brand: 'The Ordinary',
     skin_type: [1, 4, 3],
@@ -181,6 +188,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000a',
     name: 'Ultra Facial Cream',
     brand: "Kiehl's",
     skin_type: [1, 2, 4, 3, 5],
@@ -197,6 +205,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000b',
     name: 'Effaclar Gel Limpiador Purificante',
     brand: 'La Roche-Posay',
     skin_type: [3, 4, 6],
@@ -213,6 +222,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000c',
     name: 'Hydrating Facial Cleanser',
     brand: 'CeraVe',
     skin_type: [1, 2, 5],
@@ -229,6 +239,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000d',
     name: 'Niacinamide 10% + Zinc 1%',
     brand: 'The Ordinary',
     skin_type: [3, 4, 6],
@@ -250,6 +261,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000e',
     name: 'Advanced Snail 96 Mucin Power Essence',
     brand: 'COSRX',
     skin_type: [1, 2, 4],
@@ -271,6 +283,7 @@ export const productosMock: any[] = [
     deleted: false,
   },
   {
+    _id: '00000000000000000000000f',
     name: 'Mineral 89',
     brand: 'Vichy',
     skin_type: [1, 2, 4, 3, 5],

@@ -16,6 +16,11 @@ import { CreateSuscripcionDto } from './dto/create-suscripcion.dto';
 export class SuscripcionesController {
   constructor(private readonly suscripcionesService: SuscripcionesService) {}
 
+  @Get('merchant-info')
+  getMerchantInfo() {
+    return this.suscripcionesService.getMerchantInfo();
+  }
+
   @Post()
   create(@Body() createSuscripcionDto: CreateSuscripcionDto) {
     return this.suscripcionesService.create(createSuscripcionDto);
@@ -26,14 +31,14 @@ export class SuscripcionesController {
     return this.suscripcionesService.getStatus(userId);
   }
 
-  @Delete(':preapprovalId')
+  @Delete(':paymentSourceId')
   @HttpCode(HttpStatus.OK)
-  cancel(@Param('preapprovalId') preapprovalId: string) {
-    return this.suscripcionesService.cancel(preapprovalId);
+  cancel(@Param('paymentSourceId') paymentSourceId: number) {
+    return this.suscripcionesService.cancel(paymentSourceId);
   }
 
   @Post('webhook')
-  handleWebhook(@Body() body: any, @Req() req: any) {
-    return this.suscripcionesService.handleWebhook(body, req.query);
+  handleWebhook(@Body() body: any) {
+    return this.suscripcionesService.handleWebhook(body);
   }
 }
