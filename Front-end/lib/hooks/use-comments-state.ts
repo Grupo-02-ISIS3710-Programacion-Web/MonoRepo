@@ -2,7 +2,8 @@
 
 import { Comment } from "@/types/Comment";
 import { useEffect, useRef, useState } from "react";
-import { fetchProductComments, createProductComment, upvoteProductComment } from "@/lib/api-client";
+import { fetchProductComments, createProductComment, upvoteProductComment, fetchComments, createComment } from "@/lib/api-client";
+import { toast } from "sonner";
 
 type UseCommentsStateParams = Readonly<{
   targetId: string;
@@ -27,22 +28,41 @@ export function useCommentsState({
   const [localComments, setLocalComments] = useState<Comment[]>(initialComments);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Cargar comentarios del backend al montar
   useEffect(() => {
     if (targetType === "product") {
       fetchProductComments(targetId)
         .then((comments: unknown) => {
-            const list = comments as any[];
-            setLocalComments(list.map((c) => ({
-              id: c._id || c.id,
-              userId: c.userId, 
-              comment: c.comment,
-              upvotes: c.upvotes || [],
-              downvotes: c.downvotes || [],
-              createdAt: c.createdAt,
-            })));
-            })
-        .catch(() => setLocalComments([]));
+          const list = comments as any[];
+          setLocalComments(list.map((c) => ({
+            id: c._id || c.id,
+            userId: c.userId,
+            comment: c.comment,
+            upvotes: c.upvotes || [],
+            downvotes: c.downvotes || [],
+            createdAt: c.createdAt,
+          })));
+        })
+        .catch((err) => {
+          console.error("Error al cargar comentarios del producto:", err);
+          setLocalComments([]);
+        });
+    } else {
+      fetchComments(targetId)
+        .then((comments: unknown) => {
+          const list = comments as any[];
+          setLocalComments(list.map((c) => ({
+            id: c._id || c.id,
+            userId: c.userId,
+            comment: c.comment,
+            upvotes: c.upvotes || [],
+            downvotes: c.downvotes || [],
+            createdAt: c.createdAt,
+          })));
+        })
+        .catch((err) => {
+          console.error("Error al cargar comentarios de la rutina:", err);
+          setLocalComments(initialComments);
+        });
     }
   }, [targetId, targetType]);
 
@@ -65,16 +85,14 @@ export function useCommentsState({
     if (!newComment.trim()) return;
 
     if (targetType === "product") {
-
-      console.log('userId que se manda:', currentUserId);
       try {
         const created: any = await createProductComment(targetId, currentUserId, newComment.trim());
         setLocalComments((prev) => [{
           id: created._id || created.id,
           userId: {
             _id: currentUserId,
-            nombre: currentUserName,   
-            avatarUrl: currentUserAvatar, 
+            nombre: currentUserName,
+            avatarUrl: currentUserAvatar,
           },
           comment: created.comment,
           upvotes: created.upvotes || [],
@@ -83,21 +101,34 @@ export function useCommentsState({
         }, ...prev]);
         setNewComment("");
         onCommentPosted?.();
-      } catch {
-        // manejar error si quieres
+      } catch (err) {
+        console.error("Error al publicar comentario del producto:", err);
+        toast.error("No se pudo publicar el comentario. Intenta de nuevo.");
       }
     } else {
-      // rutinas — comportamiento original
-      const createdComment: Comment = {
-        id: `${targetType}-${targetId}-local-${Date.now()}`,
-        userId: currentUserId,
-        comment: newComment.trim(),
-        upvotes: [],
-        downvotes: [],
-      };
-      setLocalComments((prev) => [createdComment, ...prev]);
-      setNewComment("");
-      onCommentPosted?.();
+      try {
+        const created: any = await createComment(targetId, {
+          userId: currentUserId,
+          comment: newComment.trim(),
+        });
+        setLocalComments((prev) => [{
+          id: created._id || created.id,
+          userId: {
+            _id: currentUserId,
+            nombre: currentUserName,
+            avatarUrl: currentUserAvatar,
+          },
+          comment: created.comment,
+          upvotes: created.upvotes || [],
+          downvotes: created.downvotes || [],
+          createdAt: created.createdAt,
+        }, ...prev]);
+        setNewComment("");
+        onCommentPosted?.();
+      } catch (err) {
+        console.error("Error al publicar comentario de la rutina:", err);
+        toast.error("No se pudo publicar el comentario. Intenta de nuevo.");
+      }
     }
   };
 
@@ -105,10 +136,13 @@ export function useCommentsState({
     if (targetType === "product") {
       try {
         await upvoteProductComment(commentId, currentUserId);
-      } catch {}
+      } catch (err) {
+        console.error("Error al votar comentario:", err);
+        toast.error("No se pudo registrar el voto. Intenta de nuevo.");
+        return;
+      }
     }
 
-    // Actualizar estado local optimistamente
     setLocalComments((prev) =>
       prev.map((comment) => {
         if (comment.id !== commentId) return comment;

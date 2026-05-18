@@ -388,13 +388,16 @@ export class RutinasService {
 
 
   async getComments(rutinaId: string) {
-    this.logger.log(`Obteniendo comentarios de rutina ${rutinaId}`);
-    try {
-      return await this.comentarioModel.find({ rutinaId }).exec();
-    } catch (error) {
-      this.logger.error(`Error al obtener comentarios de rutina ${rutinaId}: ${error.message}`, error.stack);
-      throw error;
-    }
+      this.logger.log(`Obteniendo comentarios de rutina ${rutinaId}`);
+      try {
+          return await this.comentarioModel
+              .find({ rutinaId })
+              .populate('userId', 'nombre avatarUrl')
+              .exec();
+      } catch (error) {
+          this.logger.error(`Error al obtener comentarios de rutina ${rutinaId}: ${error.message}`, error.stack);
+          throw error;
+      }
   }
 
   async addComment(rutinaId: string, userId: string, comment: string) {

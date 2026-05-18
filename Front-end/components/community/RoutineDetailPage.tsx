@@ -4,8 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CommentSection from "@/components/comments/CommentsSection";
-import { getProductById, getUserById } from "@/lib/api";
-import { fetchRoutineById, fetchUserById, incrementRoutineView } from "@/lib/api-client";
+import { fetchRoutineById, fetchUserById, fetchProductsBatch, incrementRoutineView } from "@/lib/api-client";
 import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
 import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, MessageSquare, Moon, Sun, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -27,7 +26,8 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
   const { user: loggedUser, isLoggedIn } = useAuthSession();
 
   const [routine, setRoutine] = useState<Routine | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [routineAuthor, setRoutineAuthor] = useState<any>(null);
+  const [productsMap, setProductsMap] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,16 +50,25 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
         const routineData = await fetchRoutineById(routineId);
         setRoutine(routineData);
 
+        // Cargar autor de la rutina
         if (routineData?.userId) {
           try {
-            const userData = await fetchUserById(routineData.userId);
-            setUser(userData);
-          } catch (err) {
-            console.error("Failed to fetch user data from API:", err);
-            const mockUser = getUserById(routineData.userId);
-            if (mockUser) {
-              setUser(mockUser);
-            }
+            const authorData = await fetchUserById(routineData.userId) as any;
+            setRoutineAuthor(authorData);
+          } catch {
+            setRoutineAuthor(null);
+          }
+        }
+
+        // Cargar productos de los pasos
+        if (routineData?.steps?.length) {
+          try {
+            const productIds = routineData.steps.map((s: any) => s.productId).filter(Boolean);
+            const products = await fetchProductsBatch(productIds);
+            const map = Object.fromEntries(products.map((p: any) => [p.id, p]));
+            setProductsMap(map);
+          } catch {
+            setProductsMap({});
           }
         }
       } catch (err) {
@@ -91,7 +100,6 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
     setDownvotes: setRoutineDownvotes,
   } = useRoutineApiVotes(routineId, currentUserId);
 
-  // Initialize vote data when routine is loaded
   useEffect(() => {
     if (routine) {
       setRoutineUpvotes(routine.upvotes ?? []);
@@ -100,9 +108,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
   }, [routine, setRoutineUpvotes, setRoutineDownvotes]);
 
   const publishedAtLabel = useMemo(() => {
-    if (!routine?.publishedAt) {
-      return "-";
-    }
+    if (!routine?.publishedAt) return "-";
     return dateFormatter.format(new Date(routine.publishedAt));
   }, [dateFormatter, routine?.publishedAt]);
 
@@ -140,9 +146,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <Link href={backPath}>
-                {t("community")}
-              </Link>
+              <Link href={backPath}>{t("community")}</Link>
             </BreadcrumbItem>
             <BreadcrumbSeparator className="text-secondary" />
             <BreadcrumbItem>
@@ -173,9 +177,15 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
 
               <div className="border-t border-[#eceff4] pt-4">
                 <div className="flex items-center gap-3">
-                  <img src={user?.avatarUrl} alt={user?.name ?? t("authorFallback")} className="h-10 w-10 rounded-full object-cover" />
+                  <img
+                    src={routineAuthor?.avatarUrl ?? ""}
+                    alt={routineAuthor?.nombre ?? t("authorFallback")}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
                   <div>
-                    <p className="text-sm font-semibold text-[#242939]">{user?.name ?? t("userFallback")}</p>
+                    <p className="text-sm font-semibold text-[#242939]">
+                      {routineAuthor?.nombre ?? t("userFallback")}
+                    </p>
                     <p className="text-xs text-[#5d6478]">{t("routineCreator")}</p>
                   </div>
                 </div>
@@ -199,16 +209,8 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
               <div className="flex items-center gap-3 border-t border-[#eceff4] pt-4 text-sm font-semibold text-[#4f576e]">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      return;
-                    }
-                    handleRoutineVote("up");
-                  }}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 transition ${hasUpvotedRoutine
-                    ? "border-primary bg-secondary/20 text-primary"
-                    : "border-border hover:border-primary hover:text-primary"
-                    }`}
+                  onClick={() => { if (!isLoggedIn) return; handleRoutineVote("up"); }}
+                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 transition ${hasUpvotedRoutine ? "border-primary bg-secondary/20 text-primary" : "border-border hover:border-primary hover:text-primary"}`}
                   aria-label={t("upvote")}
                   disabled={!isLoggedIn}
                 >
@@ -217,16 +219,8 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      return;
-                    }
-                    handleRoutineVote("down");
-                  }}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 transition ${hasDownvotedRoutine
-                    ? "border-primary bg-secondary/20 text-primary"
-                    : "border-border hover:border-primary hover:text-primary"
-                    }`}
+                  onClick={() => { if (!isLoggedIn) return; handleRoutineVote("down"); }}
+                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 transition ${hasDownvotedRoutine ? "border-primary bg-secondary/20 text-primary" : "border-border hover:border-primary hover:text-primary"}`}
                   aria-label={t("downvote")}
                   disabled={!isLoggedIn}
                 >
@@ -234,9 +228,11 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                   {routineDownvotes.length}
                 </button>
               </div>
+
               {!isLoggedIn && (
                 <p className="text-sm text-[#5f6880]">
-                  {t("loginRequiredForComments")} <Link href={loginHref} className="font-semibold text-primary hover:underline">{t("goToLogin")}</Link>
+                  {t("loginRequiredForComments")}{" "}
+                  <Link href={loginHref} className="font-semibold text-primary hover:underline">{t("goToLogin")}</Link>
                 </p>
               )}
             </CardHeader>
@@ -252,7 +248,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                   .slice()
                   .sort((a, b) => a.order - b.order)
                   .map((step, index) => {
-                    const product = getProductById(step.productId);
+                    const product = productsMap[step.productId];
                     const productImage = product?.image_url?.[0];
                     const productHref = product
                       ? `/descubrir/${toLowerCaseAndReplaceSpacesWithHyphens(product.name)}`
@@ -272,7 +268,6 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                               {t("noImage")}
                             </div>
                           )}
-
                           <div className="min-w-0 flex-1">
                             <h3 className="text-lg font-bold text-[#212636]">
                               {t("stepTitle", { number: index + 1, name: step.name })}
@@ -285,9 +280,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                       </article>
                     );
 
-                    if (!productHref) {
-                      return <div key={step.id}>{stepContent}</div>;
-                    }
+                    if (!productHref) return <div key={step.id}>{stepContent}</div>;
 
                     return (
                       <Link key={step.id} href={productHref} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">

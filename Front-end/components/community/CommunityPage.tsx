@@ -1,7 +1,6 @@
 "use client";
 
-import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote } from "@/lib/api-client";
-import { getUserById } from "@/lib/api";
+import { fetchRoutines, upvoteRoutine, downvoteRoutine, removeUpvote, removeDownvote, fetchUserById } from "@/lib/api-client";
 import { MessageSquare, Plus, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -64,6 +63,7 @@ export default function CommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [usersMap, setUsersMap] = useState<Record<string, { name: string; avatarUrl: string }>>({});
 
   const currentUserId = user?.id ?? "";
   const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn);
@@ -75,9 +75,23 @@ export default function CommunityPage() {
         setIsLoading(true);
         setCurrentPage(1);
         const data = await fetchRoutines(1, locale, activeTab);
-        setRoutines(data.routines || []);
+        const fetchedRoutines = data.routines || [];
+        setRoutines(fetchedRoutines);
         setTotalPages(data.totalPages || 1);
         setError(null);
+
+        const uniqueUserIds = [...new Set(fetchedRoutines.map((r: Routine) => r.userId).filter(Boolean))];
+        const userEntries = await Promise.all(
+          uniqueUserIds.map(async (userId) => {
+            try {
+              const userData = await fetchUserById(userId as string) as any;
+              return [userId, { name: userData?.nombre ?? userData?.name ?? "Anonymous", avatarUrl: userData?.avatarUrl ?? "" }];
+            } catch {
+              return [userId, { name: "Anonymous", avatarUrl: "" }];
+            }
+          })
+        );
+        setUsersMap(Object.fromEntries(userEntries));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load routines");
         setRoutines([]);
@@ -96,9 +110,27 @@ export default function CommunityPage() {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
       const data = await fetchRoutines(nextPage, locale, activeTab);
-      setRoutines(prev => [...prev, ...(data.routines || [])]);
+      const newRoutines = data.routines || [];
+      setRoutines(prev => [...prev, ...newRoutines]);
       setCurrentPage(nextPage);
       setTotalPages(data.totalPages || totalPages);
+
+      // Cargar usuarios de las nuevas rutinas
+      const existingIds = new Set(Object.keys(usersMap));
+      const newUserIds = [...new Set(newRoutines.map((r: Routine) => r.userId).filter((id: string) => id && !existingIds.has(id)))];
+      if (newUserIds.length > 0) {
+        const userEntries = await Promise.all(
+          newUserIds.map(async (userId) => {
+            try {
+              const userData = await fetchUserById(userId as string) as any;
+              return [userId, { name: userData?.nombre ?? userData?.name ?? "Anonymous", avatarUrl: userData?.avatarUrl ?? "" }];
+            } catch {
+              return [userId, { name: "Anonymous", avatarUrl: "" }];
+            }
+          })
+        );
+        setUsersMap(prev => ({ ...prev, ...Object.fromEntries(userEntries) }));
+      }
     } catch (err) {
       console.error("Failed to load more routines:", err);
     } finally {
@@ -119,12 +151,10 @@ export default function CommunityPage() {
 
       if (direction === "up") {
         if (hasUpvoted) {
-          // Remove upvote
           await removeUpvote(routineId, currentUserId);
           updatedRoutine.upvotes = (updatedRoutine.upvotes ?? []).filter(id => id !== currentUserId);
           toast.success("Upvote removed");
         } else {
-          // Add upvote and remove downvote if exists
           await upvoteRoutine(routineId, currentUserId);
           updatedRoutine.upvotes = [...(updatedRoutine.upvotes ?? []), currentUserId];
           if (hasDownvoted) {
@@ -133,14 +163,11 @@ export default function CommunityPage() {
           toast.success("Upvoted!");
         }
       } else {
-        // downvote
         if (hasDownvoted) {
-          // Remove downvote
           await removeDownvote(routineId, currentUserId);
           updatedRoutine.downvotes = (updatedRoutine.downvotes ?? []).filter(id => id !== currentUserId);
           toast.success("Downvote removed");
         } else {
-          // Add downvote and remove upvote if exists
           await downvoteRoutine(routineId, currentUserId);
           updatedRoutine.downvotes = [...(updatedRoutine.downvotes ?? []), currentUserId];
           if (hasUpvoted) {
@@ -150,7 +177,6 @@ export default function CommunityPage() {
         }
       }
 
-      // Update the routine in the state
       const updatedRoutines = [...routines];
       updatedRoutines[routineIndex] = updatedRoutine;
       setRoutines(updatedRoutines);
@@ -170,13 +196,13 @@ export default function CommunityPage() {
     routines.map((routine) => {
       const publishedAtDate = routine.publishedAt ? new Date(routine.publishedAt) : null;
       const publishedAtTs = publishedAtDate ? publishedAtDate.getTime() : 0;
-      const user = getUserById(routine.userId);
+      const routineUser = usersMap[routine.userId];
       return {
         id: routine.id,
         title: routine.name,
         excerpt: routine.description,
-        userName: user?.name ?? "Anonymous",
-        avatarUrl: user?.avatarUrl ?? "https://i.pravatar.cc/80?img=29",
+        userName: routineUser?.name ?? "Anonymous",
+        avatarUrl: routineUser?.avatarUrl ?? "",
         skinType: routine.skinType,
         tag: tSkin(routine.skinType) || routine.skinType,
         upvotes: routine.upvotes?.length ?? 0,
@@ -189,7 +215,7 @@ export default function CommunityPage() {
         publishedAtTs,
       };
     }),
-    [routines, currentUserId, publishedDateFormatter]
+    [routines, usersMap, currentUserId, publishedDateFormatter, tSkin]
   );
 
   const postsBySkin = useMemo(() => activeSkinFilter === "all" ? posts : posts.filter(p => p.skinType === activeSkinFilter), [activeSkinFilter, posts]);
@@ -228,9 +254,7 @@ export default function CommunityPage() {
             <p className="mt-2">Cargando rutinas...</p>
           </div>
         ) : error ? (
-          <div className="text-center py-8 text-red-500">
-            {error}
-          </div>
+          <div className="text-center py-8 text-red-500">{error}</div>
         ) : visiblePosts.length > 0 ? (
           <>
             {visiblePosts.map((post, index) => (
@@ -245,17 +269,9 @@ export default function CommunityPage() {
             ))}
             {currentPage < totalPages && (
               <div className="text-center pt-4">
-                <Button
-                  onClick={loadMoreRoutines}
-                  disabled={isLoadingMore}
-                  variant="outline"
-                  size="lg"
-                >
+                <Button onClick={loadMoreRoutines} disabled={isLoadingMore} variant="outline" size="lg">
                   {isLoadingMore ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Cargando...
-                    </>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cargando...</>
                   ) : (
                     "Cargar más"
                   )}
@@ -264,15 +280,18 @@ export default function CommunityPage() {
             )}
           </>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No hay rutinas para mostrar
-          </div>
+          <div className="text-center py-8 text-muted-foreground">No hay rutinas para mostrar</div>
         )}
       </motion.div>
     </AnimatePresence>
   );
 
-  const MostDiscussedList = () => mostDiscussed.map(topic => <Link key={topic.id} href={`/routine/detail/${topic.id}`} className="block rounded-lg px-2 py-1.5 transition hover:bg-muted"><p className="font-bold line-clamp-1">{topic.title}</p><p className="text-xs text-muted-foreground">{t("commentsCount", { count: topic.comments })} • {topic.skinTypeTag}</p></Link>);
+  const MostDiscussedList = () => mostDiscussed.map(topic => (
+    <Link key={topic.id} href={`/routine/detail/${topic.id}`} className="block rounded-lg px-2 py-1.5 transition hover:bg-muted">
+      <p className="font-bold line-clamp-1">{topic.title}</p>
+      <p className="text-xs text-muted-foreground">{t("commentsCount", { count: topic.comments })} • {topic.skinTypeTag}</p>
+    </Link>
+  ));
 
   return (
     <main className="min-h-screen bg-background pb-24">
@@ -288,7 +307,12 @@ export default function CommunityPage() {
           </aside>
 
           <section className="space-y-4">
-            <div className="flex items-end justify-between"><div><h1 className="text-4xl font-extrabold">{t("discussionsTitle")}</h1><p className="text-sm text-muted-foreground">{t("discussionsSubtitle")}</p></div></div>
+            <div className="flex items-end justify-between">
+              <div>
+                <h1 className="text-4xl font-extrabold">{t("discussionsTitle")}</h1>
+                <p className="text-sm text-muted-foreground">{t("discussionsSubtitle")}</p>
+              </div>
+            </div>
             <div className="flex gap-2"><TabButtons /></div>
             <div><PostsList size="lg" /></div>
           </section>
@@ -309,7 +333,10 @@ export default function CommunityPage() {
           </SidebarSection>
 
           <Card>
-            <CardHeader className="pb-4"><CardTitle className="text-2xl">{t("discussionsTitle")}</CardTitle><CardDescription>{t("discussionsSubtitle")}</CardDescription></CardHeader>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl">{t("discussionsTitle")}</CardTitle>
+              <CardDescription>{t("discussionsSubtitle")}</CardDescription>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2"><TabButtons /></div>
               <div><PostsList size="sm" /></div>
@@ -320,7 +347,9 @@ export default function CommunityPage() {
             <div className="space-y-3"><MostDiscussedList /></div>
           </SidebarSection>
 
-          <Button asChild size="icon" className="fixed right-6 bottom-6 z-50 h-16 w-16 rounded-full shadow-lg"><Link href={createRoutineHref} aria-label={t("createPost")}><Plus size={30} /></Link></Button>
+          <Button asChild size="icon" className="fixed right-6 bottom-6 z-50 h-16 w-16 rounded-full shadow-lg">
+            <Link href={createRoutineHref} aria-label={t("createPost")}><Plus size={30} /></Link>
+          </Button>
         </div>
       </div>
     </main>

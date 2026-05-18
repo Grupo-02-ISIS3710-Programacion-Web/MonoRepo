@@ -5,7 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto} from './dto/resgister-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -22,7 +22,7 @@ export class UserController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')
