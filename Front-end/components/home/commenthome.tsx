@@ -76,38 +76,38 @@ export default function CommentHome() {
 
     return (
 
-        <div className="flex flex-col  bg-gray-50">
+        <div className="flex flex-col bg-muted/50">
 
             <div className="max-w-7xl mx-auto px-5 mt-23 mb-24 grid md:grid-cols-2 gap-14 items-start">
 
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-3xl font-bold text-foreground mb-4">
                         {t("title")}
                     </h2>
-                    <p className="text-gray-600 mb-8 max-w-md">
+                    <p className="text-muted-foreground mb-8 max-w-md">
                         {t("description")}
                     </p>
                     <ul className="space-y-5 mb-8 py-5">
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <div className="w-6 h-6 rounded-full bg-pink-200 flex items-center justify-center">
-                                <Check size={14} className="text-pink-600" />
+                        <li className="flex items-center gap-3 text-muted-foreground">
+                            <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
+                                <Check size={14} className="text-secondary-foreground" />
                             </div>
                             <span>{t("feature1")}</span>
                         </li>
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <div className="w-6 h-6 rounded-full bg-pink-200 flex items-center justify-center">
-                                <Check size={14} className="text-pink-600" />
+                        <li className="flex items-center gap-3 text-muted-foreground">
+                            <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
+                                <Check size={14} className="text-secondary-foreground" />
                             </div>
                             <span>{t("feature2")}</span>
                         </li>
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <div className="w-6 h-6 rounded-full bg-pink-200 flex items-center justify-center">
-                                <Check size={14} className="text-pink-600" />
+                        <li className="flex items-center gap-3 text-muted-foreground">
+                            <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
+                                <Check size={14} className="text-secondary-foreground" />
                             </div>
                             <span>{t("feature3")}</span>
                         </li>
                     </ul>
-                    <Link href="/community" className="inline-flex bg-foreground text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition">
+                    <Link href="/community" className="inline-flex bg-foreground text-background px-6 py-3 rounded-lg font-medium hover:opacity-90 transition">
                         {t("visitCommunity")}
                     </Link>
                 </div>
@@ -133,11 +133,11 @@ export default function CommentHome() {
 
                 <div className="max-w-4xl mx-auto px-6 text-center w-full">
 
-                    <h2 className="text-4xl md:text-5xl font-bold text-[#1a1c2e] mb-8 leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-8 leading-tight">
                         {t("ctaTitle")}
                     </h2>
 
-                    <p className="text-white text-xl mb-12 max-w-2xl mx-auto">
+                    <p className="text-primary-foreground text-xl mb-12 max-w-2xl mx-auto">
                         {t("ctaDescription")}
                     </p>
 
@@ -146,10 +146,10 @@ export default function CommentHome() {
                         <input
                             type="email"
                             placeholder={t("emailPlaceholder")}
-                            className="w-full max-w-md px-8 py-3 bg-white rounded-full border-none outline-none text-gray-700 shadow-md"
+                            className="w-full max-w-md px-8 py-3 bg-card rounded-full border-none outline-none text-muted-foreground shadow-md"
                         />
 
-                        <button className="flex p-5 bg-foreground text-white px-12 py-3 rounded-full font-bold hover:scale-105 transition-transform shadow-lg ">
+                        <button className="flex p-5 bg-foreground text-background px-12 py-3 rounded-full font-bold hover:scale-105 transition-transform shadow-lg ">
                             {t("joinNow")}
                         </button>
 

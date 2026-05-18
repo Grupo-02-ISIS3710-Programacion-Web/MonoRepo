@@ -15,7 +15,7 @@ export default function RoutineSidebar({
     onRemoveProduct
 }: RoutineSidebarProps) {
     return (
-        <div className="hidden md:flex flex-col bg-white rounded-lg p-6 shadow-sm h-fit sticky top-6">
+        <div className="hidden md:flex flex-col bg-card rounded-lg p-6 shadow-sm h-fit sticky top-6">
             <RoutineSummary
                 addedProducts={addedProducts}
                 products={products}

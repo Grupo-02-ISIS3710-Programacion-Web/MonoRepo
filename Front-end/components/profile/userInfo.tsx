@@ -65,7 +65,7 @@ export default function UserInfo({
 
   return (
 
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+    <div className="bg-card rounded-2xl shadow-md overflow-hidden">
 
       <div className="h-30 bg-linear-to-r from-pink-200 to-slate-200"></div>
       
@@ -159,7 +159,7 @@ export default function UserInfo({
 
           <div data-testid="edit-modal" className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-            <div className="bg-white rounded-2xl p-6 w-105 shadow-xl">
+            <div className="bg-card rounded-2xl p-6 w-105 shadow-xl">
 
               <h2 className="text-xl font-bold mb-5">
                 {t("editProfile")}
@@ -273,7 +273,7 @@ export default function UserInfo({
                 </button>
 
                 <button
-                  className="px-4 py-2 bg-primary text-white rounded-lg"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
                   onClick={updateInfoUser}
                 >
                   {t("save")}

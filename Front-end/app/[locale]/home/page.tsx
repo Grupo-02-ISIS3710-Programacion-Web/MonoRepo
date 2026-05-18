@@ -47,11 +47,11 @@ export default function Home() {
 
           <div className="flex justify-between items-end mb-10">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-bold text-foreground">
                 {t("topProducts")}
               </h2>
 
-              <p className="text-gray-700 mt-2">
+              <p className="text-muted-foreground mt-2">
                 {t("topProductsDescription")}
               </p>
             </div>

@@ -20,6 +20,7 @@ import {
   Loader2,
   Sparkles,
   Star,
+  AlertCircle,
 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "@/i18n/navigation"
@@ -27,6 +28,24 @@ import { useTranslations } from "next-intl"
 import { useAuthSession } from "@/lib/hooks/use-auth-session"
 
 type PageState = "loading" | "form" | "already-premium" | "success"
+
+const WOMPI_ERROR_MAP: Record<string, string> = {
+  "El token de aceptación ya fue usado": "Tu sesión expiró. Intenta de nuevo.",
+  "Card declined": "La tarjeta fue rechazada por el banco. Usa otra tarjeta.",
+  "card declined": "La tarjeta fue rechazada por el banco. Usa otra tarjeta.",
+  "insufficient funds": "La tarjeta no tiene fondos suficientes. Usa otra tarjeta.",
+  "expired card": "La tarjeta está vencida. Usa otra tarjeta.",
+  "invalid card": "El número de tarjeta no es válido. Revisa los datos.",
+}
+
+function userFriendlyError(raw: string): string {
+  for (const [key, msg] of Object.entries(WOMPI_ERROR_MAP)) {
+    if (raw.toLowerCase().includes(key.toLowerCase())) return msg
+  }
+  if (/^4\d{2}\s/.test(raw)) return raw.replace(/^4\d{2}\s/, "").trim()
+  if (raw.length > 120) return raw.slice(0, 120) + "…"
+  return raw
+}
 
 export default function SuscripcionPage() {
   const t = useTranslations("Suscripcion")
@@ -66,7 +85,7 @@ export default function SuscripcionPage() {
   }, [])
 
   const handleError = useCallback((msg: string) => {
-    setError(msg)
+    setError(userFriendlyError(msg))
   }, [])
 
   if (pageState === "already-premium") {
@@ -186,8 +205,18 @@ export default function SuscripcionPage() {
             </CardHeader>
             <CardContent>
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-                  {error}
+                <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 mt-0.5 shrink-0 text-red-500" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-red-800">
+                        Error al procesar el pago
+                      </p>
+                      <p className="text-sm text-red-700 leading-relaxed">
+                        {error}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               <PremiumCardForm

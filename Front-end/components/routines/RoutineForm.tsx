@@ -338,7 +338,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                                     placeholder={tSteps("routineNamePlaceholder")}
                                 />
                                 {errors.name?.message && (
-                                    <p className="text-sm text-red-600">{errors.name.message}</p>
+                                    <p className="text-sm text-destructive">{errors.name.message}</p>
                                 )}
                             </div>
 
@@ -353,7 +353,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                                     rows={4}
                                 />
                                 {errors.description?.message && (
-                                    <p className="text-sm text-red-600">{errors.description.message}</p>
+                                    <p className="text-sm text-destructive">{errors.description.message}</p>
                                 )}
                             </div>
 
@@ -386,17 +386,17 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                                     {...register("skinType", {
                                         required: tRoutine("validation.skinTypeRequired")
                                     })}
-                                    className="border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                                    className="border-input bg-transparent text-foreground focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
                                 >
-                                    <option value="">{tRoutine("infoCard.skinTypePlaceholder")}</option>
+                                    <option value="" className="text-muted-foreground">{tRoutine("infoCard.skinTypePlaceholder")}</option>
                                     {Object.values(SkinType).map((skinType) => (
-                                        <option key={skinType} value={skinType}>
+                                        <option key={skinType} value={skinType} className="text-foreground">
                                             {tSkin(skinType)}
                                         </option>
                                     ))}
                                 </select>
                                 {errors.skinType?.message && (
-                                    <p className="text-sm text-red-600">{errors.skinType.message}</p>
+                                    <p className="text-sm text-destructive">{errors.skinType.message}</p>
                                 )}
                             </div>
                         </CardContent>
@@ -455,7 +455,7 @@ export default function RoutineForm({ mode }: RoutineFormProps) {
                     </div>
                     <p className="text-sm text-muted-foreground">{tRoutine("infoCard.productsSelected", { count: selectedProducts.length })}</p>
                     {stepArrayError?.message && (
-                        <p className="text-sm text-red-600">{stepArrayError.message}</p>
+                        <p className="text-sm text-destructive">{stepArrayError.message}</p>
                     )}
                     {fields.length === 0 && (
                         <Card>

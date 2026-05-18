@@ -13,9 +13,9 @@ export default async function LandingProductCard({ product }: LandingProductCard
 
   return (
 
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-5 flex flex-col">
+    <div className="bg-card rounded-xl shadow-sm hover:shadow-md transition p-5 flex flex-col">
 
-      <div className="bg-gray-100 rounded-lg flex items-center justify-center h-40 mb-4">
+      <div className="bg-muted rounded-lg flex items-center justify-center h-40 mb-4">
 
         <Image
           src={product.image_url[0]}
@@ -28,11 +28,11 @@ export default async function LandingProductCard({ product }: LandingProductCard
 
       </div>
 
-      <p className="text-xs text-gray-400 uppercase font-medium">
+      <p className="text-xs text-muted-foreground uppercase font-medium">
         {product.brand}
       </p>
 
-      <h3 className="font-semibold text-gray-900 mt-1">
+      <h3 className="font-semibold text-foreground mt-1">
         {product.name}
       </h3>
 
@@ -44,7 +44,7 @@ export default async function LandingProductCard({ product }: LandingProductCard
         />
       </div>
 
-      <button className="mt-auto w-full bg-primary text-white py-2 rounded-lg hover:bg-pink-600 transition">
+      <button className="mt-auto w-full bg-primary text-primary-foreground py-2 rounded-lg hover:bg-secondary transition">
         {t("viewDetails")}
       </button>
 

@@ -110,7 +110,7 @@ export default function PasoRutinaCard({
                         {...nameFieldProps}
                         placeholder={t("namePlaceholder")}
                     />
-                    {nameError && <p className="text-sm text-red-600">{nameError}</p>}
+                    {nameError && <p className="text-sm text-destructive">{nameError}</p>}
                 </div>
 
                 {product && <CardProducto product={product} showButton={false} compact />}
@@ -121,7 +121,7 @@ export default function PasoRutinaCard({
                         {...notesFieldProps}
                         placeholder={t("descriptionPlaceholder")}
                     />
-                    {notesError && <p className="text-sm text-red-600">{notesError}</p>}
+                    {notesError && <p className="text-sm text-destructive">{notesError}</p>}
                 </div>
             </CardContent>
         </Card>

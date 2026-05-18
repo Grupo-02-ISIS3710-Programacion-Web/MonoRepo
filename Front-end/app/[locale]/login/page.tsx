@@ -18,7 +18,7 @@ export default async function Login({ searchParams }: any) {
       }}
     >
 
-      <Card className="w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-sm shadow-xl p-8">
+      <Card className="w-full max-w-md rounded-3xl bg-card/95 backdrop-blur-sm shadow-xl p-8">
 
         <CardContent>
 

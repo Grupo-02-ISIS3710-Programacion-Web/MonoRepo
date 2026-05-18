@@ -117,11 +117,11 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
   if (isLoading) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
-        <div className="mx-auto max-w-4xl rounded-2xl border border-[#e6e9ef] bg-card p-8 text-center">
+        <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-card p-8 text-center">
           <div className="flex justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
-          <p className="mt-4 text-[#646e84]">Cargando rutina...</p>
+          <p className="mt-4 text-muted-foreground">Cargando rutina...</p>
         </div>
       </main>
     );
@@ -130,9 +130,9 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
   if (error || !routine) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
-        <div className="mx-auto max-w-4xl rounded-2xl border border-[#e6e9ef] bg-card p-8 text-center">
-          <h1 className="text-2xl font-bold text-[#222739]">{t("notFoundTitle")}</h1>
-          <p className="mt-2 text-[#646e84]">{error || t("notFoundDescription")}</p>
+        <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="text-2xl font-bold text-foreground">{t("notFoundTitle")}</h1>
+          <p className="mt-2 text-muted-foreground">{error || t("notFoundDescription")}</p>
           <Link href={backPath} className="mt-4 inline-flex items-center gap-2 text-primary hover:underline">
             <ArrowLeft size={16} />
             {t("backToDiscussions")}
@@ -162,7 +162,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
         </Breadcrumb>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start">
-          <Card className="border-[#e8ebf1] lg:sticky lg:top-6 bg-card">
+          <Card className="border-border lg:sticky lg:top-6 bg-card">
             <CardHeader className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Link href={backPath} className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary">
@@ -175,36 +175,36 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
               </div>
 
               <div className="space-y-2">
-                <h1 className="text-3xl font-extrabold text-[#222739]">{routine.name}</h1>
-                <p className="text-[#5f6880]">{routine.description}</p>
+                <h1 className="text-3xl font-extrabold text-foreground">{routine.name}</h1>
+                <p className="text-muted-foreground">{routine.description}</p>
               </div>
 
-              <div className="border-t border-[#eceff4] pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="flex items-center gap-3">
                   <img src={user?.avatarUrl} alt={user?.name ?? t("authorFallback")} className="h-10 w-10 rounded-full object-cover" />
                   <div>
-                    <p className="text-sm font-semibold text-[#242939]">{user?.name ?? t("userFallback")}</p>
-                    <p className="text-xs text-[#5d6478]">{t("routineCreator")}</p>
+                    <p className="text-sm font-semibold text-foreground">{user?.name ?? t("userFallback")}</p>
+                    <p className="text-xs text-muted-foreground">{t("routineCreator")}</p>
                   </div>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-[#4f576e]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     <MessageSquare size={14} />
                     {comments.length}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-[#4f576e]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     <CalendarDays size={14} />
                     {publishedAtLabel}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-[#4f576e]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     {routine.type.toLowerCase() === "am" ? <Sun size={14} /> : <Moon size={14} />}
                     {t("routineType", { type: routine.type.toUpperCase() })}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 border-t border-[#eceff4] pt-4 text-sm font-semibold text-[#4f576e]">
+              <div className="flex items-center gap-3 border-t border-border pt-4 text-sm font-semibold text-muted-foreground">
                 <button
                   type="button"
                   onClick={() => {
@@ -243,7 +243,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                 </button>
               </div>
               {!isLoggedIn && (
-                <p className="text-sm text-[#5f6880]">
+                <p className="text-sm text-muted-foreground">
                   {t("loginRequiredForComments")} <Link href={loginHref} className="font-semibold text-primary hover:underline">{t("goToLogin")}</Link>
                 </p>
               )}
@@ -251,9 +251,9 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
           </Card>
 
           <div className="space-y-6">
-            <Card className="border-[#e8ebf1] bg-card">
+            <Card className="border-border bg-card">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-[#202635]">{t("stepsTitle")}</CardTitle>
+                <CardTitle className="text-2xl font-bold text-foreground">{t("stepsTitle")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {routine.steps
@@ -276,18 +276,18 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                               className="h-48 w-full rounded-lg object-cover md:h-32 md:w-32 md:min-w-32"
                             />
                           ) : (
-                            <div className="flex h-48 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-[#69728a] md:h-32 md:w-32 md:min-w-32">
+                            <div className="flex h-48 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground md:h-32 md:w-32 md:min-w-32">
                               {t("noImage")}
                             </div>
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-bold text-[#212636]">
+                            <h3 className="text-lg font-bold text-foreground">
                               {t("stepTitle", { number: index + 1, name: step.name })}
                             </h3>
-                            <p className="mt-1 text-base font-semibold text-[#3a4258]">{product?.brand ?? t("unknownBrand")}</p>
-                            <p className="mt-1 text-sm font-medium text-[#414b63]">{product?.name ?? t("unknownProduct")}</p>
-                            <p className="mt-2 text-sm text-[#687189]">{step.notes}</p>
+                            <p className="mt-1 text-base font-semibold text-card-foreground">{product?.brand ?? t("unknownBrand")}</p>
+                            <p className="mt-1 text-sm font-medium text-muted-foreground">{product?.name ?? t("unknownProduct")}</p>
+                            <p className="mt-2 text-sm text-muted-foreground">{step.notes}</p>
                           </div>
                         </div>
                       </article>

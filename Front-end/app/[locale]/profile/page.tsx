@@ -151,7 +151,7 @@ export default function Profile() {
 
 
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 sm:h-15 bg-white">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 sm:h-15 bg-background">
                                 {tabs.map((tab) => {
                                     const Icon = tab.icon
                                     const isActive = activeTab === tab.id
@@ -181,7 +181,7 @@ export default function Profile() {
 
 
                             {activeTab === "routine" && (
-                                <div className="flex flex-col lg:flex-row bg-white gap-4 items-start lg:items-center justify-between p-4 lg:px-10">
+                                <div className="flex flex-col lg:flex-row bg-background gap-4 items-start lg:items-center justify-between p-4 lg:px-10">
 
                                     <div className="flex flex-wrap rounded-2xl border border-secondary p-1 gap-2 w-full lg:w-auto">
                                         {routine.map((routin) => {
@@ -192,7 +192,7 @@ export default function Profile() {
                                                     key={routin.id}
                                                     className={dayRoutine
                                                         ? "text-primary-foreground"
-                                                        : "bg-white text-foreground border-primary hover:bg-secondary hover:text-primary-foreground"
+                                                        : "bg-background text-foreground border-primary hover:bg-secondary hover:text-primary-foreground"
                                                     }
                                                     onClick={() => setRoutineDaily(routin.id)}
                                                 >
@@ -203,7 +203,7 @@ export default function Profile() {
                                     </div>
 
                                     <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row">
-                                        <Button asChild className="bg-white text-primary hover:bg-white hover:underline w-full lg:w-auto">
+                                        <Button asChild className="bg-background text-primary hover:bg-accent hover:underline w-full lg:w-auto">
                                             <Link href={createRoutineHref}>{t("addStep")}</Link>
                                         </Button>
                                         <Button asChild variant="outline" className="w-full lg:w-auto">
@@ -217,7 +217,7 @@ export default function Profile() {
 
 
                             {activeTab === "favorites" && (
-                                <div className="flex flex-col lg:flex-row bg-white gap-4 items-start lg:items-center justify-between p-4 lg:px-10">
+                                <div className="flex flex-col lg:flex-row bg-background gap-4 items-start lg:items-center justify-between p-4 lg:px-10">
 
                                     <div className="flex items-center gap-2 w-full lg:w-96">
 
@@ -243,13 +243,13 @@ export default function Profile() {
                                             <Search className="h-4 w-4" />
                                         </Button>
 
-                                        <Button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 transition" aria-label="Filtrar favoritos">
+                                        <Button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-background hover:bg-gray-100 transition" aria-label="Filtrar favoritos">
                                             <SlidersHorizontal size={18} className="text-gray-600" />
                                         </Button>
 
                                     </div>
 
-                                    <Button asChild className="bg-white text-primary hover:bg-white hover:underline w-full lg:w-auto">
+                                    <Button asChild className="bg-background text-primary hover:bg-accent hover:underline w-full lg:w-auto">
                                         <Link href="/descubrir">{t("discoverMore")}</Link>
                                     </Button>
 

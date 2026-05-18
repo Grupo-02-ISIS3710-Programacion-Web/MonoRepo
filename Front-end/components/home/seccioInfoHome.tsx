@@ -14,41 +14,41 @@ export default function SeccionInfoHome() {
 
       <div className="flex flex-col justify-center px-6">
 
-        <span className="bg-secondary text-xs px-3 py-1 rounded-full font-medium text-gray-800 w-fit">
+        <span className="bg-secondary text-xs px-3 py-1 rounded-full font-medium text-secondary-foreground w-fit">
           {t("badge")}
         </span>
 
-        <h1 className="mt-4 text-5xl font-bold leading-tight text-gray-900">
+        <h1 className="mt-4 text-5xl font-bold leading-tight text-foreground">
           {t("title1")} <br />
           <span className="text-primary">{t("title2")}</span> {t("title3")}
         </h1>
 
-        <p className="mt-6 text-gray-600 max-w-lg">
+        <p className="mt-6 text-muted-foreground max-w-lg">
           {t("description")}
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
 
           {!isLoggedIn && (
-            <Link href="/register" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-8 text-white shadow-md transition hover:bg-secondary">
+            <Link href="/register" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-8 text-primary-foreground shadow-md transition hover:bg-secondary">
               {t("register")}
               <ArrowRight size={18} />
             </Link>
           )}
 
-          <Link href="/descubrir" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-foreground px-8 text-white shadow-md transition hover:opacity-90">
+          <Link href="/descubrir" className="inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-foreground px-8 text-primary-foreground shadow-md transition hover:opacity-90">
             {t("explorer")}
           </Link>
 
           <div className="flex w-full items-center gap-3 sm:ml-2 sm:w-auto">
 
             <div className="flex shrink-0 -space-x-3">
-              <img src="/avatar1.png" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-white" />
-              <img src="/avatar2.jpeg" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-white" />
-              <img src="/avatar3.webp" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-white" />
+              <img src="/avatar1.png" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-background" />
+              <img src="/avatar2.jpeg" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-background" />
+              <img src="/avatar3.webp" alt="" aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-background" />
             </div>
 
-            <span className="min-w-0 text-sm leading-snug text-gray-600">
+            <span className="min-w-0 text-sm leading-snug text-muted-foreground">
               <span className="font-semibold">50k+</span> {t("trusted")}
             </span>
 

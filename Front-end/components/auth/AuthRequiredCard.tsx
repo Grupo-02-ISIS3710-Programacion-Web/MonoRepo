@@ -18,12 +18,12 @@ export default function AuthRequiredCard({
   return (
     <main className="min-h-[70vh] bg-background px-4 py-10 md:px-8">
       <div className="mx-auto max-w-2xl">
-        <Card className="border-[#e6e9ef]">
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-[#222739]">{t("requiredTitle")}</CardTitle>
+            <CardTitle className="text-2xl font-bold text-foreground">{t("requiredTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            <p className="text-[#606980]">{t("requiredDescription")}</p>
+            <p className="text-muted-foreground">{t("requiredDescription")}</p>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
                 <Link href={loginHref}>{t("goToLogin")}</Link>

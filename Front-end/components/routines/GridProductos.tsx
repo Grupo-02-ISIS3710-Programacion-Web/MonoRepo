@@ -92,7 +92,7 @@ export default function GridProductos() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {loading && <p className="text-center">{t("loading")}</p>}
                         {!loading && filteredProductos.length === 0 && (
-                            <p className="text-center text-gray-500 col-span-full">
+                            <p className="text-center text-muted-foreground col-span-full">
                                 {t("noResults")}
                             </p>
                         )}

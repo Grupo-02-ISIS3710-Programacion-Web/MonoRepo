@@ -44,7 +44,7 @@ export default function RoutineContent({
       {routines.map((routine) => (
         <div
           key={routine.id}
-          className="relative group bg-white border border-gray-200 
+          className="relative group bg-card border border-border 
                      rounded-2xl p-5 sm:p-6 shadow-sm
                      hover:shadow-md transition-all duration-200"
         >

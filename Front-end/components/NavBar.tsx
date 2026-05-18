@@ -2,7 +2,7 @@
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { User, Search, Menu, Bell } from "lucide-react";
+import { User, Search, Menu, Bell, Sun, Moon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { User as AuthUser } from "@/types/user";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useTheme } from "next-themes";
 
 const linksStatic = [
     { key: "home", href: "/" },
@@ -76,6 +77,23 @@ export default function NavBar() {
     );
 }
 
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === "dark"
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+    >
+      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </Button>
+  )
+}
+
 export function NavBarDesktop({
     isLoggedIn = false,
     onLogout,
@@ -118,7 +136,7 @@ export function NavBarDesktop({
             <div className="flex items-center gap-6">
                 <Link href="/">
                     <div className="flex gap-1 cursor-pointer hover:opacity-80 transition-opacity">
-                        <Image className="dark:invert" src="/skin4all_logo.svg" alt="Skin4All logo" width={20} height={20} />
+                        <Image src="/skin4all_logo.svg" alt="Skin4All logo" width={20} height={20} />
                         <h1 className="font-medium text-xl">Skin4All</h1>
                     </div>
                 </Link>
@@ -143,7 +161,8 @@ export function NavBarDesktop({
                     <SearchBar initialValue={currentQuery} onSearch={handleSearch} />
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                    <ThemeToggle />
                     {!isLoggedIn && (
                         <div className="hidden lg:flex items-center gap-2">
                             <Button variant="outline" className=" hover:bg-secondary hover:text-secondary-foreground" onClick={onRegister}>
@@ -262,7 +281,8 @@ export function NavBarMobile({
                             ))}
                         </div>
 
-                        <div className="mt-auto pt-6 border-t flex justify-center w-full">
+                        <div className="mt-auto pt-6 border-t flex flex-col items-center gap-3 w-full">
+                            <ThemeToggle />
                             <div className=" flex flex-col gap-2 w-60">
                                 {!isLoggedIn && (
                                     <>
@@ -287,12 +307,13 @@ export function NavBarMobile({
                 <div className="flex justify-between w-full items-center">
                     <Link href="/">
                         <div className="flex gap-1 cursor-pointer hover:opacity-80 transition-opacity">
-                            <Image className="dark:invert" src="/skin4all_logo.svg" alt="Skin4All logo" width={20} height={20} priority />
+                            <Image src="/skin4all_logo.svg" alt="Skin4All logo" width={20} height={20} priority />
                             <h1 className="font-medium text-lg">Skin4All</h1>
                         </div>
                     </Link>
 
                     <div className="flex items-center gap-1">
+                        <ThemeToggle />
                         <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen((s) => !s)} aria-label={t("openSearch") ?? "Abrir búsqueda"}>
                             <Search className="h-5 w-5" />
                         </Button>

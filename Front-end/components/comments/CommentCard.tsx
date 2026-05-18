@@ -40,23 +40,23 @@ export default function CommentCard({
           className="h-9 w-9 rounded-full object-cover"
         />
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-base font-semibold text-[#232839]">{user?.name ?? t("userFallback")}</p>
-          <p className="text-sm text-[#687084]">{formattedDate}</p>
+          <p className="text-base font-semibold text-foreground">{user?.name ?? t("userFallback")}</p>
+          <p className="text-sm text-muted-foreground">{formattedDate}</p>
         </div>
       </div>
-      <div className="pl-12 text-base leading-relaxed text-[#2f3443]">
+      <div className="pl-12 text-base leading-relaxed text-foreground">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-            strong: ({ children }) => <strong className="font-semibold text-[#1f2434]">{children}</strong>,
+            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
             em: ({ children }) => <em className="italic">{children}</em>
           }}
         >
           {comment.comment}
         </ReactMarkdown>
       </div>
-      <div className="mt-3 flex items-center gap-4 pl-12 text-[#5d667d]">
+      <div className="mt-3 flex items-center gap-4 pl-12 text-muted-foreground">
         <button
           className={`inline-flex items-center gap-1 text-sm font-semibold transition ${hasUpvoted ? "text-primary" : "hover:text-primary"
             }`}

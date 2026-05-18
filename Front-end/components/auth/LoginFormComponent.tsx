@@ -72,11 +72,11 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
 
             <div className="text-center space-y-1">
 
-                <h1 className="text-2xl font-semibold text-gray-900">
+                <h1 className="text-2xl font-semibold text-foreground">
                     {t("welcome")}
                 </h1>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                     {t("subtitle")}
                 </p>
 
@@ -84,13 +84,13 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
 
             <div className="space-y-2">
 
-                <label className="text-xs font-medium text-gray-500 uppercase">
+                    <label className="text-xs font-medium text-muted-foreground uppercase">
                     {t("usernameEmail")}
                 </label>
 
                 <div className="relative">
 
-                    <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <Mail className="absolute left-3 top-3.5 text-muted-foreground" size={18} />
 
                     <Input
                         type="text"
@@ -102,7 +102,7 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
                 </div>
 
                 {errors.emailOrLogin && (
-                    <p className="text-xs text-red-500">{errors.emailOrLogin.message}</p>
+                    <p className="text-xs text-destructive">{errors.emailOrLogin.message}</p>
                 )}
 
             </div>
@@ -111,13 +111,13 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
 
                 <div className="flex justify-between items-center">
 
-                    <label className="text-xs font-medium text-gray-500 uppercase">
+                <label className="text-xs font-medium text-muted-foreground uppercase">
                         {t("password")}
                     </label>
 
                     <Link
                         href="/forgot-password"
-                        className="text-xs text-pink-500 hover:underline"
+                        className="text-xs text-primary hover:underline"
                     >
                         {t("forgotPassword")}
                     </Link>
@@ -127,7 +127,7 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
                 <div className="relative">
 
                     <Lock
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                         size={18}
                     />
 
@@ -143,7 +143,7 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
                     <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                         title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
@@ -153,33 +153,33 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
                 </div>
 
                 {errors.password && (
-                    <p className="text-xs text-red-500">{errors.password.message}</p>
+                    <p className="text-xs text-destructive">{errors.password.message}</p>
                 )}
 
             </div>
 
             <Button
                 type="submit"
-                className="w-full text-white rounded-xl py-6"
+                className="w-full text-primary-foreground rounded-xl py-6"
             >
                 {t("login")}
             </Button>
 
-            <p className="text-xs text-center text-gray-500">{t("demoHint")}</p>
+            <p className="text-xs text-center text-muted-foreground">{t("demoHint")}</p>
 
             {authError && (
-                <p className="text-xs text-red-600 text-center">{authError}</p>
+                <p className="text-xs text-destructive text-center">{authError}</p>
             )}
 
             <div className="flex items-center gap-3">
 
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px bg-border" />
 
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-muted-foreground">
                     {t("continueWith")}
                 </span>
 
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px bg-border" />
 
             </div>
 
@@ -191,13 +191,13 @@ export default function LoginFormComponent({ initialRedirect }: { initialRedirec
                 <img src="/google.svg" alt="Google" />
             </Button>
 
-            <p className="text-sm text-center text-gray-500">
+            <p className="text-sm text-center text-muted-foreground">
 
                 {t("newUser")} {" "}
 
                 <Link
                     href="/register"
-                    className="text-pink-500 font-medium hover:underline"
+                    className="text-primary font-medium hover:underline"
                 >
                     {t("register")}
                 </Link>
