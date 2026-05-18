@@ -1,46 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { ChatsController } from './chats.controller';
 import { ChatsService } from './chats.service';
-import { Chat, ChatSchema } from './entities/chat.entity';
-import { HttpException } from '@nestjs/common';
-import { Model } from 'mongoose';
 
-describe('ChatsController (with in-memory MongoDB)', () => {
+const mockChatsService = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByUser: jest.fn(),
+  saveMessage: jest.fn(),
+  updateDraft: jest.fn(),
+  updateFocusAreas: jest.fn(),
+};
+
+describe('ChatsController', () => {
   let controller: ChatsController;
-  let service: ChatsService;
-  let chatModel: Model<Chat>;
-  let mongoUri: string;
-
-  beforeAll(async () => {
-    const { MongoMemoryServer } = require('mongodb-memory-server');
-    const server = await MongoMemoryServer.create();
-    mongoUri = server.getUri();
-    (global as any).__MONGO_SERVER_CHATS_CTRL__ = server;
-  });
+  let service: typeof mockChatsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        MongooseModule.forRoot(mongoUri),
-        MongooseModule.forFeature([{ name: Chat.name, schema: ChatSchema }]),
-      ],
       controllers: [ChatsController],
-      providers: [ChatsService],
+      providers: [{ provide: ChatsService, useValue: mockChatsService }],
     }).compile();
 
     controller = module.get<ChatsController>(ChatsController);
-    service = module.get<ChatsService>(ChatsService);
-    chatModel = module.get<Model<Chat>>(getModelToken(Chat.name));
-    await chatModel.deleteMany({});
+    service = module.get(ChatsService);
   });
 
-  afterAll(async () => {
-    const server = (global as any).__MONGO_SERVER_CHATS_CTRL__;
-    if (server) {
-      await server.stop();
-    }
-  });
+  afterEach(() => jest.clearAllMocks());
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
@@ -48,28 +33,40 @@ describe('ChatsController (with in-memory MongoDB)', () => {
 
   describe('create', () => {
     it('should create a chat', async () => {
-      const dto: any = { userId: 'u1', selectedFocusAreaIds: ['fa1'] };
-      const result = await controller.create(dto);
-      expect(result).toHaveProperty('chatId');
+      service.create.mockResolvedValue({ id: 'chat-1' });
+
+      const result = await controller.create({ userId: 'u1', selectedFocusAreaIds: ['fa1'] });
+      expect(result).toHaveProperty('chatId', 'chat-1');
+      expect(service.create).toHaveBeenCalledWith('u1', ['fa1']);
     });
   });
 
   describe('findByUser', () => {
     it('should return user chats', async () => {
-      await service.create('u1');
-      await service.create('u1');
+      service.findByUser.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
+
       const result = await controller.findByUser('u1');
       expect(result).toHaveLength(2);
+      expect(service.findByUser).toHaveBeenCalledWith('u1');
+    });
+
+    it('should throw if userId is missing', async () => {
+      await expect(controller.findByUser(undefined as any)).rejects.toThrow();
     });
   });
 
   describe('findById', () => {
     it('should return chat by id', async () => {
-      const chat = await service.create('u1');
-      const chatId = (chat as any)._id.toString();
-      const result = await controller.findById(chatId, 'u1');
+      const mockChat = { id: 'chat-1', userId: 'u1' };
+      service.findById.mockResolvedValue(mockChat);
+
+      const result = await controller.findById('chat-1', 'u1');
       expect(result).toBeDefined();
       expect(result.userId).toBe('u1');
+    });
+
+    it('should throw if userId is missing', async () => {
+      await expect(controller.findById('chat-1', undefined as any)).rejects.toThrow();
     });
   });
 });

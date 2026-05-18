@@ -198,14 +198,36 @@ describe('ProductosService', () => {
 
   describe('findOne()', () => {
     it('retorna el producto si existe y no está eliminado', async () => {
-      const product = { _id: 'abc', name: 'Prod A', deleted: false };
+      const rawProduct = { _id: 'abc', name: 'Prod A', deleted: false };
 
       productoModelMock.findById.mockReturnValue({
-        lean: () => ({ exec: jest.fn().mockResolvedValue(product) }),
+        lean: () => ({ exec: jest.fn().mockResolvedValue(rawProduct) }),
+      });
+
+      skinTypeModelMock.find.mockReturnValue({
+        lean: () => ({ exec: jest.fn().mockResolvedValue([]) }),
+      });
+      productTypeModelMock.find.mockReturnValue({
+        lean: () => ({ exec: jest.fn().mockResolvedValue([]) }),
+      });
+      categoryModelMock.find.mockReturnValue({
+        lean: () => ({ exec: jest.fn().mockResolvedValue([]) }),
       });
 
       const result = await service.findOne('abc');
-      expect(result).toEqual(product);
+      expect(result).toEqual({
+        id: 'abc',
+        name: 'Prod A',
+        brand: undefined,
+        description: undefined,
+        skin_type: [],
+        product_type: undefined,
+        category: [],
+        ingredients: [],
+        image_url: [],
+        rating: 0,
+        review_count: 0,
+      });
     });
 
     it('lanza NotFoundException si el producto no existe', async () => {

@@ -88,7 +88,7 @@ describe('ProductosController', () => {
     it('llama a productosService.findAll con includeEmbeddings=false por defecto', async () => {
       service.findAll.mockResolvedValue([mockProduct]);
 
-      const result = await controller.findAll(undefined);
+      const result = await controller.findAll({}, undefined);
 
       expect(service.findAll).toHaveBeenCalledWith(false);
       expect(result).toEqual([mockProduct]);
@@ -97,7 +97,7 @@ describe('ProductosController', () => {
     it('pasa includeEmbeddings=true cuando el query param es "true"', async () => {
       service.findAll.mockResolvedValue([mockProduct]);
 
-      await controller.findAll('true');
+      await controller.findAll({}, 'true');
 
       expect(service.findAll).toHaveBeenCalledWith(true);
     });
@@ -105,7 +105,7 @@ describe('ProductosController', () => {
     it('pasa includeEmbeddings=false cuando el query param es cualquier otro valor', async () => {
       service.findAll.mockResolvedValue([mockProduct]);
 
-      await controller.findAll('false');
+      await controller.findAll({}, 'false');
 
       expect(service.findAll).toHaveBeenCalledWith(false);
     });
@@ -208,7 +208,7 @@ describe('ProductosController', () => {
 
       const result = await controller.findBatch({ productIds: ids });
 
-      expect(service.findByIds).toHaveBeenCalledWith(ids);
+      expect(service.findByIds).toHaveBeenCalledWith(ids, undefined);
       expect(result).toEqual([mockProduct]);
     });
 
