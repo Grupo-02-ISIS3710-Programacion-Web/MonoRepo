@@ -2,7 +2,7 @@
 
 import AuthRequiredCard from "@/components/auth/AuthRequiredCard"
 import PremiumCardForm from "@/components/suscripcion/PremiumCardForm"
-import { getPremiumStatus } from "@/lib/api-client"
+import { getPremiumStatus, chargeAllSubscriptions } from "@/lib/api-client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -52,6 +52,13 @@ export default function SuscripcionPage() {
   const { user, isReady } = useAuthSession()
   const [pageState, setPageState] = useState<PageState>("loading")
   const [error, setError] = useState<string | null>(null)
+  const [charging, setCharging] = useState(false)
+  const [chargeResult, setChargeResult] = useState<{
+    total: number
+    charged: number
+    failed: number
+    details?: Array<{ userId: string; status: string; charged: boolean; error?: string }>
+  } | null>(null)
 
   useEffect(() => {
     if (!isReady) return
@@ -79,6 +86,24 @@ export default function SuscripcionPage() {
   if (!user) {
     return <AuthRequiredCard redirectPath="/suscripcion" />
   }
+
+  const handleChargeAll = useCallback(async () => {
+    setCharging(true)
+    setChargeResult(null)
+    try {
+      const result = await chargeAllSubscriptions()
+      setChargeResult(result)
+    } catch (err: any) {
+      setChargeResult({
+        total: 0,
+        charged: 0,
+        failed: 0,
+        details: [{ userId: "", status: "ERROR", charged: false, error: err.message }],
+      })
+    } finally {
+      setCharging(false)
+    }
+  }, [])
 
   const handleSuccess = useCallback(() => {
     setPageState("success")
@@ -114,6 +139,55 @@ export default function SuscripcionPage() {
             <Button asChild>
               <Link href="/">{t("goHome")}</Link>
             </Button>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="rounded-xl border border-border bg-card p-5 text-left space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">Cobro mensual manual</h2>
+            <p className="text-xs text-muted-foreground">
+              Procesa el cobro mensual a todas las suscripciones activas.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleChargeAll}
+              disabled={charging}
+              className="w-full"
+            >
+              {charging ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cobrando…</>
+              ) : (
+                "Cobrar mensualidad"
+              )}
+            </Button>
+
+            {chargeResult && (
+              <div className="space-y-2 pt-1 text-sm">
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                  <span>Cobradas: <strong className="text-foreground">{chargeResult.charged}</strong></span>
+                  <span>Fallidas: <strong className="text-foreground">{chargeResult.failed}</strong></span>
+                  <span>Total: <strong className="text-foreground">{chargeResult.total}</strong></span>
+                </div>
+                {chargeResult.details && chargeResult.details.length > 0 && (
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {chargeResult.details.map((d, i) => (
+                      <div
+                        key={i}
+                        className={`text-xs px-2 py-1 rounded ${
+                          d.charged
+                            ? "bg-green-50 text-green-700"
+                            : "bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {d.charged ? "✓" : "✗"} {d.userId.slice(-8)} — {d.status}
+                        {d.error && <span className="block opacity-80">— {d.error}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

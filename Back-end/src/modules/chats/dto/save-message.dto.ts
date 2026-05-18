@@ -2,27 +2,27 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SaveMessageDto {
   @ApiProperty({
-    description: 'Message role',
+    description: 'Rol del mensaje',
     enum: ['user', 'assistant'],
     example: 'user',
   })
   role: string;
 
   @ApiProperty({
-    description: 'Message content',
-    example: 'What routine should I use for oily skin?',
+    description: 'Contenido del mensaje',
+    example: '¿Qué rutina debo usar para piel grasa?',
   })
   content: string;
 
   @ApiProperty({
-    description: 'Recommended products (only for assistant messages)',
+    description: 'Productos recomendados (solo para mensajes del asistente)',
     required: false,
     example: [
       {
         productId: '69f8832d56dcaa1b4eb44a30',
-        reason: 'Controls excess oil without drying',
+        reason: 'Controla el exceso de grasa sin resecar',
         otherAlternatives: [
-          { id: '69f8832d56dcaa1b4eb44a27', reason: 'Gentle alternative' },
+          { id: '69f8832d56dcaa1b4eb44a27', reason: 'Alternativa suave' },
         ],
       },
     ],
@@ -34,7 +34,7 @@ export class SaveMessageDto {
   }[];
 
   @ApiProperty({
-    description: 'Draft update suggestion',
+    description: 'Sugerencia de actualización del borrador',
     required: false,
   })
   draftUpdate?: {

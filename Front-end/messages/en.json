@@ -223,6 +223,12 @@
         "badge": "AI-assisted routine",
         "title": "Create a routine by chatting with AI",
         "description": "Describe what you want to achieve, refine the draft in real time, and select products that already exist inside Skin4All.",
+        "premiumRequired": {
+            "title": "Premium Feature",
+            "description": "AI-powered routine creation is an exclusive feature for Premium users. Subscribe to unlock all advanced features.",
+            "goToPremium": "Go Premium",
+            "backToCommunity": "Back to community"
+        },
         "headerActions": {
             "manualBuilder": "Open manual builder",
             "suggestions": "View suggestions"

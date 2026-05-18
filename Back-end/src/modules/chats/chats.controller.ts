@@ -16,7 +16,7 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { SaveMessageDto } from './dto/save-message.dto';
 import { UpdateDraftDto, UpdateFocusAreasDto } from './dto/update-draft.dto';
 
-@ApiTags('AI Chats')
+@ApiTags('Chats IA')
 @Controller('ai/chats')
 export class ChatsController {
   private readonly logger = new Logger(ChatsController.name);
@@ -24,11 +24,11 @@ export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new AI chat session' })
+  @ApiOperation({ summary: 'Crear una nueva sesión de chat con IA' })
   @ApiBody({ type: CreateChatDto })
   @ApiResponse({
     status: 201,
-    description: 'Chat created',
+    description: 'Chat creado',
     schema: { example: { chatId: '69f8832d56dcaa1b4eb44a30' } },
   })
   async create(@Body() dto: CreateChatDto) {
@@ -47,15 +47,15 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: 'Error creating chat', error: error.message },
+        { message: 'Error al crear el chat', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all chats for a user' })
-  @ApiResponse({ status: 200, description: 'List of chats' })
+  @ApiOperation({ summary: 'Listar todos los chats de un usuario' })
+  @ApiResponse({ status: 200, description: 'Lista de chats' })
   async findByUser(@Query('userId') userId: string) {
     this.logger.log(`Solicitud recibida: GET /ai/chats - Usuario ${userId}`);
     if (!userId) {
@@ -72,15 +72,15 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: 'Error fetching chats', error: error.message },
+        { message: 'Error al obtener los chats', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Get(':chatId')
-  @ApiOperation({ summary: 'Get a chat by ID' })
-  @ApiResponse({ status: 200, description: 'Chat with full state' })
+  @ApiOperation({ summary: 'Obtener un chat por ID' })
+  @ApiResponse({ status: 200, description: 'Chat con estado completo' })
   async findById(
     @Param('chatId') chatId: string,
     @Query('userId') userId: string,
@@ -102,16 +102,16 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: error.message || 'Chat not found' },
+        { message: error.message || 'Chat no encontrado' },
         HttpStatus.NOT_FOUND,
       );
     }
   }
 
   @Post(':chatId/messages')
-  @ApiOperation({ summary: 'Append a message to the chat' })
+  @ApiOperation({ summary: 'Agregar un mensaje al chat' })
   @ApiBody({ type: SaveMessageDto })
-  @ApiResponse({ status: 201, description: 'Message saved' })
+  @ApiResponse({ status: 201, description: 'Mensaje guardado' })
   async saveMessage(
     @Param('chatId') chatId: string,
     @Query('userId') userId: string,
@@ -139,16 +139,16 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: error.message || 'Error saving message' },
+        { message: error.message || 'Error al guardar el mensaje' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Patch(':chatId/draft')
-  @ApiOperation({ summary: 'Update the routine draft in the chat' })
+  @ApiOperation({ summary: 'Actualizar el borrador de rutina en el chat' })
   @ApiBody({ type: UpdateDraftDto })
-  @ApiResponse({ status: 200, description: 'Draft updated' })
+  @ApiResponse({ status: 200, description: 'Borrador actualizado' })
   async updateDraft(
     @Param('chatId') chatId: string,
     @Query('userId') userId: string,
@@ -177,16 +177,16 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: error.message || 'Error updating draft' },
+        { message: error.message || 'Error al actualizar el borrador' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Patch(':chatId/focus-areas')
-  @ApiOperation({ summary: 'Update selected focus areas' })
+  @ApiOperation({ summary: 'Actualizar áreas de enfoque seleccionadas' })
   @ApiBody({ type: UpdateFocusAreasDto })
-  @ApiResponse({ status: 200, description: 'Focus areas updated' })
+  @ApiResponse({ status: 200, description: 'Áreas de enfoque actualizadas' })
   async updateFocusAreas(
     @Param('chatId') chatId: string,
     @Query('userId') userId: string,
@@ -213,7 +213,7 @@ export class ChatsController {
         error.stack,
       );
       throw new HttpException(
-        { message: error.message || 'Error updating focus areas' },
+        { message: error.message || 'Error al actualizar las áreas de enfoque' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

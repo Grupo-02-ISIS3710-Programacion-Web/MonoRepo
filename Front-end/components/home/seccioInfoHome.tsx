@@ -18,7 +18,7 @@ export default function SeccionInfoHome() {
           {t("badge")}
         </span>
 
-        <h1 className="mt-4 text-5xl font-bold leading-tight text-foreground">
+        <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-foreground">
           {t("title1")} <br />
           <span className="text-primary">{t("title2")}</span> {t("title3")}
         </h1>
@@ -63,9 +63,9 @@ export default function SeccionInfoHome() {
         <Image
           src="https://bebeautycol.com/cdn/shop/products/image_33008b22-795b-41a9-bc5f-cbcc31a1f602_1024x1024.jpg?v=1704781533"
           alt="Productos de skincare"
-          width={505}
-          height={300}
-          className="h-auto w-100 rounded-2xl object-cover shadow-lg sm:w-128 md:w-auto"
+          width={600}
+          height={600}
+          className="h-auto w-full max-w-lg lg:max-w-xl rounded-2xl object-cover shadow-lg"
           unoptimized={true}
         />
 

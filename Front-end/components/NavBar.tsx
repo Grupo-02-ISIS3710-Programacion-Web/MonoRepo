@@ -268,7 +268,7 @@ export function NavBarMobile({
                         </Button>
                     </SheetTrigger>
 
-                    <SheetContent side="left" className="w-72 flex flex-col">
+                    <SheetContent side="left" className="w-[85vw] sm:w-72 flex flex-col">
                         <SheetHeader>
                             <SheetTitle>{t("menuTitle")}</SheetTitle>
                         </SheetHeader>

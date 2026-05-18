@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateChatDto {
-  @ApiProperty({ description: 'User ID', example: 'u1' })
+  @ApiProperty({ description: 'ID del usuario', example: 'u1' })
   userId: string;
 
   @ApiProperty({
-    description: 'Selected focus area IDs',
+    description: 'IDs de áreas de enfoque seleccionadas',
     example: ['hydration', 'barrier'],
   })
   selectedFocusAreaIds?: string[];

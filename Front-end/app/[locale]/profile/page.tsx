@@ -130,9 +130,9 @@ export default function Profile() {
 
     return (
         <div>
-            <div className="grid grid-cols-1 px-15 py-10 md:grid-cols-25 gap-y-10 md:gap-10 md:px-35 md:py-15 min-h-screen">
+            <div className="grid grid-cols-1 px-4 py-8 md:grid-cols-12 gap-6 md:px-8 md:py-12 min-h-screen">
 
-                <div className="col-span-6">
+                <div className="col-span-12 md:col-span-4">
                     <UserInfo
                         name={user.nombre}
                         city={user.ciudad}
@@ -144,10 +144,10 @@ export default function Profile() {
                     />
                 </div>
 
-                <div className="flex flex-col col-span-19 h-full gap-5">
+                <div className="flex flex-col col-span-12 md:col-span-8 h-full gap-5">
 
                     <div>
-                        <div className="flex flex-col rounded-2xl border border-gray-200 overflow-hidden h-full">
+                        <div className="flex flex-col rounded-2xl border border-border overflow-visible h-full">
 
 
 
@@ -161,7 +161,7 @@ export default function Profile() {
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
                                             className={`relative flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition
-                                            ${isActive ? "text-primary" : "text-gray-500 hover:text-gray-700"}`}
+                                            ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                                         >
                                             <Icon
                                                 size={16}

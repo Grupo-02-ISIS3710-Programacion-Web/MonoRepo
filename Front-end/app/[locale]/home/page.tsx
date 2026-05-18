@@ -37,12 +37,12 @@ export default function Home() {
 
     <div className="">
       {/* Informacion */}
-      <div className="max-w-7xl  mx-auto py-20">
+      <div className="max-w-7xl mx-auto py-8 sm:py-12 lg:py-20">
         <SeccionInfoHome />
       </div>
 
       {/* Productos */}
-      <div className="py-20 bg-secondary/30">
+      <div className="py-8 sm:py-12 lg:py-20 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6">
 
           <div className="flex justify-between items-end mb-10">

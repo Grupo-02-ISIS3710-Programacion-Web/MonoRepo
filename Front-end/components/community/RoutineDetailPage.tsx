@@ -273,10 +273,10 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                             <img
                               src={productImage}
                               alt={product?.name ?? t("unknownProduct")}
-                              className="h-48 w-full rounded-lg object-cover md:h-32 md:w-32 md:min-w-32"
+                              className="h-32 w-full rounded-lg object-cover sm:h-48 md:h-32 md:w-32 md:min-w-32"
                             />
                           ) : (
-                            <div className="flex h-48 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground md:h-32 md:w-32 md:min-w-32">
+                            <div className="flex h-32 w-full items-center justify-center rounded-lg bg-muted text-sm font-medium text-muted-foreground sm:h-48 md:h-32 md:w-32 md:min-w-32">
                               {t("noImage")}
                             </div>
                           )}

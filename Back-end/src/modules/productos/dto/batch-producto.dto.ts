@@ -2,13 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class BatchProductoDto {
   @ApiProperty({
-    description: 'Array of product IDs to fetch',
+    description: 'Arreglo de IDs de productos a obtener',
     example: ['69f8832d56dcaa1b4eb44a30'],
   })
   productIds: string[];
 
   @ApiProperty({
-    description: 'Include the embedding vector in the response (default: false)',
+    description: 'Incluir el vector de embedding en la respuesta (por defecto: false)',
     required: false,
     default: false,
   })

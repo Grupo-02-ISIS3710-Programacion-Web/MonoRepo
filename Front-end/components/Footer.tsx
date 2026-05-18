@@ -24,7 +24,7 @@ export default async function Footer({ locale }: FooterProps) {
     return (
         <footer className="border-t border-border bg-muted/35">
             <div className="mx-auto max-w-7xl px-4 py-12 md:px-8 md:py-14">
-                <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:gap-10 md:grid-cols-2 lg:grid-cols-3">
                     <section>
                         <Link href="/" className="inline-flex items-center gap-2 text-foreground">
                             <Image src="/skin4all_logo.svg" alt="Skin4All logo" width={20} height={20} />

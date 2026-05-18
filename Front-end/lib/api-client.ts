@@ -424,6 +424,22 @@ export async function cancelSubscription(paymentSourceId: number): Promise<{ mes
   });
 }
 
+export async function chargeAllSubscriptions(): Promise<{
+  total: number;
+  charged: number;
+  failed: number;
+  details: Array<{
+    userId: string;
+    paymentSourceId: number;
+    reference: string;
+    status: string;
+    charged: boolean;
+    error?: string;
+  }>;
+}> {
+  return apiFetch('/suscripciones/charge-all', { method: 'POST' });
+}
+
 export async function getMerchantInfo(): Promise<{
   presigned_acceptance: { acceptance_token: string; permalink: string };
   presigned_personal_data_auth: { acceptance_token: string; permalink: string };

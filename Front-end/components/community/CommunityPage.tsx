@@ -290,7 +290,7 @@ export default function CommunityPage() {
   const MostDiscussedList = () => mostDiscussed.map(topic => <Link key={topic.id} href={`/routine/detail/${topic.id}`} className="block rounded-lg px-2 py-1.5 transition hover:bg-muted"><p className="font-bold line-clamp-1">{topic.title}</p><p className="text-xs text-muted-foreground">{t("commentsCount", { count: topic.comments })} • {topic.skinTypeTag}</p></Link>);
 
   return (
-    <main className="min-h-screen bg-background pb-24">
+    <main className="min-h-screen bg-background pb-16 lg:pb-24">
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         {/* Desktop */}
         <div className="hidden gap-6 lg:grid lg:grid-cols-[240px_minmax(0,1fr)_280px]">
@@ -303,7 +303,7 @@ export default function CommunityPage() {
           </aside>
 
           <section className="space-y-4">
-            <div className="flex items-end justify-between"><div><h1 className="text-4xl font-extrabold">{t("discussionsTitle")}</h1><p className="text-sm text-muted-foreground">{t("discussionsSubtitle")}</p></div></div>
+            <div className="flex items-end justify-between"><div><h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">{t("discussionsTitle")}</h1><p className="text-sm text-muted-foreground">{t("discussionsSubtitle")}</p></div></div>
             <div className="flex gap-2"><TabButtons /></div>
             <div><PostsList size="lg" /></div>
           </section>

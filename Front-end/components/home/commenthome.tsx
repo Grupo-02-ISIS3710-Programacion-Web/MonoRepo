@@ -78,13 +78,13 @@ export default function CommentHome() {
 
         <div className="flex flex-col bg-muted/50">
 
-            <div className="max-w-7xl mx-auto px-5 mt-23 mb-24 grid md:grid-cols-2 gap-14 items-start">
+            <div className="max-w-7xl mx-auto px-5 mt-8 mb-10 grid md:grid-cols-2 gap-8 md:gap-14 items-start">
 
                 <div>
                     <h2 className="text-3xl font-bold text-foreground mb-4">
                         {t("title")}
                     </h2>
-                    <p className="text-muted-foreground mb-8 max-w-md">
+                    <p className="text-muted-foreground mb-8 max-w-lg">
                         {t("description")}
                     </p>
                     <ul className="space-y-5 mb-8 py-5">
@@ -129,15 +129,15 @@ export default function CommentHome() {
             </div>
 
 
-            <div className="min-h-foreground flex items-center bg-primary mt-5 py-20">
+            <div className="min-h-foreground flex items-center bg-primary mt-5 py-10 sm:py-16 lg:py-20">
 
                 <div className="max-w-4xl mx-auto px-6 text-center w-full">
 
-                    <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-8 leading-tight">
+                    <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-primary-foreground mb-6 md:mb-8 leading-tight">
                         {t("ctaTitle")}
                     </h2>
 
-                    <p className="text-primary-foreground text-xl mb-12 max-w-2xl mx-auto">
+                    <p className="text-primary-foreground text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 lg:mb-12 max-w-2xl mx-auto">
                         {t("ctaDescription")}
                     </p>
 
@@ -146,7 +146,7 @@ export default function CommentHome() {
                         <input
                             type="email"
                             placeholder={t("emailPlaceholder")}
-                            className="w-full max-w-md px-8 py-3 bg-card rounded-full border-none outline-none text-muted-foreground shadow-md"
+                            className="w-full max-w-md px-4 sm:px-8 py-3 bg-card rounded-full border-none outline-none text-muted-foreground shadow-md"
                         />
 
                         <button className="flex p-5 bg-foreground text-background px-12 py-3 rounded-full font-bold hover:scale-105 transition-transform shadow-lg ">

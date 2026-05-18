@@ -199,6 +199,101 @@ export class SuscripcionesService {
     return { isPremium: suscripcion.active };
   }
 
+  async chargeAll() {
+    const activeSubscriptions = await this.suscripcionModel.find({ active: true });
+    const results: any[] = [];
+
+    for (const sub of activeSubscriptions) {
+      const reference = `RENEW-${Date.now()}-${sub._id.toString().slice(-8)}`;
+      const amountInCents = (sub.transactionAmount || 20000) * 100;
+      const currency = sub.currencyId || 'COP';
+
+      const integrityStr = `${reference}${amountInCents}${currency}${process.env.WOMPI_INTEGRITY_SECRET || ''}`;
+      const signature = crypto.createHash('sha256').update(integrityStr).digest('hex');
+
+      try {
+        const response = await firstValueFrom(
+          this.httpService.post<any>(
+            `${this.wompiApiUrl}/transactions`,
+            {
+              amount_in_cents: amountInCents,
+              currency,
+              customer_email: sub.payerEmail,
+              payment_method: { installments: 1 },
+              reference,
+              signature,
+              payment_source_id: sub.paymentSourceId,
+            },
+            { headers: this.getPrivateHeaders() },
+          ),
+        );
+
+        const transactionData = response.data.data;
+        let finalStatus = transactionData.status;
+
+        if (finalStatus === 'PENDING') {
+          for (let i = 0; i < 10; i++) {
+            await new Promise((r) => setTimeout(r, 500));
+            try {
+              const statusRes = await firstValueFrom(
+                this.httpService.get<any>(
+                  `${this.wompiApiUrl}/transactions/${transactionData.id}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${process.env.WOMPI_PUBLIC_KEY || ''}`,
+                    },
+                  },
+                ),
+              );
+              finalStatus = statusRes.data.data.status;
+              if (['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'].includes(finalStatus)) break;
+            } catch {
+              break;
+            }
+          }
+        }
+
+        const charged = finalStatus === 'APPROVED';
+
+        if (charged) {
+          await this.suscripcionModel.findByIdAndUpdate(sub._id, {
+            wompiTransactionId: transactionData.id,
+            lastChargedAt: new Date(),
+            reference,
+          });
+        }
+
+        results.push({
+          userId: sub.userId.toString(),
+          paymentSourceId: sub.paymentSourceId,
+          reference,
+          status: finalStatus,
+          charged,
+        });
+      } catch (error) {
+        const wompiError = error.response?.data;
+        results.push({
+          userId: sub.userId.toString(),
+          paymentSourceId: sub.paymentSourceId,
+          reference,
+          status: 'ERROR',
+          charged: false,
+          error: wompiError?.message || error.message,
+        });
+      }
+    }
+
+    const charged = results.filter((r) => r.charged).length;
+    const failed = results.filter((r) => !r.charged).length;
+
+    return {
+      total: results.length,
+      charged,
+      failed,
+      details: results,
+    };
+  }
+
   async cancel(paymentSourceId: number) {
     try {
       await firstValueFrom(

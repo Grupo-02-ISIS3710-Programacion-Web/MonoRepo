@@ -37,7 +37,7 @@ async function bootstrap() {
       filter: true,
       showRequestDuration: true,
     },
-    customSiteTitle: 'Skin4All API Docs',
+    customSiteTitle: 'Documentación Skin4All API',
     customCss: '.swagger-ui .topbar { background-color: #4caf50; }',
   });
 

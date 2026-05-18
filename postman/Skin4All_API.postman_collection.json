@@ -1,0 +1,1636 @@
+{
+  "info": {
+    "name": "Skin4All API",
+    "description": "API para la plataforma de rutinas de cuidado de la piel Skin4All. Autenticación: Bearer JWT (configurado mediante el script de prueba de Login). Primero ejecutar Seed: POST /seed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Registrar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('La respuesta tiene token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('token');",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sofía Navarro\",\n  \"fechaNacimiento\": \"1995-06-15\",\n  \"email\": \"sofia@skin4all.com\",\n  \"contrasenia\": \"skin4all123\",\n  \"confirmarContrasenia\": \"skin4all123\",\n  \"tipoPiel\": \"mixta\",\n  \"comoEnteroDeNosotros\": \"Instagram\",\n  \"probadoSkinCare\": true,\n  \"ciudad\": \"Madrid, España\",\n  \"avatarUrl\": \"https://i.pravatar.cc/150?u=sofia\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Iniciar Sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('La respuesta tiene usuario y token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('token');",
+                  "  pm.expect(json).to.have.property('user');",
+                  "  pm.expect(json.user).to.have.property('_id');",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json.user._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sofia@skin4all.com\",\n  \"contrasenia\": \"skin4all123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Perfil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un objeto de usuario', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json).to.have.property('email');",
+                  "  pm.expect(json).to.have.property('nombre');",
+                  "  pm.expect(json).to.not.have.property('contrasenia');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Obtener Todos los Usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  if (json.length > 0) {",
+                  "    pm.expect(json[0]).to.have.property('_id');",
+                  "    pm.expect(json[0]).to.have.property('nombre');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es el usuario solicitado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Usuario actualizado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json.ciudad).to.eql('Bogotá, Colombia');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ciudad\": \"Bogotá, Colombia\",\n  \"bio\": \"Amante del skincare natural\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Usuario eliminado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json.message).to.include('eliminado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Crear Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Producto creado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json).to.have.property('name');",
+                  "  pm.collectionVariables.set('productId', json._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Hydrating Serum", "type": "text" },
+                { "key": "brand", "value": "La Roche-Posay", "type": "text" },
+                { "key": "description", "value": "A lightweight hydrating serum with hyaluronic acid.", "type": "text" },
+                { "key": "skin_type", "value": "mixta,seca", "type": "text" },
+                { "key": "product_type", "value": "serum", "type": "text" },
+                { "key": "primary_category", "value": "hidratacion", "type": "text" },
+                { "key": "ingredients", "value": "hyaluronic-acid,ceramida-3", "type": "text" },
+                { "key": "images", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  if (json.length > 0) {",
+                  "    pm.expect(json[0]).to.have.property('id');",
+                  "    pm.expect(json[0]).to.have.property('name');",
+                  "    pm.collectionVariables.set('productId', json[0].id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Productos (filtrados)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos?category=hidratacion&search=hydrat",
+              "host": ["{{base_url}}"],
+              "path": ["productos"],
+              "query": [
+                { "key": "category", "value": "hidratacion" },
+                { "key": "search", "value": "hydrat" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Catálogos de Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene catálogos', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('skin_type');",
+                  "  pm.expect(json).to.have.property('product_type');",
+                  "  pm.expect(json).to.have.property('category');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos/catalogos",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "catalogos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Producto por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es el producto solicitado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.expect(json.id).to.eql(pm.collectionVariables.get('productId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Lote de Productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productIds\": [\"{{productId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/productos/batch",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "batch"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Producto actualizado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json.name).to.eql('Hydrating Serum Pro');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hydrating Serum Pro\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/productos/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Producto eliminado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json.message).to.include('eliminado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "{{productId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rutinas",
+      "item": [
+        {
+          "name": "Crear Rutina",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Rutina creada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json).to.have.property('name');",
+                  "  pm.expect(json).to.have.property('steps');",
+                  "  pm.collectionVariables.set('routineId', json._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"name\": \"Mi rutina facial\",\n  \"description\": \"Rutina completa para piel mixta\",\n  \"type\": \"pm\",\n  \"skinType\": \"mixta\",\n  \"steps\": [\n    {\n      \"id\": \"step-1\",\n      \"name\": \"Limpiador\",\n      \"order\": 1,\n      \"productId\": \"{{productId}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todas las Rutinas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene un arreglo de rutinas', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('routines');",
+                  "  pm.expect(json).to.have.property('total');",
+                  "  pm.expect(json).to.have.property('page');",
+                  "  pm.expect(json.routines).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Rutinas por Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene rutinas', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('routines');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "user", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Rutina por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es la rutina solicitada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Rutina",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rutina actualizada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json.name).to.eql('Mi rutina mejorada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mi rutina mejorada\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}"]
+            }
+          }
+        },
+        {
+          "name": "Votar Positivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Voto positivo agregado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('upvotes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/upvote",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "upvote"]
+            }
+          }
+        },
+        {
+          "name": "Votar Negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Voto negativo agregado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('downvotes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/downvote",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "downvote"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Voto Positivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Voto positivo eliminado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('upvotes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/remove-upvote",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "remove-upvote"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Voto Negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Voto negativo eliminado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('downvotes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/remove-downvote",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "remove-downvote"]
+            }
+          }
+        },
+        {
+          "name": "Incrementar Visualización",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Visualización incrementada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('views');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/view",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "view"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Conteo de Votos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene conteo de votos', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('upvotes');",
+                  "  pm.expect(json).to.have.property('downvotes');",
+                  "  pm.expect(json).to.have.property('views');",
+                  "  pm.expect(json.upvotes).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/votes",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "votes"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Rutina (lógico)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rutina eliminada (lógico)', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('deleted');",
+                  "  pm.expect(json.deleted).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Rutina (físico)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rutina eliminada (físico)', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rutinas/{{routineId}}/hardDelete",
+              "host": ["{{base_url}}"],
+              "path": ["rutinas", "{{routineId}}", "hardDelete"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comentarios",
+      "item": [
+        {
+          "name": "Crear Comentario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Comentario creado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json).to.have.property('comment');",
+                  "  pm.collectionVariables.set('commentId', json._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"productId\": \"{{productId}}\",\n  \"comment\": \"Excelente producto para piel mixta\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comentarios",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Comentarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comentarios",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Comentario por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es el comentario solicitado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comentarios/{{commentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios", "{{commentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Comentarios por Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  if (json.length > 0) {",
+                  "    pm.expect(json[0]).to.have.property('comment');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comentarios/producto/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios", "producto", "{{productId}}"]
+            }
+          }
+        },
+        {
+          "name": "Votar Comentario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Voto positivo agregado al comentario', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('upvotes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comentarios/{{commentId}}/upvote",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios", "{{commentId}}", "upvote"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Comentario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Comentario actualizado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json.comment).to.include('actualizado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Comentario actualizado - excelente producto\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comentarios/{{commentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios", "{{commentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Comentario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Comentario eliminado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comentarios/{{commentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["comentarios", "{{commentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA",
+      "item": [
+        {
+          "name": "Chatear con IA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene respuesta de la IA', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('response');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Recomiéndame una rutina para piel mixta\"\n    }\n  ],\n  \"routineContext\": {\n    \"skinType\": \"mixta\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/agent/chat",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "agent", "chat"]
+            }
+          }
+        },
+        {
+          "name": "Sincronizar Embeddings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Embeddings sincronizados', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json).to.have.property('synced');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/products/sync-embeddings",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "products", "sync-embeddings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sesiones de Chat",
+      "item": [
+        {
+          "name": "Crear Sesión de Chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Sesión de chat creada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('chatId');",
+                  "  pm.collectionVariables.set('chatId', json.chatId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chats",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Chats del Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es un arreglo', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/chats?userId={{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Chat por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene datos del chat', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('_id');",
+                  "  pm.expect(json).to.have.property('messages');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/chats/{{chatId}}?userId={{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats", "{{chatId}}"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar Mensaje",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Mensaje guardado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('messages');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"user\",\n  \"content\": \"¿Qué productos recomiendas para hidratación?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chats/{{chatId}}/messages?userId={{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats", "{{chatId}}", "messages"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Borrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Borrador actualizado', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('routineDraft');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rutina IA\",\n  \"description\": \"Generada con IA\",\n  \"type\": \"am\",\n  \"skinType\": \"mixta\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chats/{{chatId}}/draft?userId={{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats", "{{chatId}}", "draft"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Áreas de Enfoque",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Áreas de enfoque actualizadas', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('selectedFocusAreaIds');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selectedFocusAreaIds\": [\"focus-area-1\", \"focus-area-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/chats/{{chatId}}/focus-areas?userId={{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "chats", "{{chatId}}", "focus-areas"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Datos de Prueba",
+      "item": [
+        {
+          "name": "Poblar Base de Datos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Datos de prueba insertados', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json.message).to.include('insertados');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/seed",
+              "host": ["{{base_url}}"],
+              "path": ["seed"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subir Archivos",
+      "item": [
+        {
+          "name": "Subir Avatar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('URL del avatar devuelta', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('url');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/avatar",
+              "host": ["{{base_url}}"],
+              "path": ["upload", "avatar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suscripciones",
+      "item": [
+        {
+          "name": "Obtener Información del Comercio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene datos del comercio', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/suscripciones/merchant-info",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones", "merchant-info"]
+            }
+          }
+        },
+        {
+          "name": "Crear Suscripción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Suscripción creada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status');",
+                  "  pm.expect(json).to.have.property('paymentSourceId');",
+                  "  pm.collectionVariables.set('paymentSourceId', String(json.paymentSourceId));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"tok_test_12345\",\n  \"acceptanceToken\": \"acc_test_12345\",\n  \"acceptPersonalAuth\": \"pda_test_12345\",\n  \"payerEmail\": \"sofia@skin4all.com\",\n  \"userId\": \"{{userId}}\",\n  \"transactionAmount\": 20000,\n  \"currencyId\": \"COP\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/suscripciones",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Estado de Suscripción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta tiene estado premium', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('isPremium');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/suscripciones/status/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones", "status", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar Suscripción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Suscripción cancelada', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json.message).to.include('cancelada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/suscripciones/{{paymentSourceId}}",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones", "{{paymentSourceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Webhook",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Webhook recibido', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('received');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transaction.updated\",\n  \"data\": {\n    \"transaction\": {\n      \"id\": \"txn-test-123\",\n      \"status\": \"APPROVED\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/suscripciones/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones", "webhook"]
+            }
+          }
+        },
+        {
+          "name": "Cobrar Todas las Suscripciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Resultado del cobro devuelto', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('total');",
+                  "  pm.expect(json).to.have.property('charged');",
+                  "  pm.expect(json).to.have.property('failed');",
+                  "  pm.expect(json).to.have.property('details');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/suscripciones/charge-all",
+              "host": ["{{base_url}}"],
+              "path": ["suscripciones", "charge-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Salud",
+      "item": [
+        {
+          "name": "Hola Mundo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estado es 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La respuesta es Hola Mundo', () => {",
+                  "  pm.expect(pm.response.text()).to.include('Hello');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -226,6 +226,12 @@
         "badge": "Rutina asistida por IA",
         "title": "Crea una rutina conversando con IA",
         "description": "Describe lo que buscas, ajusta el borrador en tiempo real y selecciona productos que ya existen dentro de Skin4All.",
+        "premiumRequired": {
+            "title": "Función Premium",
+            "description": "La creación de rutinas con IA es una función exclusiva para usuarios Premium. Suscríbete para acceder a todas las funciones avanzadas.",
+            "goToPremium": "Ir a Premium",
+            "backToCommunity": "Volver a la comunidad"
+        },
         "headerActions": {
             "manualBuilder": "Abrir constructor manual"
         },

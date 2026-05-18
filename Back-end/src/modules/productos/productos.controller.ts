@@ -99,7 +99,7 @@ export class ProductosController {
     required: false,
     type: Boolean,
     description:
-      'Include the embedding vector in the response (default: false)',
+      'Incluir el vector de embedding en la respuesta (por defecto: false)',
   })
   findAll(
     @Query() query: FindProductosQueryDto,
@@ -148,7 +148,7 @@ export class ProductosController {
     required: false,
     type: Boolean,
     description:
-      'Include the embedding vector in the response (default: false)',
+      'Incluir el vector de embedding en la respuesta (por defecto: false)',
   })
   findOne(
     @Param('id', ParseObjectIdPipe) id: string,
@@ -192,7 +192,7 @@ export class ProductosController {
     type: BatchProductoDto,
     examples: {
       ejemplo: {
-        summary: 'Fetch multiple products by ID',
+        summary: 'Obtener múltiples productos por ID',
         value: {
           productIds: ['69f8832d56dcaa1b4eb44a30', '69f8832d56dcaa1b4eb44a27'],
         },

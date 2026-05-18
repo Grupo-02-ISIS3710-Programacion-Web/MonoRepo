@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateDraftDto {
-  @ApiProperty({ example: 'My morning routine' })
+  @ApiProperty({ example: 'Mi rutina matutina' })
   name?: string;
 
-  @ApiProperty({ example: 'A 4-step routine for combination skin' })
+  @ApiProperty({ example: 'Rutina de 4 pasos para piel mixta' })
   description?: string;
 
   @ApiProperty({ enum: ['am', 'pm'], example: 'am' })
@@ -18,10 +18,10 @@ export class UpdateDraftDto {
     example: [
       {
         id: 'step1',
-        name: 'Cleanser',
+        name: 'Limpiador',
         order: 0,
         productId: '69f8832d56dcaa1b4eb44a30',
-        notes: 'Apply on damp skin',
+        notes: 'Aplicar sobre piel húmeda',
       },
     ],
   })
@@ -35,6 +35,6 @@ export class UpdateDraftDto {
 }
 
 export class UpdateFocusAreasDto {
-  @ApiProperty({ example: ['hydration', 'barrier'] })
+  @ApiProperty({ example: ['hidratacion', 'barrera'] })
   selectedFocusAreaIds: string[];
 }

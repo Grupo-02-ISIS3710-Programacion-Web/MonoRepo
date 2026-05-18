@@ -37,6 +37,11 @@ export class SuscripcionesController {
     return this.suscripcionesService.cancel(paymentSourceId);
   }
 
+  @Post('charge-all')
+  chargeAll() {
+    return this.suscripcionesService.chargeAll();
+  }
+
   @Post('webhook')
   handleWebhook(@Body() body: any) {
     return this.suscripcionesService.handleWebhook(body);

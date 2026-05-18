@@ -49,6 +49,9 @@ export class Suscripcion {
     default: true,
   })
   active: boolean;
+
+  @Prop()
+  lastChargedAt: Date;
 }
 
 export const SuscripcionSchema = SchemaFactory.createForClass(Suscripcion);
