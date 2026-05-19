@@ -70,6 +70,9 @@ export class User {
   @Prop({ type: [Types.ObjectId], ref: 'Rutina', default: [] })
   createdRoutineIds: Types.ObjectId[];
 
+  @Prop({ type: [String], default: [] })
+  favoriteProductIds: string[];
+
   @Prop({
     default: 0,
     min: 0,

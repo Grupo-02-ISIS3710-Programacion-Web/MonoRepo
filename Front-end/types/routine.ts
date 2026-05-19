@@ -21,6 +21,7 @@ export interface Routine {
   steps: RoutineStep[];
   comments?: Comment[];
   upvotes?: string[];
+  commentCount?: number;
   downvotes?: string[];
   views?: number;
   deleted?: boolean;

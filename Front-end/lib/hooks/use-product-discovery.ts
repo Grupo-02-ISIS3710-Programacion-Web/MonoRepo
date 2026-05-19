@@ -1,9 +1,9 @@
 "use client";
 
-import { fetchProducts } from "@/lib/api-client";
-import { productsFavorites } from "@/lib/favorites";
+import { fetchProducts, getUserFavorites } from "@/lib/api-client";
 import { Category, Product, SkinType } from "@/types/product";
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { useAuthSession } from "@/lib/hooks/use-auth-session";
 
 type DiscoveryFilters = {
   skinTypes: SkinType[];
@@ -21,14 +21,25 @@ export function useProductDiscovery(
   selectedCategory: Category | "ALL",
   searchQueryParam = ""
 ) {
+  const { user, refreshSession } = useAuthSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [allBrands, setAllBrands] = useState<string[]>([]);
   const [allIngredients, setAllIngredients] = useState<string[]>([]);
   const [filters, setFilters] = useState<DiscoveryFilters>(defaultFilters);
-  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
+  
 
-  // Cada vez que cambian filtros, categoría o búsqueda → llama al backend
+
+  // Cargar favoritos una sola vez
+  useEffect(() => {
+
+    setFavoriteIds(
+      new Set(user?.favoriteProductIds ?? [])
+    );
+
+  }, [user]);
+
   useEffect(() => {
     let ignore = false;
 
@@ -55,39 +66,56 @@ export function useProductDiscovery(
     return () => { ignore = true; };
   }, [selectedCategory, searchQueryParam, filters]);
 
-  const handleFavoriteSelect = useCallback(
-    (productIndex: number) => {
-      const selected = products[productIndex];
-      if (!selected) return;
-      setFavoriteProducts((prev) => {
-        if (prev.some((p) => p.id === selected.id)) return prev;
-        if (!productsFavorites.some((p) => p.id === selected.id))
-          productsFavorites.push(selected);
-        return [...prev, selected];
-      });
-    },
-    [products]
-  );
+  const handleFavoriteSelect = async (productId: string) => {
 
-  const handleFavoriteDeselect = useCallback(
-    (productIndex: number) => {
-      const deselected = products[productIndex];
-      if (!deselected) return;
-      setFavoriteProducts((prev) =>
-        prev.filter((p) => p.id !== deselected.id)
+    try {
+
+      if (!user?.id) return;
+
+      await fetch(
+        `http://localhost:3000/users/${user.id}/favorites/${productId}`,
+        {
+          method: "POST",
+        }
       );
-    },
-    [products]
-  );
+
+      await refreshSession();
+
+    } catch (error) {
+
+      console.error(error);
+    }
+  };
+
+  const handleFavoriteDeselect = async (productId: string) => {
+
+    try {
+
+      if (!user?.id) return;
+
+      await fetch(
+        `http://localhost:3000/users/${user.id}/favorites/${productId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      await refreshSession();
+
+    } catch (error) {
+
+      console.error(error);
+    }
+  };
 
   return {
-    favoriteProducts,
     filters,
     setFilters,
     filteredProducts: products,
     brands: allBrands,
     ingredients: allIngredients,
     isPending,
+    favoriteIds,
     handleFavoriteSelect,
     handleFavoriteDeselect,
   };

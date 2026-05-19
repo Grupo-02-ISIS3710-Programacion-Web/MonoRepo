@@ -103,4 +103,13 @@ export class AuthService {
 
     throw new InternalServerErrorException('Ocurrió un error inesperado');
   }
+
+  async profile(userId: string) {
+
+  const user = await this.userModel
+    .findById(userId)
+    .select('-contrasenia');
+
+  return user;
+}
 }

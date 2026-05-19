@@ -4,22 +4,20 @@ import { Product } from "@/types/product";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import Image from "next/image";
 import StarRating from "./star-rating";
-import { Stack } from "@mui/material";
 import { FlaskConical, Heart, Smile } from "lucide-react";
 import { Button } from "../ui/button";
-import { toLowerCaseAndReplaceSpacesWithHyphens } from "@/lib/string-utils";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useProductFavorite } from "@/lib/hooks/use-product-favorite";
-import { ReactNode, useEffect, useState } from "react";
-
+import { ReactNode } from "react";
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 
 interface ProductCardProps {
     productIndex: number;
     product: Product;
-    onFavoriteSelect?: (productIndex: number) => void;
-    onFavoriteDeselect?: (productIndex: number) => void;
+    isFavorite?: boolean;
+    onFavoriteSelect?: (productId: string) => Promise<void>;
+onFavoriteDeselect?: (productId: string) => Promise<void>; 
     showFavoriteButton?: boolean;
     action?: ReactNode;
     className?: string;
@@ -28,28 +26,24 @@ interface ProductCardProps {
 export function ProductCard({
     productIndex,
     product,
-    onFavoriteSelect = () => undefined,
-    onFavoriteDeselect = () => undefined,
+    isFavorite: isFavoriteProp = false,
+    onFavoriteSelect = async () => undefined,
+onFavoriteDeselect = async () => undefined,
     showFavoriteButton = true,
     action,
     className
 }: ProductCardProps) {
-
     const t = useTranslations("ProductCard");
     const productHref = `/descubrir/${product.id}`;
-
     const { isLoggedIn } = useAuthSession();
+
     const { isFavorite, toggleFavorite } = useProductFavorite({
         product,
         productIndex,
+        isFavorite: isFavoriteProp,
         onFavoriteSelect,
         onFavoriteDeselect,
     });
-
-    
-
-    
-
 
     return (
         <Card className={`p-0 h-full overflow-hidden ${className ?? ""}`}>
@@ -71,7 +65,7 @@ export function ProductCard({
             <CardContent className="pb-5">
                 <div className="flex flex-row items-center justify-between pb-1">
                     <div className="text-primary font-bold">{product.brand}</div>
-                    { showFavoriteButton && isLoggedIn&& (
+                    {showFavoriteButton && isLoggedIn && (
                         <Button
                             variant={isFavorite ? "secondary" : "outline"}
                             size="sm"

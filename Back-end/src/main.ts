@@ -27,6 +27,13 @@ async function bootstrap() {
     )
     .addTag('Productos', 'Endpoints para la gestión de productos de cosmética')
     .addTag('Seed', 'Endpoint para cargar datos de prueba (mocks)')
+    .addTag('Auth', 'Endpoints de autenticación (registro, login, perfil)')
+    .addTag('Usuarios', 'Endpoints para la gestión de usuarios')
+    .addTag('Comentarios', 'Endpoints para la gestión de comentarios')
+    .addTag('Suscripciones', 'Endpoints para la gestión de suscripciones premium')
+    .addTag('Upload', 'Endpoint para subida de archivos (avatares)')
+    .addTag('IA - Rutinas Inteligentes', 'Endpoints de IA para rutinas personalizadas')
+    .addTag('Chats IA', 'Endpoints para sesiones de chat con IA')
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);

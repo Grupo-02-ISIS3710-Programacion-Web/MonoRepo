@@ -56,8 +56,13 @@ export class RutinasService {
     page?: number,
     sort?: 'newest' | 'mostCommented' | 'mostVoted',
   ) {
+
     const pageSize = 20;
-    const pageNum = page ? Math.max(1, page) : 1;
+
+    const pageNum = page
+      ? Math.max(1, page)
+      : 1;
+
     const skip = (pageNum - 1) * pageSize;
 
     this.logger.log(
@@ -65,91 +70,152 @@ export class RutinasService {
     );
 
     try {
-      if (sort === 'mostCommented') {
-        const commentedResults = await this.rutinaModel.aggregate([
-          { $match: { deleted: false } },
-          {
-            $addFields: {
-              commentCount: { $size: { $ifNull: ['$comments', []] } },
-            },
+
+      const basePipeline: any[] = [
+
+        {
+          $match: {
+            deleted: false,
           },
-          { $sort: { commentCount: -1, publishedAt: -1 } },
-          { $skip: skip },
-          { $limit: pageSize },
-        ]);
+        },
 
-        const total = await this.rutinaModel.countDocuments({ deleted: false });
+        {
+          $lookup: {
 
-        this.logger.log(
-          `Rutinas listadas (más comentadas): ${commentedResults.length} de ${total} totales`,
-        );
-        return {
-          routines: commentedResults,
-          total,
-          page: pageNum,
-          pageSize,
-          totalPages: Math.ceil(total / pageSize),
-        };
-      }
+            from: 'comentarios',
 
-      if (sort === 'mostVoted') {
-        const votedResults = await this.rutinaModel.aggregate([
-          { $match: { deleted: false } },
-          {
-            $addFields: {
-              upvoteCount: { $size: { $ifNull: ['$upvotes', []] } },
-              downvoteCount: { $size: { $ifNull: ['$downvotes', []] } },
-              netVotes: {
-                $subtract: [
-                  { $size: { $ifNull: ['$upvotes', []] } },
-                  { $size: { $ifNull: ['$downvotes', []] } },
-                ],
+            let: {
+              routineId: {
+                $toString: '$_id',
               },
             },
+
+            pipeline: [
+
+              {
+                $match: {
+
+                  $expr: {
+
+                    $eq: [
+                      '$rutinaId',
+                      '$$routineId',
+                    ],
+                  },
+                },
+              },
+
+            ],
+
+            as: 'commentsData',
           },
-          { $sort: { netVotes: -1, publishedAt: -1 } },
-          { $skip: skip },
-          { $limit: pageSize },
-        ]);
+        },
 
-        const total = await this.rutinaModel.countDocuments({ deleted: false });
+        {
+          $addFields: {
 
-        this.logger.log(
-          `Rutinas listadas (más votadas): ${votedResults.length} de ${total} totales`,
-        );
-        return {
-          routines: votedResults,
-          total,
-          page: pageNum,
-          pageSize,
-          totalPages: Math.ceil(total / pageSize),
-        };
+            commentCount: {
+              $size: '$commentsData',
+            },
+
+            upvoteCount: {
+              $size: {
+                $ifNull: ['$upvotes', []],
+              },
+            },
+
+            downvoteCount: {
+              $size: {
+                $ifNull: ['$downvotes', []],
+              },
+            },
+
+            netVotes: {
+              $subtract: [
+                {
+                  $size: {
+                    $ifNull: ['$upvotes', []],
+                  },
+                },
+                {
+                  $size: {
+                    $ifNull: ['$downvotes', []],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      if (sort === 'mostCommented') {
+
+        basePipeline.push({
+          $sort: {
+            commentCount: -1,
+            publishedAt: -1,
+          },
+        });
+
+      } else if (sort === 'mostVoted') {
+
+        basePipeline.push({
+          $sort: {
+            netVotes: -1,
+            publishedAt: -1,
+          },
+        });
+
+      } else {
+
+        basePipeline.push({
+          $sort: {
+            publishedAt: -1,
+          },
+        });
       }
 
-      const routines = await this.rutinaModel
-        .find({ deleted: false })
-        .sort({ publishedAt: -1 })
-        .skip(skip)
-        .limit(pageSize)
-        .exec();
+      basePipeline.push(
+        {
+          $skip: skip,
+        },
+        {
+          $limit: pageSize,
+        },
+      );
 
-      const total = await this.rutinaModel.countDocuments({ deleted: false });
+      const routines =
+        await this.rutinaModel.aggregate(basePipeline);
+
+      const total =
+        await this.rutinaModel.countDocuments({
+          deleted: false,
+        });
 
       this.logger.log(
-        `Rutinas listadas (más recientes): ${routines.length} de ${total} totales`,
+        `Rutinas listadas: ${routines.length} de ${total} totales`,
       );
+
       return {
+
         routines,
+
         total,
+
         page: pageNum,
+
         pageSize,
+
         totalPages: Math.ceil(total / pageSize),
       };
+
     } catch (error) {
+
       this.logger.error(
         `Error al listar rutinas: ${error.message}`,
         error.stack,
       );
+
       throw error;
     }
   }

@@ -16,6 +16,7 @@ import { useTranslations, useLocale } from "next-intl"
 import { useAuthSession } from "@/lib/hooks/use-auth-session";
 import { getProtectedRoute } from "@/lib/protected-route";
 import { Routine } from "@/types/routine";
+import { Product } from "@/types/product"
 
 export default function Profile() {
 
@@ -24,7 +25,7 @@ export default function Profile() {
     const locale = useLocale()
     const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn)
     const createAiRoutineHref = getProtectedRoute("/ai-routine", isLoggedIn)
-    const products = getProducts()
+    const [products, setProducts] = useState<Product[]>([])
 
     const [activeTab, setActiveTab] = useState("routine")
     const [searchTerm, setSearchTerm] = useState("")
@@ -44,7 +45,35 @@ export default function Profile() {
     const routine = [
         { id: "am", label: t("morning") },
         { id: "pm", label: t("evening") }
+
+
     ]
+
+    useEffect(() => {
+
+        const loadProducts = async () => {
+
+            try {
+
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/productos`
+                )
+
+                const data = await response.json()
+
+                console.log("PRODUCTS RESPONSE:", data)
+
+                setProducts(data.products || data)
+
+            } catch (error) {
+
+                console.error("ERROR LOADING PRODUCTS:", error)
+            }
+        }
+
+        loadProducts()
+
+    }, [])
 
     useEffect(() => {
         if (!user) {
@@ -90,32 +119,39 @@ export default function Profile() {
         );
     }, [routineDaily, userRoutines]);
 
-    const handleFavoriteSelect = (productIndex: number) => {
-        const selectedProduct = filteredFavorites[productIndex]
-        if (!selectedProduct) {
-            return
-        }
+const handleFavoriteSelect = async (productId: string) => {
 
-        setFavoriteProductIds((currentFavoriteProductIds) => {
-            if (currentFavoriteProductIds.includes(selectedProduct.id)) {
-                return currentFavoriteProductIds
-            }
+    const selectedProduct = filteredFavorites.find(
+        (product) => product.id === productId
+    )
 
-            return [...currentFavoriteProductIds, selectedProduct.id]
-        })
+    if (!selectedProduct) {
+        return
     }
 
-    const handleFavoriteDeselect = (productIndex: number) => {
-        const deselectedProduct = filteredFavorites[productIndex]
-        if (!deselectedProduct) {
-            return
+    setFavoriteProductIds((currentFavoriteProductIds) => {
+
+        if (
+            currentFavoriteProductIds.includes(selectedProduct.id)
+        ) {
+            return currentFavoriteProductIds
         }
 
-        setFavoriteProductIds((currentFavoriteProductIds) =>
-            currentFavoriteProductIds.filter((productId) => productId !== deselectedProduct.id)
+        return [
+            ...currentFavoriteProductIds,
+            selectedProduct.id
+        ]
+    })
+}
+
+const handleFavoriteDeselect = async (productId: string) => {
+
+    setFavoriteProductIds((currentFavoriteProductIds) =>
+        currentFavoriteProductIds.filter(
+            (currentProductId) => currentProductId !== productId
         )
-    }
-
+    )
+}
     useEffect(() => {
         setVisibleCount(ITEMS_PER_PAGE)
     }, [searchTerm])
@@ -279,6 +315,7 @@ export default function Profile() {
                                             key={product.id}
                                             productIndex={index}
                                             product={product}
+                                            isFavorite={true}
                                             onFavoriteSelect={handleFavoriteSelect}
                                             onFavoriteDeselect={handleFavoriteDeselect}
                                         />

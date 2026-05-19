@@ -32,6 +32,18 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
 
   const currentUserId = loggedUser?.id ?? "";
   const comments = routine?.comments ?? [];
+  const [commentsCount, setCommentsCount] = useState(
+    routine?.commentCount ?? 0
+  );
+
+  useEffect(() => {
+
+  setCommentsCount(
+    routine?.commentCount ?? 0
+  );
+
+}, [routine]);
+    
   const loginHref = `/login?redirect=${encodeURIComponent(`/routine/detail/${routineId}`)}`;
   const dateFormatter = useLocaleDateFormatter(locale, {
     day: "2-digit",
@@ -191,7 +203,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     <MessageSquare size={14} />
-                    {comments.length}
+                    {commentsCount}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     <CalendarDays size={14} />
@@ -312,6 +324,7 @@ export default function RoutineDetailPage({ routineId, backPath = "/community" }
               initialComments={comments}
               loginHref={loginHref}
               translationNamespace="RoutineDetail"
+              onCommentsCountChange={setCommentsCount}
             />
           </div>
         </div>
