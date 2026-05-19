@@ -7,17 +7,25 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 import { CreateComentarioDto } from './dto/create-comentario.dto';
 import { UpdateComentarioDto } from './dto/update-comentario.dto';
 import { ComentariosService } from './comentarios.service';
 
+@ApiTags('Comentarios')
 @Controller('comentarios')
 export class ComentariosController {
   constructor(private readonly comentariosService: ComentariosService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Crear un comentario' })
   @ApiBody({
     type: CreateComentarioDto,
     examples: {
@@ -30,21 +38,31 @@ export class ComentariosController {
       },
     },
   })
+  @ApiResponse({ status: 201, description: 'Comentario creado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
   create(@Body() createComentarioDto: CreateComentarioDto) {
     return this.comentariosService.create(createComentarioDto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Obtener todos los comentarios' })
+  @ApiResponse({ status: 200, description: 'Lista de comentarios' })
   findAll() {
     return this.comentariosService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener un comentario por ID' })
+  @ApiParam({ name: 'id', description: 'ID del comentario' })
+  @ApiResponse({ status: 200, description: 'Comentario encontrado' })
+  @ApiResponse({ status: 404, description: 'Comentario no encontrado' })
   findOne(@Param('id') id: string) {
     return this.comentariosService.findOne(id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar un comentario' })
+  @ApiParam({ name: 'id', description: 'ID del comentario' })
   @ApiBody({
     type: UpdateComentarioDto,
     examples: {
@@ -57,6 +75,8 @@ export class ComentariosController {
       },
     },
   })
+  @ApiResponse({ status: 200, description: 'Comentario actualizado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Comentario no encontrado' })
   update(
     @Param('id') id: string,
     @Body() updateComentarioDto: UpdateComentarioDto,
@@ -65,16 +85,36 @@ export class ComentariosController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un comentario' })
+  @ApiParam({ name: 'id', description: 'ID del comentario' })
+  @ApiResponse({ status: 200, description: 'Comentario eliminado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Comentario no encontrado' })
   remove(@Param('id') id: string) {
     return this.comentariosService.remove(id);
   }
 
   @Post(':id/upvote')
+  @ApiOperation({ summary: 'Votar positivamente un comentario' })
+  @ApiParam({ name: 'id', description: 'ID del comentario' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'ID del usuario que vota', example: 'user-200' },
+      },
+      required: ['userId'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Voto registrado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Comentario no encontrado' })
   upvote(@Param('id') id: string, @Body('userId') userId: string) {
     return this.comentariosService.upvote(id, userId);
   }
 
   @Get('producto/:productId')
+  @ApiOperation({ summary: 'Obtener comentarios por producto' })
+  @ApiParam({ name: 'productId', description: 'ID del producto' })
+  @ApiResponse({ status: 200, description: 'Comentarios del producto' })
   findByProductId(@Param('productId') productId: string) {
     return this.comentariosService.findByProductId(productId);
   }

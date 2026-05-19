@@ -39,7 +39,11 @@ export default function ProductDetailPage() {
     const t = useTranslations("ProductCard");
     const tCat = useTranslations("Categories");
     const tProdType = useTranslations("ProductTypes");
-    const { isLoggedIn, user } = useAuthSession();
+    const {
+        isLoggedIn,
+        user,
+        refreshSession
+    } = useAuthSession();
     const params = useParams();
 
     let slug: string;
@@ -60,8 +64,20 @@ export default function ProductDetailPage() {
     
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [toggleFavorite, setToggleFavorite] = useState(false);
+    const [toggleFavorite, setToggleFavorite] = useState(
+        user?.favoriteProductIds?.includes(product?.id ?? "") ?? false
+    );
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    useEffect(() => {
+
+        if (!user || !product) return;
+
+        setToggleFavorite(
+            user.favoriteProductIds?.includes(product.id)
+        );
+
+    }, [user, product]);
 
     useEffect(() => {
         const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
@@ -103,13 +119,44 @@ export default function ProductDetailPage() {
 
     const createRoutineHref = getProtectedRoute(`/routine/crear?product=${encodeURIComponent(product?.id ?? "")}`, isLoggedIn);
 
-    const handleFavoriteClick = () => {
-        setToggleFavorite(!toggleFavorite);
-        // if (toggleFavorite) {
-        //     onFavoriteDeselect(productIndex);
-        // } else {
-        //     onFavoriteSelect(productIndex);
-        // }
+    const handleFavoriteClick = async () => {
+
+        if (!user || !product) return;
+
+        try {
+
+            if (toggleFavorite) {
+
+                await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/favorites/${product.id}`,
+                    {
+                        method: "DELETE",
+                    }
+                );
+
+                setToggleFavorite(false);
+
+            } else {
+
+                await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/favorites/${product.id}`,
+                    {
+                        method: "POST",
+                    }
+                );
+
+                setToggleFavorite(true);
+            }
+
+            await refreshSession();
+
+        } catch (error) {
+
+            console.error(
+                "Error updating favorite:",
+                error
+            );
+        }
     }
 
     const getCategoryIcon = (category: Category) => {

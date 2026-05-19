@@ -69,40 +69,119 @@ export default function CommunityPage() {
   const createRoutineHref = getProtectedRoute("/routine/crear", isLoggedIn);
   const createAiRoutineHref = getProtectedRoute("/ai-routine", isLoggedIn);
 
-  useEffect(() => {
-    const loadRoutines = async () => {
-      try {
-        setIsLoading(true);
-        setCurrentPage(1);
-        const data = await fetchRoutines(1, locale, activeTab);
-        const fetchedRoutines = data.routines || [];
-        setRoutines(fetchedRoutines);
-        setTotalPages(data.totalPages || 1);
-        setError(null);
+useEffect(() => {
 
-        const userIds = [...new Set(fetchedRoutines.map((r: any) => r.userId).filter(Boolean))];
-        if (userIds.length > 0) {
-          fetchUsers()
-            .then((allUsers) => {
-              const map: Record<string, any> = {};
-              for (const u of allUsers) {
-                const uid = u._id || u.id;
-                if (uid) map[uid] = u;
+  const loadRoutines = async () => {
+
+    try {
+
+      setIsLoading(true);
+
+      setCurrentPage(1);
+
+      const data = await fetchRoutines(
+        1,
+        locale,
+        activeTab
+      );
+      
+      const fetchedRoutines =
+        data.routines || [];
+
+      console.log(
+        "ROUTINES:",
+        fetchedRoutines
+      );
+
+
+      setRoutines(fetchedRoutines);
+
+      setTotalPages(
+        data.totalPages || 1
+      );
+
+      setError(null);
+
+      const userIds = [
+
+        ...new Set(
+
+          fetchedRoutines
+            .map((r: any) => r.userId)
+            .filter(Boolean)
+
+        ),
+
+      ];
+
+      if (userIds.length > 0) {
+
+        fetchUsers()
+
+          .then((allUsers) => {
+
+            const map: Record<
+              string,
+              any
+            > = {};
+
+            for (const u of allUsers) {
+
+              const uid =
+                u._id || u.id;
+
+              if (uid) {
+
+                map[uid] = u;
               }
-              setUsersMap(map);
-            })
-            .catch(() => {});
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load routines");
-        setRoutines([]);
-      } finally {
-        setIsLoading(false);
+            }
+
+            setUsersMap(map);
+
+          })
+
+          .catch(() => {});
       }
-    };
+
+    } catch (err) {
+
+      setError(
+
+        err instanceof Error
+          ? err.message
+          : "Failed to load routines"
+
+      );
+
+      setRoutines([]);
+
+    } finally {
+
+      setIsLoading(false);
+    }
+  };
+
+  loadRoutines();
+
+  const handleFocus = () => {
 
     loadRoutines();
-  }, [locale, activeTab]);
+  };
+
+  window.addEventListener(
+    "focus",
+    handleFocus
+  );
+
+  return () => {
+
+    window.removeEventListener(
+      "focus",
+      handleFocus
+    );
+  };
+
+}, [locale, activeTab]);
 
   const loadMoreRoutines = async () => {
     if (isLoadingMore || currentPage >= totalPages) return;
@@ -210,7 +289,7 @@ export default function CommunityPage() {
         downvotes: routine.downvotes?.length ?? 0,
         hasUpvoted: routine.upvotes?.includes(currentUserId) ?? false,
         hasDownvoted: routine.downvotes?.includes(currentUserId) ?? false,
-        comments: routine.comments?.length ?? 0,
+        comments: routine.commentCount ?? 0,
         views: routine.views ?? 0,
         publishedAt: publishedAtDate ? publishedDateFormatter.format(publishedAtDate) : "-",
         publishedAtTs,

@@ -20,19 +20,34 @@ export default function Home() {
 
   const products = getProducts().slice(0, 4)
 
-  const handleFavoriteSelect = (productIndex: number) => {
-    const selectedProduct = productsFavorites[productIndex]
-    if (!favoriteProducts.some(product => product.id === selectedProduct.id)) {
-      setFavoriteProducts([...favoriteProducts, selectedProduct])
-    }
-  }
+const handleFavoriteSelect = async (productId: string) => {
 
-  const handleFavoriteDeselect = (productIndex: number) => {
-    const deselectedProduct = productsFavorites[productIndex]
-    setFavoriteProducts(
-      favoriteProducts.filter(product => product.id !== deselectedProduct.id)
+  const selectedProduct = products.find(
+    product => product.id === productId
+  )
+
+  if (!selectedProduct) return
+
+  if (
+    !favoriteProducts.some(
+      product => product.id === selectedProduct.id
     )
+  ) {
+    setFavoriteProducts([
+      ...favoriteProducts,
+      selectedProduct
+    ])
   }
+}
+
+const handleFavoriteDeselect = async (productId: string) => {
+
+  setFavoriteProducts(
+    favoriteProducts.filter(
+      product => product.id !== productId
+    )
+  )
+}
 
 
   return (

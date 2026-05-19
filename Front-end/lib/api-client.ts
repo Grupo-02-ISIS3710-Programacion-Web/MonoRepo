@@ -446,3 +446,16 @@ export async function getMerchantInfo(): Promise<{
 }> {
   return apiFetch('/suscripciones/merchant-info');
 }
+
+
+export async function getUserFavorites(userId: string): Promise<string[]> {
+  return apiFetch(`/users/${userId}/favorites`);
+}
+
+export async function addUserFavorite(userId: string, productId: string): Promise<any> {
+  return apiFetch(`/users/${userId}/favorites/${productId}`, { method: 'POST' });
+}
+
+export async function removeUserFavorite(userId: string, productId: string): Promise<any> {
+  return apiFetch(`/users/${userId}/favorites/${productId}`, { method: 'DELETE' });
+}
