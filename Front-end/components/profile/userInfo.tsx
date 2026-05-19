@@ -3,8 +3,10 @@
 import { Droplet, Pencil, Upload } from "lucide-react"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 
 type UserInfoProps = {
+  userId: string 
   name: string
   city: string
   skinType: string
@@ -15,6 +17,7 @@ type UserInfoProps = {
 }
 
 export default function UserInfo({
+  userId,
   name,
   city,
   skinType,
@@ -52,15 +55,31 @@ export default function UserInfo({
   }
 
 
-  const updateInfoUser = () => {
-    setUserName(editName)
-    setUserCity(editCity)
-    setUserSkinType(editSkinType)
-    setUserBio(editBio)
-    setUserPhoto(editPhoto)
+const updateInfoUser = async () => {
+    try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombre: editName,
+                ciudad: editCity,
+                tipoPiel: editSkinType,
+                bio: editBio,
+            }),
+        })
 
-    setOpenModal(false)
-  }
+        setUserName(editName)
+        setUserCity(editCity)
+        setUserSkinType(editSkinType)
+        setUserBio(editBio)
+        setUserPhoto(editPhoto)
+        setOpenModal(false)
+        toast.success("Perfil actualizado")
+    } catch (err) {
+        console.error("Error al actualizar perfil:", err)
+        toast.error("No se pudo actualizar el perfil")
+    }
+}
 
 
   return (
