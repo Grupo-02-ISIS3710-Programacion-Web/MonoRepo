@@ -120,4 +120,45 @@ export class ComentariosService {
     this.logger.log(`Voto registrado: comentario ${id}, usuario ${userId}`);
     return comentario;
   }
+
+  async downvote(
+    id: string,
+    userId: string,
+  ) {
+
+    const comment =
+      await this.comentarioModel.findById(id);
+
+    if (!comment) {
+      return null;
+    }
+
+    comment.upvotes =
+      comment.upvotes || [];
+
+    comment.downvotes =
+      comment.downvotes || [];
+
+    comment.upvotes =
+      comment.upvotes.filter(
+        (uid) => uid !== userId,
+      );
+
+    const alreadyDownvoted =
+      comment.downvotes.includes(userId);
+
+    if (alreadyDownvoted) {
+
+      comment.downvotes =
+        comment.downvotes.filter(
+          (uid) => uid !== userId,
+        );
+
+    } else {
+
+      comment.downvotes.push(userId);
+    }
+
+    return await comment.save();
+  }
 }

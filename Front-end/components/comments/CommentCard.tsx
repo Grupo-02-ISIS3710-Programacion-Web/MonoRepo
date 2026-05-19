@@ -79,7 +79,7 @@ export default function CommentCard({
           <ArrowDown size={16} />
           {comment.downvotes.length}
         </button>
-        <button className="text-sm font-semibold hover:text-primary" disabled={isInteractionDisabled}>{t("reply")}</button>
+        
       </div>
     </article>
   );
