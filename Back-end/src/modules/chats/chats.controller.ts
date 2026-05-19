@@ -10,7 +10,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChatsService } from './chats.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { SaveMessageDto } from './dto/save-message.dto';
@@ -55,6 +55,7 @@ export class ChatsController {
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los chats de un usuario' })
+  @ApiQuery({ name: 'userId', required: true, type: String, description: 'ID del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de chats' })
   async findByUser(@Query('userId') userId: string) {
     this.logger.log(`Solicitud recibida: GET /ai/chats - Usuario ${userId}`);
@@ -80,6 +81,8 @@ export class ChatsController {
 
   @Get(':chatId')
   @ApiOperation({ summary: 'Obtener un chat por ID' })
+  @ApiParam({ name: 'chatId', type: String, description: 'ID del chat' })
+  @ApiQuery({ name: 'userId', required: true, type: String, description: 'ID del usuario' })
   @ApiResponse({ status: 200, description: 'Chat con estado completo' })
   async findById(
     @Param('chatId') chatId: string,
@@ -110,6 +113,8 @@ export class ChatsController {
 
   @Post(':chatId/messages')
   @ApiOperation({ summary: 'Agregar un mensaje al chat' })
+  @ApiParam({ name: 'chatId', type: String, description: 'ID del chat' })
+  @ApiQuery({ name: 'userId', required: true, type: String, description: 'ID del usuario' })
   @ApiBody({ type: SaveMessageDto })
   @ApiResponse({ status: 201, description: 'Mensaje guardado' })
   async saveMessage(
@@ -147,6 +152,8 @@ export class ChatsController {
 
   @Patch(':chatId/draft')
   @ApiOperation({ summary: 'Actualizar el borrador de rutina en el chat' })
+  @ApiParam({ name: 'chatId', type: String, description: 'ID del chat' })
+  @ApiQuery({ name: 'userId', required: true, type: String, description: 'ID del usuario' })
   @ApiBody({ type: UpdateDraftDto })
   @ApiResponse({ status: 200, description: 'Borrador actualizado' })
   async updateDraft(
@@ -185,6 +192,8 @@ export class ChatsController {
 
   @Patch(':chatId/focus-areas')
   @ApiOperation({ summary: 'Actualizar áreas de enfoque seleccionadas' })
+  @ApiParam({ name: 'chatId', type: String, description: 'ID del chat' })
+  @ApiQuery({ name: 'userId', required: true, type: String, description: 'ID del usuario' })
   @ApiBody({ type: UpdateFocusAreasDto })
   @ApiResponse({ status: 200, description: 'Áreas de enfoque actualizadas' })
   async updateFocusAreas(

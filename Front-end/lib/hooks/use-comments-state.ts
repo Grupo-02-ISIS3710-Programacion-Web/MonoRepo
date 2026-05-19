@@ -4,6 +4,7 @@ import { Comment } from "@/types/Comment";
 import { useEffect, useRef, useState } from "react";
 import { fetchProductComments, createProductComment, upvoteProductComment, fetchComments, createComment } from "@/lib/api-client";
 import { toast } from "sonner";
+import { voteComment as apiVoteComment } from "@/lib/api-client";
 
 type UseCommentsStateParams = Readonly<{
   targetId: string;
@@ -132,44 +133,41 @@ export function useCommentsState({
     }
   };
 
-  const voteComment = async (commentId: string, vote: "up" | "down") => {
-    if (targetType === "product") {
-      try {
-        await upvoteProductComment(commentId, currentUserId);
-      } catch (err) {
-        console.error("Error al votar comentario:", err);
-        toast.error("No se pudo registrar el voto. Intenta de nuevo.");
-        return;
-      }
-    }
+  const voteComment = async (
+    commentId: string,
+    vote: "up" | "down",
+  ) => {
 
-    setLocalComments((prev) =>
-      prev.map((comment) => {
-        if (comment.id !== commentId) return comment;
-        const hasUpvoted = comment.upvotes.includes(currentUserId);
-        const hasDownvoted = comment.downvotes.includes(currentUserId);
-        if (vote === "up") {
-          return {
-            ...comment,
-            upvotes: hasUpvoted
-              ? comment.upvotes.filter((id) => id !== currentUserId)
-              : [...comment.upvotes, currentUserId],
-            downvotes: hasDownvoted
-              ? comment.downvotes.filter((id) => id !== currentUserId)
-              : comment.downvotes,
-          };
-        }
-        return {
-          ...comment,
-          downvotes: hasDownvoted
-            ? comment.downvotes.filter((id) => id !== currentUserId)
-            : [...comment.downvotes, currentUserId],
-          upvotes: hasUpvoted
-            ? comment.upvotes.filter((id) => id !== currentUserId)
-            : comment.upvotes,
-        };
-      })
-    );
+    if (!currentUserId) return;
+
+    try {
+
+      const updatedComment =
+        await apiVoteComment(
+          commentId,
+          currentUserId,
+          vote,
+        );
+
+      
+
+      setLocalComments((prev) =>
+        prev.map((comment) =>
+
+          (comment.id || comment._id) === commentId
+            ? updatedComment
+            : comment
+
+        )
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Error voting comment:",
+        error,
+      );
+    }
   };
 
   return {

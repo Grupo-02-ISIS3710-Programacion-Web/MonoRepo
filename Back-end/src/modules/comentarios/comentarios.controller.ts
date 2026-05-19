@@ -111,9 +111,43 @@ export class ComentariosController {
     return this.comentariosService.upvote(id, userId);
   }
 
+  @Post(':id/downvote')
+  @ApiOperation({ summary: 'Votar negativamente un comentario' })
+  @ApiParam({ name: 'id', description: 'ID del comentario' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'ID del usuario que vota',
+          example: 'user-200',
+        },
+      },
+      required: ['userId'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Voto negativo registrado exitosamente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Comentario no encontrado',
+  })
+  downvote(
+    @Param('id') id: string,
+    @Body('userId') userId: string,
+  ) {
+    return this.comentariosService.downvote(
+      id,
+      userId,
+    );
+  }
+
   @Get('producto/:productId')
   @ApiOperation({ summary: 'Obtener comentarios por producto' })
-  @ApiParam({ name: 'productId', description: 'ID del producto' })
+  @ApiParam({ name: 'productId', type: String, description: 'ID del producto', example: '69f8832d56dcaa1b4eb44a30' })
   @ApiResponse({ status: 200, description: 'Comentarios del producto' })
   findByProductId(@Param('productId') productId: string) {
     return this.comentariosService.findByProductId(productId);

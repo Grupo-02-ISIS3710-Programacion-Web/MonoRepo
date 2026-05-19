@@ -102,22 +102,109 @@ export class ComentariosService {
   }
 
   async upvote(id: string, userId: string) {
-    this.logger.log(`Votando comentario ${id} por usuario ${userId}`);
-    const comentario = await this.comentarioModel.findById(id).exec();
-    if (!comentario) {
-      this.logger.warn(`Comentario ${id} no encontrado para votar`);
-      throw new NotFoundException(`Comentario ${id} not found`);
-    }
-    if (comentario.upvotes.includes(userId)) {
-      this.logger.log(`Usuario ${userId} ya había votado el comentario ${id}`);
-      return comentario;
-    }
-    comentario.downvotes = comentario.downvotes.filter(
-      (u: string) => u !== userId,
+
+    this.logger.log(
+      `Votando comentario ${id} por usuario ${userId}`
     );
-    comentario.upvotes.push(userId);
+
+    const comentario =
+      await this.comentarioModel
+        .findById(id)
+        .exec();
+
+    if (!comentario) {
+
+      this.logger.warn(
+        `Comentario ${id} no encontrado para votar`
+      );
+
+      throw new NotFoundException(
+        `Comentario ${id} not found`
+      );
+    }
+
+    comentario.upvotes =
+      comentario.upvotes || [];
+
+    comentario.downvotes =
+      comentario.downvotes || [];
+
+    if (
+      comentario.upvotes.includes(userId)
+    ) {
+
+      comentario.upvotes =
+        comentario.upvotes.filter(
+          (u: string) => u !== userId,
+        );
+
+    } else {
+
+      comentario.downvotes =
+        comentario.downvotes.filter(
+          (u: string) => u !== userId,
+        );
+
+      comentario.upvotes.push(userId);
+    }
+
     await comentario.save();
-    this.logger.log(`Voto registrado: comentario ${id}, usuario ${userId}`);
-    return comentario;
+
+
+    return await this.comentarioModel
+      .findById(id)
+      .populate(
+        "userId",
+        "nombre avatarUrl"
+      )
+      .exec();
+  }
+
+  async downvote(
+    id: string,
+    userId: string,
+  ) {
+
+    const comment =
+      await this.comentarioModel.findById(id);
+
+    if (!comment) {
+      return null;
+    }
+
+    comment.upvotes =
+      comment.upvotes || [];
+
+    comment.downvotes =
+      comment.downvotes || [];
+
+    comment.upvotes =
+      comment.upvotes.filter(
+        (uid) => uid !== userId,
+      );
+
+    const alreadyDownvoted =
+      comment.downvotes.includes(userId);
+
+    if (alreadyDownvoted) {
+
+      comment.downvotes =
+        comment.downvotes.filter(
+          (uid) => uid !== userId,
+        );
+
+    } else {
+
+      comment.downvotes.push(userId);
+    }
+
+    await comment.save();
+
+    return await this.comentarioModel
+      .findById(id)
+      .populate(
+        "userId",
+        "nombre avatarUrl"
+      );
   }
 }

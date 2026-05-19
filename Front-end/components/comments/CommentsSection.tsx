@@ -196,7 +196,7 @@ export default function CommentSection({
 
           {localComments.map((comment) => (
 
-            <div key={comment.id}>
+            <div key={comment.id || comment._id}>
 
               <CommentCard
                 comment={comment}

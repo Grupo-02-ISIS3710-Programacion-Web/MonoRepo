@@ -88,10 +88,7 @@ useEffect(() => {
       const fetchedRoutines =
         data.routines || [];
 
-      console.log(
-        "ROUTINES:",
-        fetchedRoutines
-      );
+      
 
 
       setRoutines(fetchedRoutines);

@@ -459,3 +459,43 @@ export async function addUserFavorite(userId: string, productId: string): Promis
 export async function removeUserFavorite(userId: string, productId: string): Promise<any> {
   return apiFetch(`/users/${userId}/favorites/${productId}`, { method: 'DELETE' });
 }
+
+
+export async function voteComment(
+  commentId: string,
+  userId: string,
+  vote: "up" | "down",
+) {
+
+  const endpoint =
+    vote === "up"
+      ? "upvote"
+      : "downvote";
+
+  const response = await fetch(
+
+    `${process.env.NEXT_PUBLIC_API_URL}/comentarios/${commentId}/${endpoint}`,
+
+    {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        userId,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+
+    throw new Error(
+      "Error voting comment",
+    );
+  }
+
+  return response.json();
+}

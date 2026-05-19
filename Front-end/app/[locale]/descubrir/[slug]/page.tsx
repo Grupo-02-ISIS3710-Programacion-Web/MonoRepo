@@ -49,7 +49,7 @@ export default function ProductDetailPage() {
     let slug: string;
     if (Array.isArray(params.slug)) {
         slug = params.slug.join('-');
-        console.log("Slug is an array, joined to:", slug);
+        
     } else if (typeof params.slug === 'string') {
         slug = params.slug;
     } else {

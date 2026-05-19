@@ -170,6 +170,7 @@ const handleFavoriteDeselect = async (productId: string) => {
 
                 <div className="col-span-12 md:col-span-4">
                     <UserInfo
+                        userId={user.id}
                         name={user.nombre}
                         city={user.ciudad}
                         skinType={user.tipoPiel}
