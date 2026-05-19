@@ -35,18 +35,18 @@ export default function CommentCard({
 
   const user =
     typeof comment.userId === "object" &&
-    comment.userId !== null
+      comment.userId !== null
 
       ? {
-          name: comment.userId.nombre,
-          avatarUrl:
-            comment.userId.avatarUrl,
-        }
+        name: comment.userId.nombre,
+        avatarUrl:
+          comment.userId.avatarUrl,
+      }
 
       : {
-          name: null,
-          avatarUrl: null,
-        };
+        name: null,
+        avatarUrl: null,
+      };
 
   const hasUpvoted =
     comment.upvotes.includes(
@@ -136,11 +136,10 @@ export default function CommentCard({
       <div className="mt-3 flex items-center gap-4 pl-12 text-muted-foreground">
 
         <button
-          className={`inline-flex items-center gap-1 text-sm font-semibold transition ${
-            hasUpvoted
+          className={`inline-flex items-center gap-1 text-sm font-semibold transition ${hasUpvoted
               ? "text-primary"
               : "hover:text-primary"
-          }`}
+            }`}
           aria-label={t("upvote")}
           type="button"
           disabled={isInteractionDisabled}
@@ -159,11 +158,10 @@ export default function CommentCard({
         </button>
 
         <button
-          className={`inline-flex items-center gap-1 text-sm transition ${
-            hasDownvoted
+          className={`inline-flex items-center gap-1 text-sm transition ${hasDownvoted
               ? "text-primary"
               : "hover:text-primary"
-          }`}
+            }`}
           aria-label={t("downvote")}
           type="button"
           disabled={isInteractionDisabled}

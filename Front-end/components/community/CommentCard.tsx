@@ -26,8 +26,8 @@ export default function CommentCard({
   const t = useTranslations(translationNamespace);
   const locale = useLocale();
   const user = typeof comment.userId === 'object' && comment.userId !== null
-  ? { name: (comment.userId as any).nombre, avatarUrl: (comment.userId as any).avatarUrl }
-  : { name: null, avatarUrl: null };
+    ? { name: (comment.userId as any).nombre, avatarUrl: (comment.userId as any).avatarUrl }
+    : { name: null, avatarUrl: null };
   const hasUpvoted = comment.upvotes.includes(currentUserId);
   const hasDownvoted = comment.downvotes.includes(currentUserId);
   const formattedDate = useFormattedCommentDate(comment.createdAt, locale);
@@ -64,7 +64,11 @@ export default function CommentCard({
           aria-label={t("upvote")}
           type="button"
           disabled={isInteractionDisabled}
-          onClick={() => onVote?.(comment.id, "up")}
+          onClick={() => {
+            const id = comment.id;
+            if (!id) return;
+            onVote?.(id, "up");
+          }}
         >
           <ArrowUp size={16} />
           {comment.upvotes.length}
@@ -75,7 +79,11 @@ export default function CommentCard({
           aria-label={t("downvote")}
           type="button"
           disabled={isInteractionDisabled}
-          onClick={() => onVote?.(comment.id, "down")}
+          onClick={() => {
+            const id = comment.id;
+            if (!id) return;
+            onVote?.(id, "down");
+          }}
         >
           <ArrowDown size={16} />
           {comment.downvotes.length}
