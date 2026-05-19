@@ -149,10 +149,12 @@ export function useCommentsState({
           vote,
         );
 
+      
+
       setLocalComments((prev) =>
         prev.map((comment) =>
 
-          comment.id === commentId
+          (comment.id || comment._id) === commentId
             ? updatedComment
             : comment
 

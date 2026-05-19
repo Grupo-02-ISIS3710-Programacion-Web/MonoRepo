@@ -1,5 +1,6 @@
 export type Comment = {
-  id: string;
+  _id?: string;
+  id?: string;
   userId: string | { _id: string; nombre: string; avatarUrl: string }; 
   comment: string;
   upvotes: string[];
