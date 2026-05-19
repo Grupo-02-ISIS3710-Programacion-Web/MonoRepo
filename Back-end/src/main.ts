@@ -21,6 +21,7 @@ async function bootstrap() {
       'API para la gestión de rutinas de cuidado de la piel. Esta API permite crear, consultar, actualizar y eliminar rutinas, así como gestionar votos y visualizaciones. Los datos se cargan mediante el endpoint /seed utilizando mocks de usuarios, productos y rutinas.',
     )
     .setVersion('1.0')
+    .addTag('App', 'Endpoint de health check y verificación del servidor')
     .addTag(
       'Rutinas',
       'Endpoints para la gestión de rutinas de cuidado de la piel',
@@ -34,6 +35,7 @@ async function bootstrap() {
     .addTag('Upload', 'Endpoint para subida de archivos (avatares)')
     .addTag('IA - Rutinas Inteligentes', 'Endpoints de IA para rutinas personalizadas')
     .addTag('Chats IA', 'Endpoints para sesiones de chat con IA')
+    .addBearerAuth()
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);

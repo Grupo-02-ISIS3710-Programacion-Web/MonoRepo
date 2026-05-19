@@ -147,7 +147,7 @@ export class ComentariosController {
 
   @Get('producto/:productId')
   @ApiOperation({ summary: 'Obtener comentarios por producto' })
-  @ApiParam({ name: 'productId', description: 'ID del producto' })
+  @ApiParam({ name: 'productId', type: String, description: 'ID del producto', example: '69f8832d56dcaa1b4eb44a30' })
   @ApiResponse({ status: 200, description: 'Comentarios del producto' })
   findByProductId(@Param('productId') productId: string) {
     return this.comentariosService.findByProductId(productId);
